@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+printf '%s\n' 'Bond developer helpers'
+printf '%s\n' ''
+printf '%s\n' 'Prompt wrapper: docs/COPILOT_CHANGE_PROMPT_TEMPLATE.md'
+printf '%s\n' 'Prompt examples: docs/COPILOT_PROMPT_EXAMPLES.md'
+printf '%s\n' 'Session starter: docs/COPILOT_SESSION_STARTER.md'
+printf '%s\n' 'Review checklist: docs/REVIEW_CHECKLIST.md'
+printf '%s\n' 'Change review template: docs/CHANGE_REVIEW_TEMPLATE.md'
+printf '%s\n' ''
+printf '%s\n' 'Local declaration gate: make reviewcheck'
+printf '%s\n' 'Example:'
+printf '%s\n' '  DOCS_REVIEWED=yes DOCS_UPDATED=no EXTERNAL_CONTEXT_NEEDED=no EXTERNAL_CONTEXT_PROVIDED=no CHANGE_SUMMARY="bounded docs update" DOCS_IMPACT_NOTE="updated governance docs" EXTERNAL_CONTEXT_NOTE="no external planning context needed" make reviewcheck'

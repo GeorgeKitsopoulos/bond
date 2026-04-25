@@ -1,0 +1,11 @@
+[Unit]
+Description=Run AI Memory Rotation Weekly With Catch-Up
+
+[Timer]
+OnBootSec=5min
+OnCalendar=weekly
+Persistent=true
+Unit=ai-memory-rotate.service
+
+[Install]
+WantedBy=timers.target

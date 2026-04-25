@@ -1,0 +1,9 @@
+[Unit]
+Description=AI Memory Rotation
+
+[Service]
+Type=oneshot
+# Example unit. Copy and adapt BOND_ROOT if your install path differs.
+Environment=BOND_ROOT=%h/bond
+WorkingDirectory=%h/bond
+ExecStart=%h/bond/scripts/bond-memory-rotate

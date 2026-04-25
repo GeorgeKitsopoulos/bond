@@ -1,0 +1,61 @@
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Editor / local IDE state
+.vscode/
+!.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Aider local runtime/history/cache
+.aider.chat.history.md
+.aider.input.history
+.aider.llm.history
+.aider.tags.cache.v4/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Gitea runtime data
+deploy/gitea/data/
+deploy/gitea/config/
+deploy/gitea/backups/
+
+# runtime data
+memory/
+state/
+
+# local config
+config/bond/assistant_config.json
+
+# virtual env
+.venv/
+
+# python
+*.pyc
+
+# Python/tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Coverage outputs
+.coverage
+coverage.xml
+htmlcov/
+
+# Build outputs
+build/
+dist/
+*.egg-info/
+
+# Local editor/runtime noise
+*.bak
+*~
+.DS_Store

@@ -1,0 +1,9 @@
+{
+  "ollama_url": "http://127.0.0.1:11434/api/generate",
+  "router_config": "repo://config/router/profiles.json",
+  "memory_root": "data://memory",
+  "state_root": "state://state",
+  "changelog_path": "state://changelog/changelog.jsonl",
+  "second_drive": "",
+  "archive_root": ""
+}

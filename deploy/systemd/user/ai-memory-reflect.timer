@@ -1,0 +1,11 @@
+[Unit]
+Description=Run AI Memory Reflection Builder Daily With Catch-Up
+
+[Timer]
+OnBootSec=7min
+OnCalendar=daily
+Persistent=true
+Unit=ai-memory-reflect.service
+
+[Install]
+WantedBy=timers.target

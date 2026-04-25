@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  ./scripts/bond-reviewcheck \
+    --docs-reviewed yes|no \
+    --docs-updated yes|no \
+    --external-context-needed yes|no \
+    --external-context-provided yes|no \
+    --change-summary "text" \
+    --docs-impact-note "text" \
+    --external-context-note "text"
+
+Rules:
+- If --docs-reviewed is no, the check fails.
+- If --external-context-needed is yes and --external-context-provided is no, the check fails.
+- change-summary, docs-impact-note, and external-context-note are required non-empty text fields.
+- --docs-updated is a declaration field and does not itself force failure.
+EOF
+}
+
+docs_reviewed=""
+docs_updated=""
+external_needed=""
+external_provided=""
+change_summary=""
+docs_impact_note=""
+external_context_note=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --docs-reviewed)
+      docs_reviewed="${2:-}"
+      shift 2
+      ;;
+    --docs-updated)
+      docs_updated="${2:-}"
+      shift 2
+      ;;
+    --external-context-needed)
+      external_needed="${2:-}"
+      shift 2
+      ;;
+    --external-context-provided)
+      external_provided="${2:-}"
+      shift 2
+      ;;
+    --change-summary)
+      change_summary="${2:-}"
+      shift 2
+      ;;
+    --docs-impact-note)
+      docs_impact_note="${2:-}"
+      shift 2
+      ;;
+    --external-context-note)
+      external_context_note="${2:-}"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'Unknown argument: %s\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
+valid_yes_no() {
+  case "$1" in
+    yes|no) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+for value_name in docs_reviewed docs_updated external_needed external_provided; do
+  value="${!value_name}"
+  if [[ -z "$value" ]]; then
+    printf 'Missing required argument for %s\n' "$value_name" >&2
+    usage >&2
+    exit 2
+  fi
+  if ! valid_yes_no "$value"; then
+    printf 'Invalid value for %s: %s\n' "$value_name" "$value" >&2
+    printf 'Expected: yes or no\n' >&2
+    exit 2
+  fi
+done
+
+for text_name in change_summary docs_impact_note external_context_note; do
+  value="${!text_name}"
+  if [[ -z "$value" ]]; then
+    printf 'Missing required text argument for %s\n' "$text_name" >&2
+    usage >&2
+    exit 2
+  fi
+done
+
+if [[ "$docs_reviewed" != "yes" ]]; then
+  printf 'FAIL: authoritative documentation review was not completed.\n' >&2
+  exit 1
+fi
+
+if [[ "$external_needed" == "yes" && "$external_provided" != "yes" ]]; then
+  printf 'FAIL: external planning context was required but not provided.\n' >&2
+  exit 1
+fi
+
+printf 'PASS: review declarations satisfy repository gate.\n'
+printf 'docs_reviewed=%s\n' "$docs_reviewed"
+printf 'docs_updated=%s\n' "$docs_updated"
+printf 'external_context_needed=%s\n' "$external_needed"
+printf 'external_context_provided=%s\n' "$external_provided"
+printf 'change_summary=%s\n' "$change_summary"
+printf 'docs_impact_note=%s\n' "$docs_impact_note"
+printf 'external_context_note=%s\n' "$external_context_note"

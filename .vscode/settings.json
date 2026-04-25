@@ -1,0 +1,9 @@
+{
+  "git.decorations.enabled": true,
+  "explorer.decorations.badges": true,
+  "explorer.decorations.colors": true,
+  "explorer.autoReveal": true,
+  "workbench.editor.highlightModifiedTabs": true,
+  "files.autoSave": "off",
+  "workbench.iconTheme": "vs-seti"
+}
