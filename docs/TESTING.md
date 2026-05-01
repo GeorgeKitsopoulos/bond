@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest baseline is passing 61/61 in the current public-candidate baseline and includes Stage 2E parser-contract/action-preflight checks plus confirmation-token flow coverage.
+Current integrated selftest baseline is passing 67/67 in the current public-candidate baseline and includes Stage 2E parser-contract/action-preflight checks, Stage 2D confirmation-token flow coverage, and Stage 2F-A capability-registry honesty checks.
 
 The current integrated suite covers:
 
@@ -46,6 +46,9 @@ The current integrated suite covers:
 - safe single-action dry-run still works
 - safe action-chain dry-run still works
 - high-risk confirmation-required flow remains intact
+- capability-registry validation and required-entry presence checks
+- planned/unsupported capabilities are tested as unavailable
+- partial current capabilities are tested as available-with-caveats
 
 This baseline is necessary and useful, but it is not proof of final assistant correctness or product maturity.
 

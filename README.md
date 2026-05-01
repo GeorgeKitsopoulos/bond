@@ -7,7 +7,7 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 - Bond is under active development.
 - The current validated baseline is Stage 2E plus P0 cleanup work.
 - Current documented validation baseline: compile passes and integrated selftest passes 61/61.
-- Stage 2F is paused until cleanup gates pass.
+- Stage 2F has resumed with the code-level capability registry foundation; public-release hardening remains ongoing.
 - Bond is not yet a general-purpose desktop assistant.
 - Bond should not be used for unattended automation, privileged/system changes, or safety-critical workflows.
 
@@ -20,13 +20,14 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 - dry-run support
 - confirmation-required flow for high-risk actions
 - safe bounded action execution for current supported actions
+- code-level capability registry foundation
 - portable path/config foundations
 - memory/logging foundations
 - selftest suite
 
 ## What does not work yet
 
-- no full capability registry yet
+- no dynamic probe-backed capability discovery yet; the code-level registry foundation is present but not yet wired into normal assistant answers or execution decisions
 - no privileged execution lane
 - no service/app/applet layer
 - no system maintenance advisor, monthly health report, or GUI maintenance dashboard yet

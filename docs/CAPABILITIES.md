@@ -50,9 +50,17 @@ Each capability entry uses these fields:
 - `required_tools`: deterministic tools/probes required for reliable operation.
 - `notes`: free-form clarification.
 
+## Executable registry status
+
+- `src/bond/ai_capabilities.py` is now the executable subset of this document.
+- `docs/CAPABILITIES.md` remains the broader canonical design/reference document.
+- The Python registry is intentionally static in Stage 2F-A.
+- Planned/unsupported entries must remain non-available until real adapters/probes exist.
+- The registry is not yet wired into normal assistant answers or execution decisions.
+
 ## Capability entries
 
-Existing entries use the legacy compact schema. New entries should use the full schema above.
+Some entries still use the legacy compact schema in this reference document. The Stage 2F-A executable registry foundation now exists in `src/bond/ai_capabilities.py`; remaining entries can still be expanded to full schema fields incrementally.
 All entries may be extended with full-schema fields incrementally without breaking existing policy logic.
 
 Route names in `config/router/profiles.json` are dispatch targets, not capability assertions.
@@ -108,11 +116,11 @@ Initial capabilities:
 
 - name: describe_capabilities
   class: inspector
-  status: planned
+  status: partial
   execution_mode: deterministic_probe
   risk_level: low
   read_only: true
-  notes: answers what Bond can do from capability registry, not model improvisation.
+  notes: code-level capability registry helpers now exist in `src/bond/ai_capabilities.py`, but normal assistant answer integration is still pending.
 
 - name: describe_context_capabilities
   class: inspector

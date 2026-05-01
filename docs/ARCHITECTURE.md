@@ -589,6 +589,8 @@ The registry drives:
 - documentation
 - testing
 
+Stage 2F-A introduces `src/bond/ai_capabilities.py` as the static executable registry foundation. It does not yet provide dynamic environment probing, assistant-answer integration, plugin loading, or execution authorization.
+
 No module communicates via implicit strings — all interfaces must follow schema.
 
 ## Summary

@@ -19,6 +19,13 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-A capability registry foundation
+
+- Added `src/bond/ai_capabilities.py` static capability registry foundation.
+- Added capability-registry honesty selftests.
+- Updated docs to distinguish code-level registry foundation from dynamic probe-backed capability discovery.
+- New validation baseline expected: 67/67.
+
 ### Documentation
 
 - Documented planned system maintenance and health-advisor capabilities, including read-only package update inspection, safe update planning, storage hygiene reporting, duplicate-file candidate reporting, boot/service health reporting, monthly health reports, and future GUI/dashboard presentation boundaries.

@@ -40,6 +40,17 @@ from ai_policy import (
     evaluate_request_policy,
 )
 from ai_router import route_request
+from ai_capabilities import (
+    STATUS_PARTIAL,
+    STATUS_PLANNED,
+    STATUS_UNSUPPORTED,
+    capability_status,
+    get_capability,
+    is_capability_available,
+    list_capabilities,
+    list_capability_dicts,
+    validate_registry,
+)
 
 SRC_BOND = BOND_ROOT / "src" / "bond"
 AI_RUN = SRC_BOND / "ai_run.py"
@@ -909,6 +920,217 @@ def run_action_contract_tests() -> list[dict]:
                 "cmd": ["build_action_contract", case["text"]],
             }
         )
+
+    return results
+
+
+def run_capability_registry_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _record(name: str, errors: list[str], payload: dict) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": json.dumps(payload, ensure_ascii=False),
+                "stderr": "",
+                "errors": errors,
+                "cmd": ["capability_registry", name],
+            }
+        )
+
+    validation_errors = validate_registry()
+    caps = list_capabilities()
+    errors: list[str] = []
+    if validation_errors != []:
+        errors.append(f"validate_registry returned errors: {validation_errors}")
+    if len(caps) < 27:
+        errors.append(f"expected at least 27 capabilities, got {len(caps)}")
+    _record(
+        "capability_registry_validates",
+        errors,
+        {
+            "validation_errors": validation_errors,
+            "capability_count": len(caps),
+        },
+    )
+
+    required_names = {
+        "open_known_target",
+        "open_explicit_path",
+        "query_model",
+        "describe_capabilities",
+        "timer",
+        "clipboard",
+        "apply_privileged_system_updates",
+        "inspect_package_update_status",
+        "inspect_storage_hygiene",
+        "retrieve_document_knowledge",
+        "ingest_knowledge_sources",
+        "reindex_document_corpus",
+    }
+    names = {cap.name for cap in caps}
+    missing = sorted(required_names - names)
+    errors = []
+    if missing:
+        errors.append(f"missing required capability names: {missing}")
+    _record(
+        "capability_registry_required_entries_present",
+        errors,
+        {
+            "required_count": len(required_names),
+            "present_required_count": len(required_names - set(missing)),
+            "missing": missing,
+        },
+    )
+
+    checks = [
+        (
+            "open_known_target",
+            True,
+            STATUS_PARTIAL,
+        ),
+        (
+            "query_model",
+            True,
+            STATUS_PARTIAL,
+        ),
+        (
+            "describe_capabilities",
+            True,
+            STATUS_PARTIAL,
+        ),
+    ]
+    errors = []
+    for name, expected_available, expected_status in checks:
+        actual_available = is_capability_available(name)
+        actual_status = capability_status(name)
+        if actual_available is not expected_available:
+            errors.append(
+                f"{name}: expected available={expected_available!r}, got {actual_available!r}"
+            )
+        if actual_status != expected_status:
+            errors.append(f"{name}: expected status={expected_status!r}, got {actual_status!r}")
+    _record(
+        "capability_registry_partial_current_capabilities_are_available_with_caveats",
+        errors,
+        {
+            "open_known_target": {
+                "available": is_capability_available("open_known_target"),
+                "status": capability_status("open_known_target"),
+            },
+            "query_model": {
+                "available": is_capability_available("query_model"),
+                "status": capability_status("query_model"),
+            },
+            "describe_capabilities": {
+                "available": is_capability_available("describe_capabilities"),
+                "status": capability_status("describe_capabilities"),
+            },
+        },
+    )
+
+    checks = [
+        ("timer", False, STATUS_UNSUPPORTED),
+        ("clipboard", False, STATUS_UNSUPPORTED),
+        ("inspect_package_update_status", False, STATUS_PLANNED),
+        ("retrieve_document_knowledge", False, STATUS_PLANNED),
+    ]
+    errors = []
+    for name, expected_available, expected_status in checks:
+        actual_available = is_capability_available(name)
+        actual_status = capability_status(name)
+        if actual_available is not expected_available:
+            errors.append(
+                f"{name}: expected available={expected_available!r}, got {actual_available!r}"
+            )
+        if actual_status != expected_status:
+            errors.append(f"{name}: expected status={expected_status!r}, got {actual_status!r}")
+    _record(
+        "capability_registry_planned_and_unsupported_are_not_available",
+        errors,
+        {
+            "timer": {
+                "available": is_capability_available("timer"),
+                "status": capability_status("timer"),
+            },
+            "clipboard": {
+                "available": is_capability_available("clipboard"),
+                "status": capability_status("clipboard"),
+            },
+            "inspect_package_update_status": {
+                "available": is_capability_available("inspect_package_update_status"),
+                "status": capability_status("inspect_package_update_status"),
+            },
+            "retrieve_document_knowledge": {
+                "available": is_capability_available("retrieve_document_knowledge"),
+                "status": capability_status("retrieve_document_knowledge"),
+            },
+        },
+    )
+
+    cap = get_capability("apply_privileged_system_updates")
+    errors = []
+    if cap is None:
+        errors.append("apply_privileged_system_updates was missing")
+    else:
+        if cap.status != STATUS_PLANNED:
+            errors.append(f"expected status={STATUS_PLANNED!r}, got {cap.status!r}")
+        if cap.needs_elevated_lane is not True:
+            errors.append(f"expected needs_elevated_lane=True, got {cap.needs_elevated_lane!r}")
+        if cap.requires_confirmation is not True:
+            errors.append(f"expected requires_confirmation=True, got {cap.requires_confirmation!r}")
+        if cap.read_only is not False:
+            errors.append(f"expected read_only=False, got {cap.read_only!r}")
+    if is_capability_available("apply_privileged_system_updates") is not False:
+        errors.append("apply_privileged_system_updates should not be available")
+    _record(
+        "capability_registry_privileged_updates_are_planned_only",
+        errors,
+        {
+            "status": cap.status if cap else None,
+            "needs_elevated_lane": cap.needs_elevated_lane if cap else None,
+            "requires_confirmation": cap.requires_confirmation if cap else None,
+            "read_only": cap.read_only if cap else None,
+            "available": is_capability_available("apply_privileged_system_updates"),
+        },
+    )
+
+    dicts = list_capability_dicts()
+    errors = []
+    if not all(isinstance(item, dict) for item in dicts):
+        errors.append("list_capability_dicts should return list[dict]")
+    for index, item in enumerate(dicts):
+        for key in ("name", "class", "status", "execution_mode", "risk_level"):
+            if key not in item:
+                errors.append(f"entry {index} missing required key: {key}")
+        if "capability_class" in item:
+            errors.append(f"entry {index} leaked capability_class")
+        if not isinstance(item.get("side_effects", []), list):
+            errors.append(f"entry {index} side_effects must be list")
+        if not isinstance(item.get("required_tools", []), list):
+            errors.append(f"entry {index} required_tools must be list")
+        if not isinstance(item.get("backends", {}), dict):
+            errors.append(f"entry {index} backends must be dict")
+    if get_capability("does_not_exist") is not None:
+        errors.append("unknown capability should return None")
+    if capability_status("does_not_exist") != STATUS_UNSUPPORTED:
+        errors.append("unknown capability status should be unsupported")
+    if is_capability_available("does_not_exist") is not False:
+        errors.append("unknown capability should not be available")
+    _record(
+        "capability_registry_dict_schema_is_public_safe",
+        errors,
+        {
+            "dict_count": len(dicts),
+            "unknown": {
+                "get_capability": get_capability("does_not_exist"),
+                "status": capability_status("does_not_exist"),
+                "available": is_capability_available("does_not_exist"),
+            },
+        },
+    )
 
     return results
 
@@ -1901,6 +2123,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_action_contract_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_capability_registry_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")
