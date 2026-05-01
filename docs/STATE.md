@@ -84,14 +84,15 @@ P0F preparation update (current-doc reference cleanup):
 - parser preflight does not expand executor capability
 - high-risk Stage 2D confirmation behavior remains intact
 - Stage 2E parser-contract and action-preflight coverage remains present; Stage 2F-A started with `src/bond/ai_capabilities.py` as the static code-level capability registry foundation
+- Stage 2F-B complete/current: read-only capability questions are answered from the static registry through `src/bond/ai_capability_answer.py` and `ai_run.py` integration
 - capability-registry honesty tests now verify planned/unsupported capabilities are not reported as available
-- current integrated selftest baseline is passing 67/67
+- current integrated selftest baseline is passing 73/73
 ## Partial, open, or not implemented yet
 
 - no privileged execution lane implementation
 - action parser remains heuristic and partial
 - action catalog and executor remain narrow/rootless
-- no dynamic probe-backed capability discovery or normal assistant-answer integration for the capability registry yet
+- no dynamic probe-backed capability discovery yet; current capability-answer integration is read-only and does not authorize execution
 - probes are partial
 - memory retrieval remains shallow/lexical relative to the documented target architecture
 - no document ingestion/drop-folder knowledge pipeline yet

@@ -143,7 +143,8 @@ Current checkpoint note:
 
 - Stage 2B policy gate, Stage 2C action contract/dry-run behavior, and Stage 2D confirmation-token flow are implemented and covered in integrated selftests.
 - Stage 2F-A adds the code-level capability registry foundation in `src/bond/ai_capabilities.py`.
-- capability registry implementation has started with a code-level foundation; dynamic probe-backed capability discovery and assistant-answer integration remain open, so this milestone is not complete.
+- Stage 2F-B wires read-only capability questions into deterministic registry-backed answers.
+- capability registry implementation has started with a code-level foundation; dynamic probe-backed capability discovery, execution-authorization integration, and plugin capability loading remain open, so this milestone is not complete.
 
 Exit criteria:
 
@@ -235,9 +236,9 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest baseline currently passes 67/67 with coverage for routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, events bucket, and core memory flows
+- integrated selftest baseline currently passes 73/73 with coverage for routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, events bucket, and core memory flows
 - integrated selftest baseline now includes confirmation-token flow coverage (token creation, invalid/expired/consumed handling, confirmed dry-run, and non-reuse)
-- Stage 2E improves parser honesty and preflight failure behavior; Stage 2F-A adds static capability registry foundation and honesty checks, but does not expand the executor
+- Stage 2E improves parser honesty and preflight failure behavior; Stage 2F-A/2F-B add static registry truth and read-only capability answers, but do not expand executor authorization
 - this does not imply full behavioral coverage or assistant maturity
 
 ### M7 - Service layer

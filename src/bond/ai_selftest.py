@@ -51,6 +51,11 @@ from ai_capabilities import (
     list_capability_dicts,
     validate_registry,
 )
+from ai_capability_answer import (
+    answer_capability_question,
+    is_capability_question,
+    mentioned_capabilities,
+)
 
 SRC_BOND = BOND_ROOT / "src" / "bond"
 AI_RUN = SRC_BOND / "ai_run.py"
@@ -1135,6 +1140,160 @@ def run_capability_registry_tests() -> list[dict]:
     return results
 
 
+def run_capability_answer_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _record(name: str, errors: list[str], payload: dict) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": json.dumps(payload, ensure_ascii=False),
+                "stderr": "",
+                "errors": errors,
+                "cmd": ["capability_answer", name],
+            }
+        )
+
+    text = "what can you do?"
+    answer = answer_capability_question(text)
+    errors: list[str] = []
+    if is_capability_question(text) is not True:
+        errors.append("expected capability question detection for general English query")
+    if answer is None:
+        errors.append("expected non-empty answer for general English query")
+    else:
+        if "Capability summary:" not in answer:
+            errors.append("missing Capability summary header")
+        if "Usable with caveats:" not in answer:
+            errors.append("missing usable with caveats section")
+        if "Safety boundary:" not in answer:
+            errors.append("missing safety boundary section")
+        if "timer" not in answer:
+            errors.append("expected timer mention in general capability answer")
+        if "clipboard" not in answer:
+            errors.append("expected clipboard mention in general capability answer")
+        if "I can update your system" in answer:
+            errors.append("general answer incorrectly claimed system update capability")
+    _record(
+        "capability_answer_detects_general_english_query",
+        errors,
+        {"input": text, "answer": answer},
+    )
+
+    text = "τι μπορείς να κάνεις;"
+    answer = answer_capability_question(text)
+    errors = []
+    if is_capability_question(text) is not True:
+        errors.append("expected capability question detection for general Greek query")
+    if answer is None:
+        errors.append("expected non-empty answer for general Greek query")
+    else:
+        if "Capability summary:" not in answer:
+            errors.append("missing Capability summary header")
+        if "Planned or unavailable:" not in answer:
+            errors.append("missing planned/unavailable section")
+        if "unsupported" not in answer:
+            errors.append("missing unsupported wording")
+    _record(
+        "capability_answer_detects_general_greek_query",
+        errors,
+        {"input": text, "answer": answer},
+    )
+
+    text = "can you update my system?"
+    answer = answer_capability_question(text)
+    mentions = mentioned_capabilities(text)
+    errors = []
+    if is_capability_question(text) is not True:
+        errors.append("expected capability question detection for system update query")
+    if "apply_privileged_system_updates" not in mentions:
+        errors.append("expected apply_privileged_system_updates mention")
+    if answer is None:
+        errors.append("expected non-empty answer for system update capability query")
+    else:
+        if "apply_privileged_system_updates" not in answer:
+            errors.append("missing apply_privileged_system_updates in answer")
+        if "not currently available" not in answer:
+            errors.append("missing not currently available wording")
+        if "planned" not in answer:
+            errors.append("missing planned wording")
+        if "must never silently run upgrades" not in answer:
+            errors.append("missing silent-upgrade safety boundary wording")
+    _record(
+        "capability_answer_specific_system_update_is_not_available",
+        errors,
+        {"input": text, "mentions": mentions, "answer": answer},
+    )
+
+    text = "do you support timers and clipboard?"
+    answer = answer_capability_question(text)
+    mentions = mentioned_capabilities(text)
+    errors = []
+    if is_capability_question(text) is not True:
+        errors.append("expected capability question detection for timer/clipboard query")
+    if "timer" not in mentions:
+        errors.append("expected timer mention")
+    if "clipboard" not in mentions:
+        errors.append("expected clipboard mention")
+    if answer is None:
+        errors.append("expected non-empty answer for timer/clipboard capability query")
+    else:
+        if "timer" not in answer:
+            errors.append("missing timer in answer")
+        if "clipboard" not in answer:
+            errors.append("missing clipboard in answer")
+        if "unsupported" not in answer:
+            errors.append("missing unsupported wording")
+    _record(
+        "capability_answer_timer_and_clipboard_are_unsupported",
+        errors,
+        {"input": text, "mentions": mentions, "answer": answer},
+    )
+
+    text = "do you support installed models?"
+    answer = answer_capability_question(text)
+    mentions = mentioned_capabilities(text)
+    errors = []
+    if is_capability_question(text) is not True:
+        errors.append("expected capability question detection for installed models query")
+    if "query_model" not in mentions:
+        errors.append("expected query_model mention")
+    if answer is None:
+        errors.append("expected non-empty answer for installed models capability query")
+    else:
+        if "query_model" not in answer:
+            errors.append("missing query_model in answer")
+        if "usable with caveats" not in answer:
+            errors.append("missing usable with caveats wording")
+        if "partial" not in answer:
+            errors.append("missing partial status wording")
+    _record(
+        "capability_answer_available_partial_capability_is_caveated",
+        errors,
+        {"input": text, "mentions": mentions, "answer": answer},
+    )
+
+    text = "hello Bond, help me think through my day"
+    answer = answer_capability_question(text)
+    mentions = mentioned_capabilities(text)
+    errors = []
+    if is_capability_question(text) is not False:
+        errors.append("normal chat should not be detected as capability question")
+    if mentions != []:
+        errors.append(f"normal chat should not mention capabilities, got: {mentions}")
+    if answer is not None:
+        errors.append("normal chat should not return capability answer")
+    _record(
+        "capability_answer_does_not_intercept_normal_chat",
+        errors,
+        {"input": text, "mentions": mentions, "answer": answer},
+    )
+
+    return results
+
+
 def run_parse_contract_tests() -> list[dict]:
     results: list[dict] = []
 
@@ -2135,6 +2294,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_capability_registry_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_capability_answer_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

@@ -63,6 +63,7 @@ from ai_parse_contract import (
     parse_contract_to_log_meta,
 )
 from ai_router import decision_to_log_meta, route_request
+from ai_capability_answer import maybe_answer_capability_question
 
 try:
     from ai_memory_query import query_memory
@@ -879,6 +880,21 @@ def main():
 
     override_profile, text = parse_manual_override(raw_text)
     profiles = load_router_profiles()
+
+    capability_answer = maybe_answer_capability_question(text)
+    if capability_answer:
+        log_memory(
+            "chats",
+            f"capability_answer: {text}",
+            {
+                "assistant_name": ASSISTANT_NAME,
+                "override": bool(override_profile),
+                "path": "registry_capability_answer",
+            },
+        )
+        build_active_context()
+        print(capability_answer)
+        return
 
     route_decision = route_request(text)
 

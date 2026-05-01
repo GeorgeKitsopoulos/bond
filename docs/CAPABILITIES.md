@@ -53,10 +53,12 @@ Each capability entry uses these fields:
 ## Executable registry status
 
 - `src/bond/ai_capabilities.py` is now the executable subset of this document.
+- `src/bond/ai_capability_answer.py` now provides read-only deterministic capability answers from that registry.
 - `docs/CAPABILITIES.md` remains the broader canonical design/reference document.
-- The Python registry is intentionally static in Stage 2F-A.
+- The Python registry is intentionally static in Stage 2F-A/2F-B.
+- This is not dynamic probe-backed discovery.
+- This does not authorize actions.
 - Planned/unsupported entries must remain non-available until real adapters/probes exist.
-- The registry is not yet wired into normal assistant answers or execution decisions.
 
 ## Capability entries
 
@@ -120,7 +122,7 @@ Initial capabilities:
   execution_mode: deterministic_probe
   risk_level: low
   read_only: true
-  notes: code-level capability registry helpers now exist in `src/bond/ai_capabilities.py`, but normal assistant answer integration is still pending.
+  notes: read-only assistant capability answer integration now exists via `src/bond/ai_capability_answer.py`; dynamic context-aware capability discovery remains planned.
 
 - name: describe_context_capabilities
   class: inspector

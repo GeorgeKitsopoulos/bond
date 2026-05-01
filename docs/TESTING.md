@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest baseline is passing 67/67 in the current public-candidate baseline and includes Stage 2E parser-contract/action-preflight checks, Stage 2D confirmation-token flow coverage, and Stage 2F-A capability-registry honesty checks.
+Current integrated selftest baseline is passing 73/73 in the current public-candidate baseline and includes Stage 2E parser-contract/action-preflight checks, Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry honesty checks, and Stage 2F-B capability-answer checks.
 
 The current integrated suite covers:
 
@@ -49,6 +49,11 @@ The current integrated suite covers:
 - capability-registry validation and required-entry presence checks
 - planned/unsupported capabilities are tested as unavailable
 - partial current capabilities are tested as available-with-caveats
+- general English capability question handling is tested
+- Greek capability question handling is tested
+- planned system updates are tested as not available in capability answers
+- unsupported timer/clipboard are tested as unavailable in capability answers
+- normal chat is tested to ensure capability-answer interception does not trigger
 
 This baseline is necessary and useful, but it is not proof of final assistant correctness or product maturity.
 

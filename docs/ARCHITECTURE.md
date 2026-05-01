@@ -213,6 +213,8 @@ The capability truth layer should be usable by:
 - user-facing limitation explanations
 - documentation alignment work
 
+Stage 2F-B adds `src/bond/ai_capability_answer.py` and an early `ai_run.py` read-only answer path for capability questions. This path is deterministic and registry-backed; it does not execute actions, perform probes, or authorize capabilities.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

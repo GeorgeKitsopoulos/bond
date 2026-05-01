@@ -19,6 +19,14 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-B read-only capability answer integration
+
+- Added `src/bond/ai_capability_answer.py` for deterministic read-only capability answers.
+- Wired capability questions into `src/bond/ai_run.py` before model/action handling.
+- Added six capability-answer selftests.
+- Updated docs to distinguish static registry-backed answers from future dynamic probe-backed discovery.
+- New validation baseline expected: 73/73.
+
 ### Stage 2F-A capability registry foundation
 
 - Added `src/bond/ai_capabilities.py` static capability registry foundation.
