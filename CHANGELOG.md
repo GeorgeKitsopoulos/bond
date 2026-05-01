@@ -19,6 +19,13 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Development telemetry (opt-in test instrumentation)
+
+- Added opt-in `BOND_DEV_TELEMETRY=1` development telemetry for response timing and safe decision metadata.
+- Telemetry is disabled by default, goes to stderr, and is not part of normal Bond answers.
+- Added dev telemetry selftests.
+- New expected validation baseline: 78/78.
+
 ### Stage 2F-B read-only capability answer integration
 
 - Corrected the describe_capabilities registry note so capability summaries no longer claim assistant-answer integration is pending after Stage 2F-B.

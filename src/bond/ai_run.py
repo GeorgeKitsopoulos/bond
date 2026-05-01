@@ -64,6 +64,7 @@ from ai_parse_contract import (
 )
 from ai_router import decision_to_log_meta, route_request
 from ai_capability_answer import maybe_answer_capability_question
+from ai_dev_telemetry import maybe_emit_dev_telemetry, now_perf
 
 try:
     from ai_memory_query import query_memory
@@ -798,18 +799,44 @@ def looks_like_generic_drift(reply: str) -> bool:
     return _matches_any_pattern(text, GENERIC_DRIFT_PATTERNS)
 
 
-def main():
+def main() -> int:
     ensure_memory_dirs()
     build_active_context()
 
+    telemetry_start = now_perf()
+    dev_telemetry = {
+        "answer_path": "",
+        "route_worker": "",
+        "route_reason": "",
+        "policy_mode": "",
+        "action_contract_mode": "",
+        "intent": "",
+        "profile": "",
+        "model": "",
+        "deterministic": None,
+        "dry_run": None,
+        "confirmation_required": None,
+        "error_kind": "",
+    }
+
+    def finalize(exit_code: int, **updates) -> int:
+        if updates:
+            dev_telemetry.update(updates)
+        maybe_emit_dev_telemetry(
+            start_perf=telemetry_start,
+            exit_code=exit_code,
+            **dev_telemetry,
+        )
+        return exit_code
+
     if len(sys.argv) < 2:
         print("usage: ai_run.py <request>")
-        raise SystemExit(1)
+        return finalize(1, answer_path="error", deterministic=True, error_kind="usage_error")
 
     raw_text = " ".join(sys.argv[1:]).strip()
     if not raw_text:
         print("empty request")
-        raise SystemExit(1)
+        return finalize(1, answer_path="error", deterministic=True, error_kind="empty_request")
 
     confirmation_granted = False
     confirmation_token = parse_confirmation_request(raw_text)
@@ -838,7 +865,7 @@ def main():
                     ensure_ascii=False,
                 )
             )
-            raise SystemExit(5)
+            return finalize(5, answer_path="error", deterministic=True, error_kind=reason)
 
         original_text = str(pending.get("original_text", "")).strip()
         if not original_text:
@@ -864,7 +891,7 @@ def main():
                     ensure_ascii=False,
                 )
             )
-            raise SystemExit(5)
+            return finalize(5, answer_path="error", deterministic=True, error_kind="confirmation_invalid")
 
         raw_text = original_text
         confirmation_granted = True
@@ -894,16 +921,20 @@ def main():
         )
         build_active_context()
         print(capability_answer)
-        return
+        return finalize(0, answer_path="capability_answer", deterministic=True)
 
     route_decision = route_request(text)
+    dev_telemetry["route_worker"] = getattr(route_decision, "primary_agent", "") or ""
+    dev_telemetry["route_reason"] = getattr(route_decision, "reason", "") or ""
 
     classifier_text = build_classifier_text_for_dry_run(text)
     gatekeeper_result, chain_steps = classify_request(classifier_text)
+    dev_telemetry["intent"] = gatekeeper_result or ""
     if gatekeeper_result in {"unknown", "pure_question"} and route_decision.risk_level == "high":
         if is_high_risk_command_like_text(text):
             gatekeeper_result = "pure_action"
             chain_steps = None
+            dev_telemetry["intent"] = gatekeeper_result
 
     parse_contract = build_parse_contract(classifier_text, gatekeeper_result, chain_steps)
     parse_contract_meta = parse_contract_to_log_meta(parse_contract)
@@ -930,7 +961,7 @@ def main():
         )
         build_active_context()
         print(json.dumps(build_action_not_parsed_response(parse_contract, ASSISTANT_NAME), ensure_ascii=False))
-        raise SystemExit(3)
+        return finalize(3, answer_path="reject", deterministic=True, error_kind="action_not_parsed")
 
     policy_decision = evaluate_request_policy(
         text,
@@ -945,6 +976,8 @@ def main():
         route_decision,
         confirmation_granted=confirmation_granted,
     )
+    dev_telemetry["policy_mode"] = getattr(policy_decision, "mode", "") or ""
+    dev_telemetry["action_contract_mode"] = getattr(action_contract, "mode", "") or ""
 
     if action_contract.mode == ACTION_CONFIRM_REQUIRED:
         pending = create_pending_confirmation(
@@ -985,7 +1018,12 @@ def main():
         response["would_execute"] = False
         response["dry_run"] = False
         print(json.dumps(response, ensure_ascii=False))
-        raise SystemExit(action_contract.exit_code)
+        return finalize(
+            action_contract.exit_code,
+            answer_path="confirmation_required",
+            deterministic=True,
+            confirmation_required=True,
+        )
 
     if action_contract.mode == ACTION_REJECT:
         if action_contract.reason == CONTRACT_REASON_CONFIRMED_ACTION_NO_EXECUTABLE_STEPS:
@@ -1015,7 +1053,12 @@ def main():
                     ensure_ascii=False,
                 )
             )
-            raise SystemExit(action_contract.exit_code)
+            return finalize(
+                action_contract.exit_code,
+                answer_path="reject",
+                deterministic=True,
+                error_kind="confirmed_action_no_executable_steps",
+            )
 
         log_memory(
             "failures",
@@ -1030,7 +1073,7 @@ def main():
         )
         build_active_context()
         print(json.dumps(build_policy_rejection_response(policy_decision, ASSISTANT_NAME), ensure_ascii=False))
-        raise SystemExit(action_contract.exit_code)
+        return finalize(action_contract.exit_code, answer_path="reject", deterministic=True)
 
     if action_contract.mode == ACTION_DRY_RUN:
         log_memory(
@@ -1046,7 +1089,7 @@ def main():
         )
         build_active_context()
         print(json.dumps(build_dry_run_response(action_contract, ASSISTANT_NAME), ensure_ascii=False))
-        return
+        return finalize(0, answer_path="action_dry_run", deterministic=True, dry_run=True)
 
     fact_spec = detect_fact_query(text)
     if fact_spec:
@@ -1067,7 +1110,7 @@ def main():
             )
             build_active_context()
             print(answer)
-            return
+            return finalize(0, answer_path="fact_answer", deterministic=True)
 
     if action_contract.mode == ACTION_EXECUTE:
         if policy_decision.mode == POLICY_MODE_ACTION_CHAIN:
@@ -1080,15 +1123,15 @@ def main():
             build_active_context()
             print(result)
             if ok:
-                return
-            raise SystemExit(3)
+                return finalize(0, answer_path="action_execute", deterministic=True)
+            return finalize(3, answer_path="action_execute", deterministic=True, error_kind="action_execution_failed")
 
         ok, result = run_safe_action(text)
         build_active_context()
         print(result)
         if ok:
-            return
-        raise SystemExit(3)
+            return finalize(0, answer_path="action_execute", deterministic=True)
+        return finalize(3, answer_path="action_execute", deterministic=True, error_kind="action_execution_failed")
 
     if override_profile:
         chosen = override_profile
@@ -1101,6 +1144,8 @@ def main():
         profile_cfg = choose_profile_config(chosen, profiles) or {}
 
     model = extract_model_from_profile(profile_cfg)
+    dev_telemetry["profile"] = chosen
+    dev_telemetry["model"] = model or ""
     memory_context, memory_result = build_memory_context_for_request(text)
 
     direct_answer = maybe_build_direct_project_answer(text, memory_result)
@@ -1123,7 +1168,7 @@ def main():
         )
         build_active_context()
         print(direct_answer)
-        return
+        return finalize(0, answer_path="direct_answer", deterministic=True)
 
     prompt = build_model_prompt(
         profile_cfg,
@@ -1155,7 +1200,12 @@ def main():
         )
         build_active_context()
         print(f"model error: {e}")
-        raise SystemExit(2)
+        return finalize(
+            2,
+            answer_path="error",
+            deterministic=False,
+            error_kind=type(e).__name__,
+        )
 
     if is_project_specific_query(text) and looks_like_generic_drift(reply):
         reply = build_grounded_project_fallback(text, memory_result)
@@ -1180,8 +1230,9 @@ def main():
     build_active_context()
 
     print(reply)
+    return finalize(0, answer_path="model_answer", deterministic=False)
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
 

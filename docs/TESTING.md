@@ -57,6 +57,15 @@ The current integrated suite covers:
 
 This baseline is necessary and useful, but it is not proof of final assistant correctness or product maturity.
 
+## Development telemetry for tests
+
+- Enable with `BOND_DEV_TELEMETRY=1`.
+- Emits one `BOND_DEV_TELEMETRY` JSON line to stderr.
+- Includes elapsed_ms and safe decision metadata.
+- Disabled by default.
+- Not part of final assistant answer behavior.
+- No prompts, user text, memory contents, or environment values are included.
+
 ## Test categories
 
 Bond testing must be divided into explicit categories.

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import io
 import json
 import os
 import subprocess
@@ -55,6 +56,13 @@ from ai_capability_answer import (
     answer_capability_question,
     is_capability_question,
     mentioned_capabilities,
+)
+from ai_dev_telemetry import (
+    build_dev_telemetry_record,
+    dev_telemetry_enabled,
+    elapsed_ms,
+    format_dev_telemetry_line,
+    maybe_emit_dev_telemetry,
 )
 
 SRC_BOND = BOND_ROOT / "src" / "bond"
@@ -1298,6 +1306,106 @@ def run_capability_answer_tests() -> list[dict]:
     return results
 
 
+def run_dev_telemetry_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _record(name: str, errors: list[str], payload: dict) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": json.dumps(payload, ensure_ascii=False),
+                "stderr": "",
+                "errors": errors,
+                "cmd": ["dev_telemetry", name],
+            }
+        )
+
+    errors: list[str] = []
+    if dev_telemetry_enabled({}) is not False:
+        errors.append("expected disabled by default with empty env")
+    if dev_telemetry_enabled({"BOND_DEV_TELEMETRY": "0"}) is not False:
+        errors.append("expected disabled for 0")
+    if dev_telemetry_enabled({"BOND_DEV_TELEMETRY": "false"}) is not False:
+        errors.append("expected disabled for false")
+    if dev_telemetry_enabled({"BOND_DEV_TELEMETRY": "no"}) is not False:
+        errors.append("expected disabled for no")
+    _record("dev_telemetry_disabled_by_default", errors, {"values": ["", "0", "false", "no"]})
+
+    errors = []
+    truthy_values = ["1", "true", "TRUE", "yes", "on", " On "]
+    for value in truthy_values:
+        if dev_telemetry_enabled({"BOND_DEV_TELEMETRY": value}) is not True:
+            errors.append(f"expected truthy value to enable telemetry: {value!r}")
+    _record("dev_telemetry_truthy_values", errors, {"values": truthy_values})
+
+    errors = []
+    record = build_dev_telemetry_record(
+        start_perf=0.0,
+        exit_code=0,
+        answer_path="capability_answer",
+        deterministic=True,
+        extra={"tuple": ("a", "b")},
+    )
+    if record.get("schema") != "bond_dev_telemetry_v1":
+        errors.append("expected schema=bond_dev_telemetry_v1")
+    if record.get("exit_code") != 0:
+        errors.append("expected exit_code=0")
+    if record.get("answer_path") != "capability_answer":
+        errors.append("expected answer_path=capability_answer")
+    if "elapsed_ms" not in record or not isinstance(record.get("elapsed_ms"), (int, float)):
+        errors.append("expected numeric elapsed_ms")
+    try:
+        json.dumps(record)
+    except Exception as e:
+        errors.append(f"json.dumps(record) failed: {e}")
+    for forbidden in ("text", "prompt", "message", "user_message"):
+        if forbidden in record:
+            errors.append(f"forbidden key present in record: {forbidden}")
+    _record("dev_telemetry_record_is_json_safe", errors, {"record": record})
+
+    errors = []
+    line = format_dev_telemetry_line(record)
+    prefix = "BOND_DEV_TELEMETRY "
+    parsed = None
+    if not line.startswith(prefix):
+        errors.append("line must start with BOND_DEV_TELEMETRY prefix")
+    else:
+        try:
+            parsed = json.loads(line[len(prefix):])
+        except Exception as e:
+            errors.append(f"telemetry suffix must parse as JSON: {e}")
+    if isinstance(parsed, dict) and parsed.get("schema") != "bond_dev_telemetry_v1":
+        errors.append("parsed schema mismatch")
+    _record("dev_telemetry_line_format", errors, {"line": line, "parsed": parsed})
+
+    errors = []
+    buf = io.StringIO()
+    maybe_emit_dev_telemetry(start_perf=0.0, exit_code=0, env={}, stream=buf, answer_path="test")
+    if buf.getvalue() != "":
+        errors.append("expected no output when telemetry is disabled")
+    maybe_emit_dev_telemetry(
+        start_perf=0.0,
+        exit_code=0,
+        env={"BOND_DEV_TELEMETRY": "1"},
+        stream=buf,
+        answer_path="test",
+    )
+    emitted = buf.getvalue()
+    lines = [line for line in emitted.splitlines() if line.strip()]
+    if len(lines) != 1:
+        errors.append(f"expected one emitted line, got {len(lines)}")
+    if not emitted or "BOND_DEV_TELEMETRY " not in emitted:
+        errors.append("expected telemetry prefix in emitted line")
+    _record("dev_telemetry_emit_is_opt_in", errors, {"emitted": emitted})
+
+    # Keep elapsed_ms imported and exercised as a direct helper check.
+    _ = elapsed_ms(0.0, 0.001)
+
+    return results
+
+
 def run_parse_contract_tests() -> list[dict]:
     results: list[dict] = []
 
@@ -2310,6 +2418,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_capability_answer_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_dev_telemetry_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")
