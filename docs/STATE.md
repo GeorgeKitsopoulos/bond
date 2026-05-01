@@ -85,6 +85,7 @@ P0F preparation update (current-doc reference cleanup):
 - high-risk Stage 2D confirmation behavior remains intact
 - Stage 2E parser-contract and action-preflight coverage remains present; Stage 2F-A started with `src/bond/ai_capabilities.py` as the static code-level capability registry foundation
 - Stage 2F-B complete/current: read-only capability questions are answered from the static registry through `src/bond/ai_capability_answer.py` and `ai_run.py` integration
+- Post-Stage 2F-B correction: describe_capabilities registry wording now reflects that read-only assistant answer integration exists; dynamic context-aware discovery remains planned.
 - capability-registry honesty tests now verify planned/unsupported capabilities are not reported as available
 - current integrated selftest baseline is passing 73/73
 ## Partial, open, or not implemented yet

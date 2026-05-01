@@ -291,7 +291,7 @@ _REGISTRY_ENTRIES: tuple[Capability, ...] = (
         needs_network=False,
         needs_elevated_lane=False,
         audit_tag="describe_capabilities",
-        notes="Code-level registry helpers exist in src/bond/ai_capabilities.py; not yet wired into normal assistant answers.",
+        notes="Code-level registry helpers and read-only assistant answer integration exist; dynamic context-aware capability discovery remains planned.",
     ),
     _cap(
         name="describe_context_capabilities",

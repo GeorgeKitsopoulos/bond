@@ -1176,6 +1176,10 @@ def run_capability_answer_tests() -> list[dict]:
             errors.append("expected clipboard mention in general capability answer")
         if "I can update your system" in answer:
             errors.append("general answer incorrectly claimed system update capability")
+        if "read-only assistant answer integration" not in answer:
+            errors.append("expected read-only assistant answer integration mention in capability answer")
+        if "not yet wired into normal assistant answers" in answer:
+            errors.append("stale wiring note must not appear in capability answer")
     _record(
         "capability_answer_detects_general_english_query",
         errors,

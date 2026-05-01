@@ -21,6 +21,7 @@ Until formal release tagging is established, this changelog should follow these 
 ## Unreleased
 ### Stage 2F-B read-only capability answer integration
 
+- Corrected the describe_capabilities registry note so capability summaries no longer claim assistant-answer integration is pending after Stage 2F-B.
 - Added `src/bond/ai_capability_answer.py` for deterministic read-only capability answers.
 - Wired capability questions into `src/bond/ai_run.py` before model/action handling.
 - Added six capability-answer selftests.
