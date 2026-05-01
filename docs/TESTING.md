@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest baseline is passing 60/60 and now includes Stage 2E parser-contract and action-preflight checks.
+Current integrated selftest baseline is passing 61/61 in the current public-candidate baseline and includes Stage 2E parser-contract/action-preflight checks plus confirmation-token flow coverage.
 
 The current integrated suite covers:
 

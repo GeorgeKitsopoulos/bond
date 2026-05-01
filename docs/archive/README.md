@@ -23,6 +23,7 @@ For current project status, use:
 
 - `analysis/` contains historical design analysis and planning rationale.
 - `reports/` contains historical implementation notes and migration reports.
+- `reports/project-transcript-path-bootstrap-stabilization.md` is an archived checkpoint note moved out of the repository root to avoid public source-of-truth confusion.
 
 ## How to use archived documents
 

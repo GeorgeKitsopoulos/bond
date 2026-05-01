@@ -6,9 +6,10 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 
 - Bond is under active development.
 - The current validated baseline is Stage 2E plus P0 cleanup work.
-- Recent validation after P0B: compile passes and selftest passes 61/61.
+- Current documented validation baseline: compile passes and integrated selftest passes 61/61.
 - Stage 2F is paused until cleanup gates pass.
 - Bond is not yet a general-purpose desktop assistant.
+- Bond should not be used for unattended automation, privileged/system changes, or safety-critical workflows.
 
 ## What works today
 
@@ -47,6 +48,12 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 The current private development history is not intended to be published as-is. The project is being prepared for a clean public release.
 
 See [docs/PUBLICATION_BOUNDARY.md](docs/PUBLICATION_BOUNDARY.md) and [docs/CLEANUP_PLAN.md](docs/CLEANUP_PLAN.md).
+
+Public project governance files:
+
+- [SECURITY.md](SECURITY.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [LICENSE](LICENSE)
 
 ## Documentation
 

@@ -19,6 +19,13 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### P0F-A2 - Public repository truth alignment and hygiene
+- Aligned current validation baseline references on 61/61.
+- Added public security, contribution, and license files.
+- Moved the root checkpoint transcript into the historical archive.
+- Clarified public-use safety boundaries in the README.
+- Preserved current behavior; no product capabilities were added.
+
 ### P0F-A1 - Current documentation reference cleanup
 - Replaced stale current-doc references to pre-archive analysis/report paths with archive paths.
 - Removed or redirected references to obsolete tool-specific workflow documents.

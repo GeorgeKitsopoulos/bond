@@ -233,7 +233,7 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest baseline currently passes 60/60 with coverage for routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, events bucket, and core memory flows
+- integrated selftest baseline currently passes 61/61 with coverage for routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, events bucket, and core memory flows
 - integrated selftest baseline now includes confirmation-token flow coverage (token creation, invalid/expired/consumed handling, confirmed dry-run, and non-reuse)
 - Stage 2E improves parser honesty and preflight failure behavior but does not expand the executor or implement capability registry
 - this does not imply full behavioral coverage or assistant maturity

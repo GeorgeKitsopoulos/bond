@@ -83,7 +83,7 @@ P0F preparation update (current-doc reference cleanup):
 - action-looking requests with no parsed safe executable action shape now fail closed as `action_not_parsed` before executor
 - parser preflight does not expand executor capability
 - high-risk Stage 2D confirmation behavior remains intact
-- Stage 2E parser-contract and action-preflight coverage remains present; the current post-P0B/P0C/P0D integrated selftest baseline is passing 61/61
+- Stage 2E parser-contract and action-preflight coverage remains present; the current post-P0B/P0C/P0D/P0E/P0F-preparation integrated selftest baseline is passing 61/61
 ## Partial, open, or not implemented yet
 
 - no privileged execution lane implementation

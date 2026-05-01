@@ -1,3 +1,5 @@
+> Historical archive note: This file is an archived checkpoint note from earlier private/local development. It is preserved for context only and is not current project truth. Use `README.md`, `ROADMAP.md`, `CHANGELOG.md`, and `docs/STATE.md` for current status.
+
 ### Checkpoint: Path/Bootstrap Stabilization Completed
 
 - ai_core is now source of truth for paths/config
