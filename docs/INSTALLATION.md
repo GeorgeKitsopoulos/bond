@@ -110,6 +110,8 @@ Explicit Stage 1 rejections:
 
 Updates must be repository-driven.
 
+This section describes updating Bond itself. It is separate from future OS/package update advisory features.
+
 That means updates should eventually follow a controlled path such as:
 
 1. pull or otherwise receive repository changes
@@ -139,6 +141,22 @@ Update governance note:
 - release/update governance requirements are defined in `docs/RELEASE_PROCESS.md`
 - schema/version governance requirements are defined in `docs/SCHEMAS.md`
 - survivability and recovery requirements are defined in `docs/SURVIVABILITY.md`
+
+## Future OS/package update advisor boundary
+
+Bond may later inspect and plan operating-system package updates as a user-facing maintenance capability. That future capability must not be confused with Bond's own repository update process.
+
+Future OS/package update handling must follow this order:
+
+1. read-only package/update inspection
+2. dry-run or simulated update plan where supported
+3. user-facing explanation of risk, privilege, reboot likelihood, and validation steps
+4. explicit confirmation
+5. privileged execution only through the future privileged lane
+6. post-update validation and report
+7. rollback/snapshot reference where applicable
+
+Bond must not silently run `apt upgrade`, `snap refresh`, `flatpak update`, package removal, service restart, or cleanup commands from a scheduled report or GUI surface.
 
 ## Uninstall direction
 

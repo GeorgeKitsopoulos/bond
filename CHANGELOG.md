@@ -19,6 +19,11 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Documentation
+
+- Documented planned system maintenance and health-advisor capabilities, including read-only package update inspection, safe update planning, storage hygiene reporting, duplicate-file candidate reporting, boot/service health reporting, monthly health reports, and future GUI/dashboard presentation boundaries.
+- Clarified that maintenance reports are recommendations only and must not perform privileged updates, cleanup, deletion, or service changes without future privileged-lane, confirmation, audit, and validation support.
+
 ### P0F-A2 - Public repository truth alignment and hygiene
 - Aligned current validation baseline references on 61/61.
 - Added public security, contribution, and license files.

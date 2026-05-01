@@ -29,6 +29,7 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 - no full capability registry yet
 - no privileged execution lane
 - no service/app/applet layer
+- no system maintenance advisor, monthly health report, or GUI maintenance dashboard yet
 - no voice interface
 - no document ingestion/RAG pipeline
 - no plugin marketplace/system

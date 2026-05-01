@@ -32,6 +32,9 @@ Bond must be able to evolve, fail, recover, and explain degraded state without s
 - Pin or record versions for core, schemas, adapters, capability registry, and model roster assumptions.
 - Require pre-update validation and post-update validation.
 - Make updates migration-aware and rollback-aware.
+- Distinguish Bond self-updates from OS/package update advisory features.
+- Require dry-run planning before any future privileged package update execution.
+- Require post-update validation after any future package-manager mutation.
 
 ### 4. Resource governance and execution budgeting
 - Enforce task timeouts.
@@ -52,6 +55,22 @@ Bond must be able to evolve, fail, recover, and explain degraded state without s
 - Classify degraded modes explicitly.
 - Expose debug traces for failures without exposing hidden chain-of-thought or secrets.
 - Make startup checks detect corrupt or stale state before normal operation.
+- Include maintenance report health for package state, storage pressure, duplicate candidates, Trash/cache growth, failed units, boot timing, and journal warning summaries.
+- Classify maintenance report sections as healthy, warning, action recommended, degraded, or unavailable.
+
+### 7. Maintenance automation safety
+
+Future maintenance automation must be conservative by default.
+
+Rules:
+
+- scheduled maintenance reports are read-only
+- recommendations are not actions
+- duplicate candidates are not deletion targets
+- Trash/cache warnings are not cleanup permission
+- package update plans are not package update execution
+- service health warnings are not service restart permission
+- privileged system changes require the future privileged lane, explicit confirmation, audit logging, and post-action validation
 
 ## Priority order
 

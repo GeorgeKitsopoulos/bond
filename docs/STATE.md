@@ -94,6 +94,10 @@ P0F preparation update (current-doc reference cleanup):
 - memory retrieval remains shallow/lexical relative to the documented target architecture
 - no document ingestion/drop-folder knowledge pipeline yet
 - no service/daemon, applet, voice, or final packaging implementation yet
+- no system maintenance advisor implementation yet
+- no safe OS update/upgrade planner yet
+- no monthly health report generation yet
+- no graphical maintenance dashboard yet
 
 ## Blockers
 
@@ -290,6 +294,18 @@ Bond does not yet properly use:
 - environment inspection tools
 - system information tools
 - desktop/session inspection
+
+Bond also does not yet properly inspect or reason over:
+
+- package update state
+- package-manager health
+- Trash/cache size
+- duplicate-file candidates
+- boot/service health
+- `systemd-analyze blame`
+- failed units or journal warning summaries
+
+Any future maintenance feature must start as read-only inspection and recommendation. Applying system updates, deleting files, emptying Trash, or changing services must remain outside current capability until the privileged lane and confirmation/audit/rollback contracts exist.
 
 Much of its behavior is still model-driven rather than system-grounded.
 

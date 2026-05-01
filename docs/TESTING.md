@@ -196,6 +196,13 @@ Examples:
 - environment variables
 - installed packages
 - filesystem state
+- package update status inspection
+- package-manager degraded-state reporting
+- Trash/cache size reporting
+- duplicate-file candidate reporting
+- failed systemd unit reporting
+- `systemd-analyze blame` summary reporting
+- journal warning summary reporting
 
 Tests must verify:
 
@@ -211,6 +218,10 @@ Concrete expectations that system-probe tests must cover:
 - **Default app/backend resolution obeys evidence ranking.** Resolution order must be explicit default handler, desktop/session API fact, desktop entry match, installed binary presence, then heuristic fallback.
 - **Probe failure never becomes fabricated truth.** Failed probes must return structured uncertainty or error output, not invented factual values.
 - **Guessed values are labeled as guesses.** Any heuristic output must be marked as heuristic rather than authoritative.
+- **Maintenance probes are read-only.** Package, storage, duplicate, boot, service, and journal probes must not mutate system state.
+- **Update planning is not update execution.** A dry-run or simulated package update plan must not apply package changes.
+- **Duplicate candidates are not deletion decisions.** Tests must verify that duplicate-file output is framed as candidates with evidence, not automatic cleanup.
+- **Maintenance report degradation is explicit.** Missing tools, permission-limited journal access, unavailable package managers, or stale package metadata must be reported as degraded or unavailable, not silently treated as healthy.
 
 ### 9. Memory behavior tests
 

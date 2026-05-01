@@ -180,6 +180,252 @@ Initial capabilities:
 
 ---
 
+## System maintenance and health capabilities
+
+These entries define planned local system-maintenance capabilities. None are currently implemented. They exist so future work can be planned without letting the model claim unsupported power.
+
+These capabilities must follow the same doctrine as every other Bond capability:
+
+- read-only inspection first
+- recommendation before mutation
+- dry-run before execution
+- no silent privileged action
+- no automatic deletion
+- no automatic system upgrade
+- GUI surfaces may display or request actions, but may not bypass policy
+
+- name: inspect_package_update_status
+  class: inspector
+  status: planned
+  execution_mode: deterministic_probe
+  risk_level: low
+  read_only: true
+  rootless: true
+  side_effects: []
+  requires_confirmation: false
+  interactive: false
+  needs_gui_session: false
+  needs_network: true
+  needs_elevated_lane: false
+  backends:
+    linux:
+      - apt_update_probe
+      - snap_refresh_probe
+      - flatpak_update_probe
+  degraded_modes:
+    - report unavailable package surfaces explicitly
+    - separate stale cache state from no-updates state
+  result_schema: package_update_status_result
+  error_schema: standard_error
+  audit_tag: inspect_package_update_status
+  required_tools:
+    - apt
+    - snap
+    - flatpak
+  notes: >
+    Planned read-only inspection of available package updates. Must distinguish repository metadata
+    freshness, available updates, held packages, security updates when safely knowable, and package
+    manager errors. This is not permission to apply updates.
+
+- name: plan_safe_system_update
+  class: inspector
+  status: planned
+  execution_mode: deterministic_probe
+  risk_level: medium
+  read_only: true
+  rootless: true
+  side_effects: []
+  requires_confirmation: false
+  interactive: false
+  needs_gui_session: false
+  needs_network: true
+  needs_elevated_lane: false
+  backends:
+    linux:
+      - apt_simulation_probe
+      - snap_refresh_plan_probe
+      - flatpak_update_plan_probe
+  degraded_modes:
+    - provide partial plan per available package surface
+    - mark unknown package-manager state as degraded rather than guessing
+  result_schema: system_update_plan_result
+  error_schema: standard_error
+  audit_tag: plan_safe_system_update
+  required_tools:
+    - apt
+    - snap
+    - flatpak
+  notes: >
+    Planned dry-run style update planner. It should report what would change, what needs privilege,
+    whether a reboot may be required, and what validation should run afterwards. It must not perform
+    the update.
+
+- name: apply_privileged_system_updates
+  class: privileged_lane
+  status: planned
+  execution_mode: guarded_action
+  risk_level: high
+  read_only: false
+  rootless: false
+  side_effects:
+    - modifies installed system packages
+    - may restart services
+    - may require reboot
+    - may change package-manager state
+  requires_confirmation: true
+  interactive: true
+  needs_gui_session: false
+  needs_network: true
+  needs_elevated_lane: true
+  backends:
+    linux:
+      - privileged_update_adapter
+  degraded_modes: []
+  result_schema: privileged_update_result
+  error_schema: standard_error
+  audit_tag: apply_privileged_system_updates
+  required_tools:
+    - policy_gate
+    - confirmation_token
+    - privileged_lane
+    - rollback_snapshot
+    - post_update_validation
+  notes: >
+    Planned future privileged capability only. Must not exist until the privileged execution lane,
+    confirmation flow, audit logging, snapshot/rollback expectations, and post-update validation are
+    implemented. Bond must never silently run system upgrades.
+
+- name: inspect_storage_hygiene
+  class: inspector
+  status: planned
+  execution_mode: deterministic_probe
+  risk_level: low
+  read_only: true
+  rootless: true
+  side_effects: []
+  requires_confirmation: false
+  interactive: false
+  needs_gui_session: false
+  needs_network: false
+  needs_elevated_lane: false
+  backends:
+    linux:
+      - trash_size_probe
+      - cache_size_probe
+      - large_file_probe
+      - duplicate_candidate_probe
+  degraded_modes:
+    - skip unreadable paths and report them
+    - report duplicate candidates by evidence level rather than deleting anything
+  result_schema: storage_hygiene_result
+  error_schema: standard_error
+  audit_tag: inspect_storage_hygiene
+  required_tools:
+    - filesystem_probe
+  notes: >
+    Planned read-only report for Trash size, cache growth, large files, and duplicate-file candidates.
+    Duplicate detection must be conservative: size/name/path similarity may produce candidates, while
+    hash-confirmed matches may produce stronger evidence. No deletion is allowed by this capability.
+
+- name: inspect_boot_and_service_health
+  class: inspector
+  status: planned
+  execution_mode: deterministic_probe
+  risk_level: low
+  read_only: true
+  rootless: true
+  side_effects: []
+  requires_confirmation: false
+  interactive: false
+  needs_gui_session: false
+  needs_network: false
+  needs_elevated_lane: false
+  backends:
+    linux:
+      - systemd_failed_units_probe
+      - systemd_analyze_blame_probe
+      - journal_warning_summary_probe
+  degraded_modes:
+    - report missing systemd tools explicitly
+    - summarize inaccessible journal data as permission-limited
+  result_schema: boot_service_health_result
+  error_schema: standard_error
+  audit_tag: inspect_boot_and_service_health
+  required_tools:
+    - systemctl
+    - systemd-analyze
+    - journalctl
+  notes: >
+    Planned read-only service and boot health inspection. The assistant may summarize failed units,
+    slow boot contributors, and warning patterns, but must not restart, disable, enable, mask, or edit
+    services from this capability.
+
+- name: generate_periodic_health_report
+  class: inspector
+  status: planned
+  execution_mode: deterministic_probe
+  risk_level: low
+  read_only: true
+  rootless: true
+  side_effects:
+    - writes a local report artifact when enabled
+  requires_confirmation: false
+  interactive: false
+  needs_gui_session: false
+  needs_network: false
+  needs_elevated_lane: false
+  backends:
+    linux:
+      - maintenance_report_builder
+  degraded_modes:
+    - generate partial report when one probe family fails
+    - mark missing probe sections as degraded
+  result_schema: periodic_health_report_result
+  error_schema: standard_error
+  audit_tag: generate_periodic_health_report
+  required_tools:
+    - inspect_package_update_status
+    - inspect_storage_hygiene
+    - inspect_boot_and_service_health
+  notes: >
+    Planned monthly or user-requested local report that recommends actions. It should separate facts,
+    recommendations, risk, required permission level, and suggested validation. It must not perform
+    cleanup or updates by itself.
+
+- name: present_maintenance_dashboard
+  class: handoff
+  status: planned
+  execution_mode: handoff
+  risk_level: low
+  read_only: true
+  rootless: true
+  side_effects:
+    - displays local report state
+    - may submit explicit user requests back to core
+  requires_confirmation: false
+  interactive: true
+  needs_gui_session: true
+  needs_network: false
+  needs_elevated_lane: false
+  backends:
+    linux:
+      - cinnamon_applet_dashboard
+      - local_gui_dashboard
+  degraded_modes:
+    - CLI report output when GUI session is unavailable
+  result_schema: maintenance_dashboard_result
+  error_schema: standard_error
+  audit_tag: present_maintenance_dashboard
+  required_tools:
+    - service_health_endpoint
+    - report_store
+  notes: >
+    Planned GUI-facing presentation capability. The dashboard may display update plans, storage
+    warnings, duplicate candidates, Trash size, failed services, boot-delay contributors, and monthly
+    recommendations. It must not duplicate parser, policy, memory, probes, or execution logic.
+
+---
+
 ## Document knowledge capabilities
 
 These entries cover the planned document knowledge ingestion and retrieval layer. None are currently implemented. They are defined here so that policy routing, capability truth, and testing can reference stable names when implementation begins.

@@ -80,9 +80,13 @@ Canonical probe domains include:
 - XDG user dirs and path truth
 - default app and handler resolution
 - app inventory / package surfaces
+- package update and package-manager state
 - portals / D-Bus / user-session capability surfaces
 - clipboard / notification / desktop interaction availability
 - model and runtime truth
+- storage hygiene state: Trash size, cache size, large-file candidates, duplicate-file candidates
+- boot and service health: failed units, boot timing, `systemd-analyze blame`, journal warning summaries
+- report-readiness state for periodic maintenance reports
 - knowledge corpus / ingestion status only as probeable state, not as inferred knowledge
 - health and diagnostic probes (planned): startup integrity checks, degraded-mode detection, and subsystem health summaries
 - locale probes (planned): host locale, user dirs locale, UI/session locale where available, and keyboard/input locale when safely probeable
@@ -147,6 +151,40 @@ Re-probe is required whenever cached fact age exceeds its refresh class threshol
 Probes are inspectors, not arbitrary execution backdoors.
 Probes may call deterministic tools/APIs but must remain bounded.
 Side effects must be avoided unless a probe is explicitly documented as interactive or exceptional.
+
+## Maintenance probe boundaries
+
+Maintenance probes are inspectors.
+
+They may collect package, storage, boot, service, and report-readiness facts, but they must not:
+
+- apply updates
+- remove packages
+- empty Trash
+- delete duplicate candidates
+- restart, enable, disable, mask, or edit services
+- treat journal or boot warnings as proof of root cause without evidence
+
+Maintenance probe outputs must separate:
+
+- observed fact
+- confidence level
+- source command or API
+- user-impact summary
+- recommended next action
+- whether the next action requires confirmation
+- whether the next action requires the future privileged lane
+
+Package update probes must distinguish:
+
+- stale metadata
+- available updates
+- security-relevant updates when safely knowable
+- held or broken packages
+- unavailable package surfaces
+- permission-limited results
+
+Duplicate-file probes must report candidates, not deletion decisions.
 
 ## Cross references
 

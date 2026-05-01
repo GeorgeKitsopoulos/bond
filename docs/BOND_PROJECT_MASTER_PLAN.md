@@ -57,6 +57,7 @@ Build Bond into a serious local assistant that can:
 - perform controlled local actions
 - retain useful memory without corrupting current truth
 - expose honest capability boundaries
+- produce local maintenance reports and safe action recommendations without silently changing the system
 - later support richer interfaces without compromising the core
 
 ## Program-shape objectives
@@ -78,7 +79,8 @@ The long-term repository/program shape should include:
 13. operational survivability requirements
 14. schema and data contract governance
 15. health diagnostics and degraded-mode transparency
-16. release, update, and rollback governance
+16. maintenance reporting and safe system-update advisory under strict policy control
+17. release, update, and rollback governance
 
 ## Current reality anchor
 
@@ -296,9 +298,13 @@ This workstream includes:
 - probe registry direction
 - deterministic system information gathering
 - package inspection
+- package update state inspection
 - environment inspection
 - filesystem inspection
+- storage hygiene inspection
 - session/desktop inspection where appropriate
+- boot and service health inspection
+- maintenance report readiness inspection
 - tool-availability inspection
 
 Required outcomes:
@@ -306,6 +312,8 @@ Required outcomes:
 - system answers become more grounded
 - environment state is not fabricated
 - probes are structured rather than hidden shell improvisation
+
+Maintenance reporting belongs in the probe and service/dashboard layers, not in model improvisation. The assistant should eventually be able to say: "Trash is large", "these files are duplicate candidates", "these services failed", "these boot steps are slow", or "these updates are available", while also explaining what evidence supports each claim and what action, if any, would require confirmation or privilege.
 
 ### System fact hierarchy direction
 

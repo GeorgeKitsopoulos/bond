@@ -196,6 +196,7 @@ Exit criteria:
 - documentation and planning remain compatible with the current lean roster, with qwen2.5:7b-instruct as the highest-capability local baseline and no heavyweight local fallback assumed
 - probe and telemetry direction includes startup health-check expectations and explicit degraded-mode visibility requirements
 - context/probe truth requirements are defined for `what can you do here?` answers based on current environment/session evidence
+- maintenance probe direction is documented for package update state, storage hygiene, duplicate candidates, boot/service health, and monthly report readiness
 
 #### Capability adapter phases
 
@@ -251,6 +252,7 @@ Exit criteria:
 - service direction remains subordinate to core correctness and safety contracts
 - service integration remains separate from packaging core and platform adapter concerns
 - service design references `docs/SERVICE.md`
+- scheduled read-only maintenance report generation is documented as future service responsibility and does not bypass policy
 
 ### M8 - Applet
 
@@ -266,6 +268,7 @@ Exit criteria:
 - future GUI locale/message catalog readiness is documented for localized user-facing strings
 - applet integration remains separate from packaging core and platform adapter lifecycle
 - applet integration contracts reference `docs/APPLET.md`
+- maintenance dashboard/report display is documented as future UI scope without giving the UI independent execution authority
 
 ### M9 - Voice
 
@@ -536,12 +539,15 @@ Required outcomes:
 - desktop integration expectations are documented
 - Cinnamon-facing work is framed as a later layer on top of a stronger core
 - background/runtime supervision direction is documented without pretending it is already final
+- monthly read-only system health report direction is documented
+- GUI/app/applet presentation of maintenance recommendations is documented without implying implementation
 
 Key constraints:
 
 - do not push desktop polish ahead of architectural correctness
 - do not hide capability gaps behind interface gloss
 - telemetry must be truthful, not theater
+- maintenance recommendations must not become unattended privileged changes
 
 ## Stage 10 — Voice and multimodal interaction
 

@@ -30,6 +30,9 @@ Service mode should:
 - expose telemetry
 - hold session cache
 - provide last response summary for applet surfaces
+- run explicitly enabled scheduled read-only maintenance checks
+- produce structured monthly health report payloads
+- expose latest maintenance report summary for applet/dashboard display
 
 ## Non-responsibilities
 
@@ -40,6 +43,10 @@ It must not:
 - duplicate parsing, policy, memory, or capability logic outside core
 - bypass policy gates
 - imply privileged actions by daemon existence alone
+- perform unattended privileged system updates
+- delete files or empty Trash automatically
+- restart or modify services automatically
+- let scheduled tasks bypass parser, policy, capability, or confirmation contracts
 
 ## Runtime documentation to define later
 
@@ -50,6 +57,10 @@ Future implementation docs should define:
 - failure modes
 - runtime files
 - safe mode behavior
+- maintenance report schedule configuration
+- report artifact location
+- report retention policy
+- degraded report behavior when probes fail
 
 ## Current implementation status
 
