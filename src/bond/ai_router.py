@@ -11,6 +11,8 @@ import json
 import re
 from dataclasses import dataclass, field
 
+from ai_linguistics import simplify_text
+
 # ---------------------------------------------------------------------------
 # Route constants
 # ---------------------------------------------------------------------------
@@ -135,7 +137,56 @@ _HIGH_RISK_PHRASES = [
     "επανεκκίνηση",
     "τερματισμος",
     "τερματισμός",
+    "power off",
+    "power off the laptop",
+    "delete downloads",
+    "delete my downloads",
+    "delete everything in downloads",
+    "remove all files",
+    "remove all files in home",
+    "format the disk",
+    "κανε επανεκκινηση",
+    "κάνε επανεκκίνηση",
+    "κλεισε τον υπολογιστη",
+    "κλείσε τον υπολογιστή",
+    "σβησε τις ληψεις",
+    "σβήσε τις λήψεις",
+    "διεγραψε ολα τα αρχεια",
+    "διέγραψε όλα τα αρχεία",
 ]
+
+_HIGH_RISK_SIMPLIFIED_PHRASES = [
+    "power off",
+    "power off the laptop",
+    "delete downloads",
+    "delete my downloads",
+    "delete everything in downloads",
+    "remove all files",
+    "remove all files in home",
+    "format the disk",
+    "format disk",
+    "κανε επανεκκινηση",
+    "επανεκκινηση",
+    "κλεισε τον υπολογιστη",
+    "σβησε τις ληψεις",
+    "διεγραψε ολα τα αρχεια",
+]
+
+_UPDATE_ACTION_PHRASES = [
+    "update packages",
+]
+
+
+def _looks_like_update_capability_question(text: str, simplified: str) -> bool:
+    if "update" not in simplified and "upgrade" not in simplified and "ενημερω" not in simplified and "αναβαθμι" not in simplified and "αναβαθμι" not in simplified:
+        return False
+
+    questionish = (
+        "?" in text
+        or bool(re.match(r"^\s*(can|could|would|do|does)\b", text.lower()))
+        or bool(re.match(r"^\s*(μπορεις|μπορείς|μπορει|μπορεί)\b", simplified))
+    )
+    return questionish
 
 _MEDIUM_RISK_PHRASES = [
     "install",
@@ -174,8 +225,15 @@ def detect_risk(text: str) -> tuple[str, list[str]]:
     risk_level is one of: "low", "medium", "high"
     """
     t = text.lower()
+    s = simplify_text(text)
+
+    if any(phrase in s for phrase in _UPDATE_ACTION_PHRASES) and not _looks_like_update_capability_question(text, s):
+        return "high", ["update packages"]
 
     high_signals = [phrase for phrase in _HIGH_RISK_PHRASES if phrase.lower() in t]
+    for phrase in _HIGH_RISK_SIMPLIFIED_PHRASES:
+        if phrase in s and phrase not in high_signals:
+            high_signals.append(phrase)
     if high_signals:
         return "high", high_signals
 

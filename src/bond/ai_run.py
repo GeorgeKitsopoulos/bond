@@ -27,7 +27,7 @@ from ai_facts import (
     extract_model_from_profile,
 )
 from ai_intent import classify_request
-from ai_linguistics import normalize_action_text
+from ai_linguistics import normalize_action_text, simplify_text, strip_assistant_invocation_prefix
 from ai_action_contract import (
     ACTION_CHAT,
     CONTRACT_REASON_CONFIRMED_ACTION_NO_EXECUTABLE_STEPS,
@@ -204,17 +204,45 @@ def build_classifier_text_for_dry_run(text: str) -> str:
 
 
 def is_high_risk_command_like_text(text: str) -> bool:
-    normalized = re.sub(r"\s+", " ", text.lower()).strip()
-    if not normalized:
+    stripped = strip_assistant_invocation_prefix(text)
+    normalized = re.sub(r"\s+", " ", stripped.lower()).strip()
+    simplified = simplify_text(stripped)
+    if not normalized or not simplified:
+        return False
+
+    is_update_capability_question = (
+        ("update" in simplified or "upgrade" in simplified or "ενημερω" in simplified or "αναβαθμι" in simplified)
+        and (
+            "?" in stripped
+            or bool(re.match(r"^\s*(can|could|would|do|does)\b", normalized))
+            or bool(re.match(r"^\s*(μπορεις|μπορείς|μπορει|μπορεί)\b", simplified))
+        )
+    )
+    if is_update_capability_question:
         return False
 
     command_start_patterns = [
         r"^(sudo|pkexec|doas)\b",
         r"^rm\s+-rf\b",
         r"^(mkfs|dd|chmod|chown|systemctl|reboot|shutdown|poweroff)\b",
+        r"^restart\b",
+        r"^power\s+off\b",
+        r"^power\s+off\s+the\s+laptop\b",
+        r"^delete\s+my\s+downloads\b",
+        r"^delete\s+downloads\b",
+        r"^delete\s+everything\s+in\s+downloads\b",
+        r"^remove\s+all\s+files\b",
+        r"^remove\s+all\s+files\s+in\s+home\b",
+        r"^format\s+the\s+disk\b",
+        r"^format\s+disk\b",
+        r"^κανε\s+επανεκκινηση\b",
+        r"^επανεκκινηση\b",
+        r"^κλεισε\s+τον\s+υπολογιστη\b",
+        r"^σβησε\s+τις\s+ληψεις\b",
+        r"^διεγραψε\s+ολα\s+τα\s+αρχεια\b",
     ]
 
-    return any(re.search(pattern, normalized) for pattern in command_start_patterns)
+    return any(re.search(pattern, simplified) for pattern in command_start_patterns)
 
 
 def run_safe_action(text: str) -> tuple[bool, str]:
@@ -908,21 +936,6 @@ def main() -> int:
     override_profile, text = parse_manual_override(raw_text)
     profiles = load_router_profiles()
 
-    capability_answer = maybe_answer_capability_question(text)
-    if capability_answer:
-        log_memory(
-            "chats",
-            f"capability_answer: {text}",
-            {
-                "assistant_name": ASSISTANT_NAME,
-                "override": bool(override_profile),
-                "path": "registry_capability_answer",
-            },
-        )
-        build_active_context()
-        print(capability_answer)
-        return finalize(0, answer_path="capability_answer", deterministic=True)
-
     route_decision = route_request(text)
     dev_telemetry["route_worker"] = getattr(route_decision, "primary_agent", "") or ""
     dev_telemetry["route_reason"] = getattr(route_decision, "reason", "") or ""
@@ -935,6 +948,23 @@ def main() -> int:
             gatekeeper_result = "pure_action"
             chain_steps = None
             dev_telemetry["intent"] = gatekeeper_result
+
+    if gatekeeper_result in {"unknown", "pure_question"}:
+        capability_answer = maybe_answer_capability_question(text)
+        if capability_answer:
+            log_memory(
+                "chats",
+                f"capability_answer: {text}",
+                {
+                    "assistant_name": ASSISTANT_NAME,
+                    "override": bool(override_profile),
+                    "path": "registry_capability_answer",
+                    "route_decision": decision_to_log_meta(route_decision),
+                },
+            )
+            build_active_context()
+            print(capability_answer)
+            return finalize(0, answer_path="capability_answer", deterministic=True)
 
     parse_contract = build_parse_contract(classifier_text, gatekeeper_result, chain_steps)
     parse_contract_meta = parse_contract_to_log_meta(parse_contract)

@@ -3,6 +3,8 @@ import os
 import re
 from dataclasses import dataclass
 
+from ai_linguistics import normalize_action_text
+
 from ai_policy import (
     POLICY_MODE_ACTION,
     POLICY_MODE_ACTION_CHAIN,
@@ -144,6 +146,7 @@ def build_action_contract(
 
     effective_mode = policy_decision.mode
     effective_action_steps = list(policy_decision.action_steps)
+    display_action_steps = list(effective_action_steps)
     effective_risk_level = policy_decision.risk_level
     execute_reason = CONTRACT_REASON_SAFE_ACTION_EXECUTE
     confirmed_no_executable_steps = False
@@ -152,11 +155,22 @@ def build_action_contract(
         if policy_decision.action_steps:
             effective_mode = POLICY_MODE_ACTION_CHAIN
             effective_action_steps = list(policy_decision.action_steps)
+            display_action_steps = list(effective_action_steps)
         else:
             effective_mode = POLICY_MODE_ACTION
             effective_action_steps = []
+            display_action_steps = []
             confirmed_no_executable_steps = True
         execute_reason = CONTRACT_REASON_CONFIRMED_ACTION_EXECUTE
+
+    if (
+        not display_action_steps
+        and effective_mode == POLICY_MODE_ACTION
+        and not (confirmation_granted and policy_decision.requires_confirmation)
+    ):
+        normalized_step = normalize_action_text(text)
+        if normalized_step:
+            display_action_steps = [normalized_step]
 
     if effective_mode not in {POLICY_MODE_ACTION, POLICY_MODE_ACTION_CHAIN}:
         return ActionContract(
@@ -180,7 +194,7 @@ def build_action_contract(
             requires_confirmation=False,
             reason=CONTRACT_REASON_EXPLICIT_DRY_RUN,
             risk_level=effective_risk_level,
-            action_steps=effective_action_steps,
+            action_steps=display_action_steps,
             user_message="Dry-run only. No action was executed.",
             exit_code=0,
             metadata=shared_metadata,
@@ -194,7 +208,7 @@ def build_action_contract(
             requires_confirmation=False,
             reason=CONTRACT_REASON_ENV_DRY_RUN,
             risk_level=effective_risk_level,
-            action_steps=effective_action_steps,
+            action_steps=display_action_steps,
             user_message="Dry-run only. No action was executed.",
             exit_code=0,
             metadata=shared_metadata,
@@ -222,7 +236,7 @@ def build_action_contract(
             requires_confirmation=False,
             reason=CONTRACT_REASON_SAFE_ACTION_CHAIN_EXECUTE if execute_reason != CONTRACT_REASON_CONFIRMED_ACTION_EXECUTE else execute_reason,
             risk_level=effective_risk_level,
-            action_steps=effective_action_steps,
+            action_steps=display_action_steps,
             user_message="",
             exit_code=0,
             metadata=shared_metadata,
@@ -235,7 +249,7 @@ def build_action_contract(
         requires_confirmation=False,
         reason=execute_reason,
         risk_level=effective_risk_level,
-        action_steps=effective_action_steps,
+        action_steps=display_action_steps,
         user_message="",
         exit_code=0,
         metadata=shared_metadata,

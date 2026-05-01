@@ -6,8 +6,8 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 
 - Bond is under active development.
 - The current validated baseline is Stage 2E plus P0 cleanup work.
-- Current documented validation baseline: compile passes and integrated selftest passes 73/73.
-- Stage 2F-B now wires the static capability registry into read-only assistant capability answers; public-release hardening remains ongoing.
+- Current documented validation baseline: compile passes and integrated selftest passes 107/107.
+- Stage 2F-C hardens deterministic guardrails from telemetry findings (assistant-prefix normalization, mixed-intent handling, high-risk command shaping, and capability alias coverage) while keeping telemetry opt-in and answers telemetry-free by default.
 - Bond is not yet a general-purpose desktop assistant.
 - Bond should not be used for unattended automation, privileged/system changes, or safety-critical workflows.
 

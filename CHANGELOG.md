@@ -19,6 +19,16 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-C telemetry-driven guardrail hardening
+
+- Hardened deterministic guardrails from telemetry findings: assistant-invocation stripping, Greek action normalization coverage, high-risk natural command shaping, and mixed-intent preemption protection.
+- Moved capability-answer interception behind intent/risk gating so mixed/action paths are not preempted by capability wording.
+- Expanded capability-alias coverage (English/Greek/colloquial/adversarial phrasing) while preserving registry truth boundaries for planned/unsupported capabilities.
+- Improved single-action dry-run metadata to always include non-empty normalized action_steps for safe action previews.
+- Added telemetry-derived regression selftests for assistant-prefixed commands, high-risk confirmations, mixed-intent rejection, and capability aliases.
+- Telemetry remains opt-in dev/test instrumentation (`BOND_DEV_TELEMETRY=1`), stderr-only, and outside normal assistant answer text.
+- New validation baseline expected: 107/107.
+
 ### Development telemetry (opt-in test instrumentation)
 
 - Added opt-in `BOND_DEV_TELEMETRY=1` development telemetry for response timing and safe decision metadata.
@@ -33,7 +43,7 @@ Until formal release tagging is established, this changelog should follow these 
 - Wired capability questions into `src/bond/ai_run.py` before model/action handling.
 - Added six capability-answer selftests.
 - Updated docs to distinguish static registry-backed answers from future dynamic probe-backed discovery.
-- New validation baseline expected: 73/73.
+- Validation baseline has since advanced to 107/107 after follow-up hardening stages.
 
 ### Stage 2F-A capability registry foundation
 

@@ -15,6 +15,7 @@ ACTION_NOISE_PATTERNS = [
     r"^\s*can you\s+",
     r"^\s*could you\s+",
     r"^\s*would you\s+",
+    r"^\s*can you like\s+",
     r"^\s*i want to\s+",
     r"^\s*i wanna\s+",
     r"^\s*let me\s+",
@@ -29,6 +30,12 @@ ACTION_NOISE_PATTERNS = [
     r"^\s*να\s+",
     r"^\s*μηπως\s+",
     r"^\s*μήπως\s+",
+    r"^\s*σε παρακαλω\s+",
+    r"^\s*σε παρακαλώ\s+",
+]
+
+ASSISTANT_INVOCATION_PATTERNS = [
+    r"^\s*(?:(?:hey|hi|hello|ok|okay|λοιπον|λοιπόν|γεια|please|σε παρακαλω|σε παρακαλώ|παρακαλω|παρακαλώ)[\s,.;:!?-]+)*(?:bond|μποντ|μποντ|μπόντ)(?:[\s,.;:!?-]+|$)",
 ]
 
 GREEK_ACTION_NORMALIZATIONS = [
@@ -53,6 +60,22 @@ GREEK_ACTION_NORMALIZATIONS = [
     (r"\bστο file manager\b", "in file manager"),
     (r"\bστον διαχειριστη αρχειων\b", "in file manager"),
     (r"\bστο διαχειριστη αρχειων\b", "in file manager"),
+    (r"\bτις ληψεις\b", "downloads"),
+    (r"\bτις λήψεις\b", "downloads"),
+    (r"\bτα εγγραφα\b", "documents"),
+    (r"\bτα έγγραφα\b", "documents"),
+    (r"\bληψεις\b", "downloads"),
+    (r"\bλήψεις\b", "downloads"),
+    (r"\bεγγραφα\b", "documents"),
+    (r"\bέγγραφα\b", "documents"),
+    (r"\bφακελος ληψεις\b", "downloads folder"),
+    (r"\bφάκελος λήψεις\b", "downloads folder"),
+    (r"\bφακελο ληψεις\b", "downloads folder"),
+    (r"\bφάκελο λήψεις\b", "downloads folder"),
+    (r"\bφακελος εγγραφα\b", "documents folder"),
+    (r"\bφάκελος έγγραφα\b", "documents folder"),
+    (r"\bφακελο εγγραφα\b", "documents folder"),
+    (r"\bφάκελο έγγραφα\b", "documents folder"),
 ]
 
 CHAIN_REPLACEMENTS = [
@@ -89,6 +112,19 @@ def contains_bond_variant(text: str) -> bool:
     return any(variant in compact for variant in BOND_VARIANTS)
 
 
+def strip_assistant_invocation_prefix(text: str) -> str:
+    cleaned = text.strip()
+    changed = True
+    while changed and cleaned:
+        changed = False
+        for pattern in ASSISTANT_INVOCATION_PATTERNS:
+            new_cleaned = re.sub(pattern, "", cleaned, flags=re.I).strip()
+            if new_cleaned != cleaned:
+                cleaned = new_cleaned
+                changed = True
+    return cleaned.strip(" ,.;:!?-")
+
+
 def strip_action_noise(text: str) -> str:
     cleaned = text.strip()
     changed = True
@@ -103,7 +139,8 @@ def strip_action_noise(text: str) -> str:
 
 
 def normalize_action_text(text: str) -> str:
-    t = strip_action_noise(text)
+    t = strip_assistant_invocation_prefix(text)
+    t = strip_action_noise(t)
     for pattern, replacement in GREEK_ACTION_NORMALIZATIONS:
         t = re.sub(pattern, replacement, t, flags=re.I)
     t = re.sub(r"\s+", " ", t).strip(" ,.;")

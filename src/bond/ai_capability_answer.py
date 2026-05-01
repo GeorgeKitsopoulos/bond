@@ -12,6 +12,7 @@ from ai_capabilities import (
     is_capability_available,
     list_capabilities,
 )
+from ai_linguistics import strip_assistant_invocation_prefix
 
 
 _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
@@ -50,6 +51,11 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "installed models",
         "model inventory",
         "runtime model",
+        "what model are you using",
+        "what models are installed",
+        "local models",
+        "use qwen",
+        "nomic embed text",
     ),
     "timer": (
         "timer",
@@ -59,6 +65,10 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "χρονομετρο",
         "υπενθυμιση",
         "υπενθυμισεις",
+        "timers are a thing",
+        "are timers a thing",
+        "reminders work",
+        "υπενθυμίσεις",
     ),
     "clipboard": (
         "clipboard",
@@ -112,11 +122,20 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "language detection",
         "greek detection",
         "english detection",
+        "detect greek",
+        "detect whether i write greek or english",
+        "μιλας ελληνικα",
+        "μιλάς ελληνικά",
+        "καταλαβαινεις ελληνικα",
+        "καταλαβαίνεις ελληνικά",
     ),
     "apply_response_language_policy": (
         "response language",
         "answer language",
         "language policy",
+        "answer me in greek",
+        "απαντα ελληνικα",
+        "απάντα ελληνικά",
     ),
     "localize_user_message": (
         "localization",
@@ -146,6 +165,15 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "install updates",
         "system upgrade",
         "system updates",
+        "update packages",
+        "system update",
+        "ενημερωση συστηματος",
+        "ενημέρωση συστήματος",
+        "αναβαθμιση συστηματος",
+        "αναβάθμιση συστήματος",
+        "ενημερωσεις",
+        "ενημερώσεις",
+        "privileged maintenance",
     ),
     "inspect_storage_hygiene": (
         "storage hygiene",
@@ -184,6 +212,13 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "knowledge retrieval",
         "rag",
         "search my documents",
+        "search documents",
+        "ψαξεις τα εγγραφα μου",
+        "ψάξεις τα έγγραφά μου",
+        "ψαξε τα εγγραφα",
+        "ψάξε τα έγγραφα",
+        "αναζητηση εγγραφων",
+        "αναζήτηση εγγράφων",
     ),
     "ingest_knowledge_sources": (
         "ingest documents",
@@ -223,6 +258,19 @@ _SPECIFIC_QUESTION_PHRASES = (
     "υποστηριζεις",
     "μπορει ο bond",
     "μπορει το bond",
+    "say that",
+    "pretend",
+    "correct",
+    "or not",
+)
+
+_ASSERTIVE_CAPABILITY_PROMPT_PHRASES = (
+    "say that",
+    "pretend",
+    "correct",
+    "or not",
+    "are timers a thing",
+    "timers are a thing",
 )
 
 
@@ -255,7 +303,8 @@ _NORMALIZED_ALIASES: dict[str, tuple[str, ...]] = {
 
 
 def mentioned_capabilities(text: str) -> list[str]:
-    normalized = normalize_text(text)
+    stripped = strip_assistant_invocation_prefix(text)
+    normalized = normalize_text(stripped)
     if not normalized:
         return []
 
@@ -268,21 +317,26 @@ def mentioned_capabilities(text: str) -> list[str]:
 
 
 def is_general_capability_question(text: str) -> bool:
-    normalized = normalize_text(text)
+    stripped = strip_assistant_invocation_prefix(text)
+    normalized = normalize_text(stripped)
     if not normalized:
         return False
     return any(_contains_phrase(normalized, phrase) for phrase in _GENERAL_QUESTION_PHRASES)
 
 
 def is_specific_capability_question(text: str) -> bool:
-    normalized = normalize_text(text)
+    stripped = strip_assistant_invocation_prefix(text)
+    normalized = normalize_text(stripped)
     if not normalized:
         return False
 
     has_question_phrase = any(
         _contains_phrase(normalized, phrase) for phrase in _SPECIFIC_QUESTION_PHRASES
     )
-    if not has_question_phrase:
+    has_assertive_probe = any(
+        _contains_phrase(normalized, phrase) for phrase in _ASSERTIVE_CAPABILITY_PROMPT_PHRASES
+    )
+    if not has_question_phrase and not has_assertive_probe and "?" not in stripped:
         return False
 
     return bool(mentioned_capabilities(normalized))

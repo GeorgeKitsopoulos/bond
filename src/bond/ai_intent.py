@@ -2,7 +2,12 @@
 import re
 
 from ai_facts import detect_fact_query
-from ai_linguistics import normalize_action_text, simplify_text, split_chain_candidate
+from ai_linguistics import (
+    normalize_action_text,
+    simplify_text,
+    split_chain_candidate,
+    strip_assistant_invocation_prefix,
+)
 
 MAX_CHAIN_STEPS = 3
 
@@ -75,6 +80,14 @@ ACTION_START_PATTERNS = [
     r"^\s*set\b.*\bwallpaper\b",
     r"^\s*change\b.*\bwallpaper\b",
     r"^\s*open\s+https?://",
+    r"^\s*reboot\b",
+    r"^\s*restart\b",
+    r"^\s*shutdown\b",
+    r"^\s*power\s+off\b",
+    r"^\s*delete\b",
+    r"^\s*remove\b",
+    r"^\s*format\b",
+    r"^\s*sudo\s+apt\s+upgrade\b",
     r"^\s*ανοιξε\b",
     r"^\s*άνοιξε\b",
     r"^\s*δειξε\b",
@@ -85,6 +98,15 @@ ACTION_START_PATTERNS = [
     r"^\s*πήγαινε\b",
     r"^\s*παμε\b",
     r"^\s*πάμε\b",
+    r"^\s*κανε\s+επανεκκινηση\b",
+    r"^\s*κάνε\s+επανεκκίνηση\b",
+    r"^\s*επανεκκινηση\b",
+    r"^\s*κλεισε\s+τον\s+υπολογιστη\b",
+    r"^\s*κλείσε\s+τον\s+υπολογιστή\b",
+    r"^\s*σβησε\s+τις\s+ληψεις\b",
+    r"^\s*σβήσε\s+τις\s+λήψεις\b",
+    r"^\s*διεγραψε\s+ολα\s+τα\s+αρχεια\b",
+    r"^\s*διέγραψε\s+όλα\s+τα\s+αρχεία\b",
 ]
 
 EXPLICIT_ACTION_PATTERNS = [
@@ -138,6 +160,22 @@ ACTION_TARGET_HINTS = [
     "/",
 ]
 
+HIGH_RISK_ACTION_START_PATTERNS = [
+    r"^\s*reboot\b",
+    r"^\s*restart\b",
+    r"^\s*shutdown\b",
+    r"^\s*power\s+off\b",
+    r"^\s*delete\b",
+    r"^\s*remove\b",
+    r"^\s*format\b",
+    r"^\s*sudo\s+apt\s+upgrade\b",
+    r"^\s*κανε\s+επανεκκινηση\b",
+    r"^\s*επανεκκινηση\b",
+    r"^\s*κλεισε\s+τον\s+υπολογιστη\b",
+    r"^\s*σβησε\s+τις\s+ληψεις\b",
+    r"^\s*διεγραψε\s+ολα\s+τα\s+αρχεια\b",
+]
+
 ACTION_DISQUALIFIER_PATTERNS = [
     r"^\s*what did\b",
     r"^\s*what changed\b",
@@ -178,15 +216,25 @@ MIXED_QUESTION_CLAUSE_PATTERNS = [
     r"\bπου\b",
     r"\bπως\b",
     r"\bγιατι\b",
+    r"\bexplain\b",
+    r"\bsummarize\b",
+    r"\bdescribe\b",
+    r"\bcapabilities\b",
+    r"\bδυνατοτητες\b",
+    r"\bεξηγησε\b",
+    r"\bεξήγησε\b",
+    r"\bσυνοψισε\b",
+    r"\bσυνόψισε\b",
 ]
 
 
 def looks_like_question_request(text: str) -> bool:
-    t = simplify_text(text)
+    stripped = strip_assistant_invocation_prefix(text)
+    t = simplify_text(stripped)
     if not t:
         return False
 
-    if "?" in text:
+    if "?" in stripped:
         return True
 
     if any(re.search(pattern, t) for pattern in CHAT_DIRECTIVE_PATTERNS):
@@ -212,10 +260,12 @@ def _contains_action_disqualifier(text: str) -> bool:
 
 
 def looks_like_action_request(text: str) -> bool:
-    if detect_fact_query(text):
+    stripped = strip_assistant_invocation_prefix(text)
+
+    if detect_fact_query(stripped):
         return False
 
-    normalized = normalize_action_text(text)
+    normalized = normalize_action_text(stripped)
     t = simplify_text(normalized)
     if not t:
         return False
@@ -231,6 +281,10 @@ def looks_like_action_request(text: str) -> bool:
 
     starts_like_action = _starts_like_action(t)
     has_target_hint = _has_action_target_hint(t)
+    starts_like_high_risk_action = any(re.search(pattern, t) for pattern in HIGH_RISK_ACTION_START_PATTERNS)
+
+    if starts_like_high_risk_action:
+        return True
 
     if starts_like_action and has_target_hint:
         return True
@@ -242,7 +296,8 @@ def looks_like_action_request(text: str) -> bool:
 
 
 def detect_action_chain(text: str) -> list[str] | None:
-    parts = split_chain_candidate(text)
+    stripped = strip_assistant_invocation_prefix(text)
+    parts = split_chain_candidate(stripped)
     if len(parts) < 2:
         return None
 
@@ -258,11 +313,12 @@ def detect_action_chain(text: str) -> list[str] | None:
 
 
 def _single_clause_is_mixed(text: str) -> bool:
-    t = simplify_text(normalize_action_text(text))
+    stripped = strip_assistant_invocation_prefix(text)
+    t = simplify_text(normalize_action_text(stripped))
     if not t:
         return False
 
-    if not looks_like_action_request(text):
+    if not looks_like_action_request(stripped):
         return False
 
     if not any(re.search(pattern, t) for pattern in MIXED_QUESTION_CLAUSE_PATTERNS):
@@ -279,18 +335,20 @@ def _single_clause_is_mixed(text: str) -> bool:
 
 
 def classify_single_intent(text: str) -> str:
-    fact_spec = detect_fact_query(text)
+    stripped = strip_assistant_invocation_prefix(text)
+
+    fact_spec = detect_fact_query(stripped)
     if fact_spec:
         return "question"
 
-    is_action = looks_like_action_request(text)
-    is_question = looks_like_question_request(text)
+    is_action = looks_like_action_request(stripped)
+    is_question = looks_like_question_request(stripped)
 
-    if _single_clause_is_mixed(text):
+    if _single_clause_is_mixed(stripped):
         return "mixed"
 
     if is_action and is_question:
-        if "?" in text:
+        if "?" in stripped:
             return "question"
         return "question"
 
@@ -304,7 +362,8 @@ def classify_single_intent(text: str) -> str:
 
 
 def classify_request(text: str) -> tuple[str, list[str] | None]:
-    parts = split_chain_candidate(text)
+    stripped = strip_assistant_invocation_prefix(text)
+    parts = split_chain_candidate(stripped)
 
     if len(parts) >= 2:
         intents = [classify_single_intent(part) for part in parts]
@@ -317,7 +376,7 @@ def classify_request(text: str) -> tuple[str, list[str] | None]:
             return "mixed", None
 
         if all(intent == "action" for intent in intents):
-            chain = detect_action_chain(text)
+            chain = detect_action_chain(stripped)
             if chain:
                 return "pure_action", chain
             return "unknown", None

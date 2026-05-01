@@ -144,6 +144,7 @@ Current checkpoint note:
 - Stage 2B policy gate, Stage 2C action contract/dry-run behavior, and Stage 2D confirmation-token flow are implemented and covered in integrated selftests.
 - Stage 2F-A adds the code-level capability registry foundation in `src/bond/ai_capabilities.py`.
 - Stage 2F-B wires read-only capability questions into deterministic registry-backed answers.
+- Stage 2F-C applies telemetry-driven guardrail hardening for assistant-prefix normalization, high-risk natural command shaping, mixed-intent preemption safety, expanded capability aliases, and deterministic dry-run step metadata.
 - capability registry implementation has started with a code-level foundation; dynamic probe-backed capability discovery, execution-authorization integration, and plugin capability loading remain open, so this milestone is not complete.
 
 Exit criteria:
@@ -236,9 +237,9 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest baseline currently passes 73/73 with coverage for routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, events bucket, and core memory flows
+- integrated selftest baseline currently passes 107/107 with coverage for routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, telemetry-derived guardrail regressions, events bucket, and core memory flows
 - integrated selftest baseline now includes confirmation-token flow coverage (token creation, invalid/expired/consumed handling, confirmed dry-run, and non-reuse)
-- Stage 2E improves parser honesty and preflight failure behavior; Stage 2F-A/2F-B add static registry truth and read-only capability answers, but do not expand executor authorization
+- Stage 2E improves parser honesty and preflight failure behavior; Stage 2F-A/2F-B/2F-C add static registry truth, read-only capability answers, and telemetry-driven deterministic guardrail hardening, but do not expand executor authorization
 - this does not imply full behavioral coverage or assistant maturity
 
 ### M7 - Service layer
