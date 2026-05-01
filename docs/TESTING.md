@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest baseline is passing 107/107 in the current public-candidate baseline and includes Stage 2E parser-contract/action-preflight checks, Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry honesty checks, Stage 2F-B capability-answer checks, and Stage 2F-C telemetry-derived guardrail regression checks.
+Current integrated selftest baseline is passing 113/113 in the current public-candidate baseline and includes Stage 2E parser-contract/action-preflight checks, Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-derived guardrail regression checks, and Stage 2F-C2 regression-cleanup checks.
 
 The current integrated suite covers:
 
@@ -58,6 +58,9 @@ The current integrated suite covers:
 - high-risk natural English/Greek commands are tested to return confirmation-required without model-answer fallthrough
 - mixed action+question requests are tested to reject as mixed intent without capability-answer/model-answer preemption
 - expanded capability aliases (including colloquial/adversarial prompts) are tested to return deterministic registry-backed capability answers
+- deterministic social check-in handling is tested to avoid model fallback for trivial prompts
+- model and language capability prompts are tested to route as deterministic capability answers
+- restart-the-laptop phrasing is tested to return confirmation-required with tokenized high-risk flow
 
 This baseline is necessary and useful, but it is not proof of final assistant correctness or product maturity.
 

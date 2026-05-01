@@ -19,6 +19,15 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-C2 telemetry verification regression cleanup
+
+- Reordered `ai_run.py` guardrail flow so policy/action gating and action execution paths are handled before capability/fact/model fallback, then capability answers are checked before fact answers.
+- Added deterministic social check-in handling for trivial prompts such as `how are you?` to avoid model fallback.
+- Expanded capability-query detection/aliases for model and Greek language-policy prompts, including direct imperative-style language-policy requests.
+- Hardened high-risk restart phrasing (`restart the laptop` family) to remain confirmation-required instead of falling through to action-not-parsed/model paths.
+- Added six targeted Stage 2F-C2 regression tests in integrated selftest.
+- Validation baseline advanced to 113/113.
+
 ### Stage 2F-C telemetry-driven guardrail hardening
 
 - Hardened deterministic guardrails from telemetry findings: assistant-invocation stripping, Greek action normalization coverage, high-risk natural command shaping, and mixed-intent preemption protection.
@@ -27,7 +36,7 @@ Until formal release tagging is established, this changelog should follow these 
 - Improved single-action dry-run metadata to always include non-empty normalized action_steps for safe action previews.
 - Added telemetry-derived regression selftests for assistant-prefixed commands, high-risk confirmations, mixed-intent rejection, and capability aliases.
 - Telemetry remains opt-in dev/test instrumentation (`BOND_DEV_TELEMETRY=1`), stderr-only, and outside normal assistant answer text.
-- New validation baseline expected: 107/107.
+- Validation baseline has since advanced to 113/113 after Stage 2F-C2 cleanup.
 
 ### Development telemetry (opt-in test instrumentation)
 
@@ -43,7 +52,7 @@ Until formal release tagging is established, this changelog should follow these 
 - Wired capability questions into `src/bond/ai_run.py` before model/action handling.
 - Added six capability-answer selftests.
 - Updated docs to distinguish static registry-backed answers from future dynamic probe-backed discovery.
-- Validation baseline has since advanced to 107/107 after follow-up hardening stages.
+- Validation baseline has since advanced to 113/113 after follow-up hardening stages.
 
 ### Stage 2F-A capability registry foundation
 

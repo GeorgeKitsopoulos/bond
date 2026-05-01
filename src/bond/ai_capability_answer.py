@@ -53,6 +53,7 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "runtime model",
         "what model are you using",
         "what models are installed",
+        "which local model are you using right now",
         "local models",
         "use qwen",
         "nomic embed text",
@@ -128,14 +129,21 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "μιλάς ελληνικά",
         "καταλαβαινεις ελληνικα",
         "καταλαβαίνεις ελληνικά",
+        "μπορεις να καταλαβεις ελληνικα",
+        "μπορείς να καταλάβεις ελληνικά",
     ),
     "apply_response_language_policy": (
         "response language",
         "answer language",
         "language policy",
         "answer me in greek",
+        "answer me in greek from now on",
         "απαντα ελληνικα",
         "απάντα ελληνικά",
+        "απαντα μου ελληνικα",
+        "απάντα μου ελληνικά",
+        "γραφε ελληνικα",
+        "γράφε ελληνικά",
     ),
     "localize_user_message": (
         "localization",
@@ -262,6 +270,20 @@ _SPECIFIC_QUESTION_PHRASES = (
     "pretend",
     "correct",
     "or not",
+    "answer me in greek",
+    "answer me in greek from now on",
+    "απαντα ελληνικα",
+    "απάντα ελληνικά",
+    "απαντα μου ελληνικα",
+    "απάντα μου ελληνικά",
+    "γραφε ελληνικα",
+    "γράφε ελληνικά",
+    "μιλας ελληνικα",
+    "μιλάς ελληνικά",
+    "καταλαβαινεις ελληνικα",
+    "καταλαβαίνεις ελληνικά",
+    "μπορεις να καταλαβεις ελληνικα",
+    "μπορείς να καταλάβεις ελληνικά",
 )
 
 _ASSERTIVE_CAPABILITY_PROMPT_PHRASES = (
@@ -325,6 +347,7 @@ def is_general_capability_question(text: str) -> bool:
 
 
 def is_specific_capability_question(text: str) -> bool:
+    has_question_mark = "?" in text
     stripped = strip_assistant_invocation_prefix(text)
     normalized = normalize_text(stripped)
     if not normalized:
@@ -336,7 +359,7 @@ def is_specific_capability_question(text: str) -> bool:
     has_assertive_probe = any(
         _contains_phrase(normalized, phrase) for phrase in _ASSERTIVE_CAPABILITY_PROMPT_PHRASES
     )
-    if not has_question_phrase and not has_assertive_probe and "?" not in stripped:
+    if not has_question_phrase and not has_assertive_probe and not has_question_mark:
         return False
 
     return bool(mentioned_capabilities(normalized))

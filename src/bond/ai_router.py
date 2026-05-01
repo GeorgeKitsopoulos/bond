@@ -153,6 +153,12 @@ _HIGH_RISK_PHRASES = [
     "σβήσε τις λήψεις",
     "διεγραψε ολα τα αρχεια",
     "διέγραψε όλα τα αρχεία",
+    "restart the laptop",
+    "restart laptop",
+    "restart the computer",
+    "restart computer",
+    "restart the pc",
+    "restart pc",
 ]
 
 _HIGH_RISK_SIMPLIFIED_PHRASES = [
@@ -170,15 +176,42 @@ _HIGH_RISK_SIMPLIFIED_PHRASES = [
     "κλεισε τον υπολογιστη",
     "σβησε τις ληψεις",
     "διεγραψε ολα τα αρχεια",
+    "restart the laptop",
+    "restart laptop",
+    "restart the computer",
+    "restart computer",
+    "restart the pc",
+    "restart pc",
 ]
 
 _UPDATE_ACTION_PHRASES = [
     "update packages",
 ]
 
+_RESTART_ACTION_PHRASES = [
+    "restart the laptop",
+    "restart laptop",
+    "restart the computer",
+    "restart computer",
+    "restart the pc",
+    "restart pc",
+]
+
 
 def _looks_like_update_capability_question(text: str, simplified: str) -> bool:
     if "update" not in simplified and "upgrade" not in simplified and "ενημερω" not in simplified and "αναβαθμι" not in simplified and "αναβαθμι" not in simplified:
+        return False
+
+    questionish = (
+        "?" in text
+        or bool(re.match(r"^\s*(can|could|would|do|does)\b", text.lower()))
+        or bool(re.match(r"^\s*(μπορεις|μπορείς|μπορει|μπορεί)\b", simplified))
+    )
+    return questionish
+
+
+def _looks_like_restart_capability_question(text: str, simplified: str) -> bool:
+    if not any(phrase in simplified for phrase in _RESTART_ACTION_PHRASES):
         return False
 
     questionish = (
@@ -229,6 +262,8 @@ def detect_risk(text: str) -> tuple[str, list[str]]:
 
     if any(phrase in s for phrase in _UPDATE_ACTION_PHRASES) and not _looks_like_update_capability_question(text, s):
         return "high", ["update packages"]
+    if any(phrase in s for phrase in _RESTART_ACTION_PHRASES) and not _looks_like_restart_capability_question(text, s):
+        return "high", ["restart"]
 
     high_signals = [phrase for phrase in _HIGH_RISK_PHRASES if phrase.lower() in t]
     for phrase in _HIGH_RISK_SIMPLIFIED_PHRASES:

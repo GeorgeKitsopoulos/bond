@@ -1589,6 +1589,119 @@ def run_stage2f_c_guardrail_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_c2_regression_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(name: str, proc: subprocess.CompletedProcess, errors: list[str], cmd: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": proc.returncode,
+                "stdout": (proc.stdout or "").strip(),
+                "stderr": (proc.stderr or "").strip(),
+                "errors": errors,
+                "cmd": cmd,
+            }
+        )
+
+    social_cmd = ["python3", str(AI_RUN), "how are you?"]
+    social_proc = run_cmd(social_cmd, {"BOND_DEV_TELEMETRY": "1", "BOND_ACTION_DRY_RUN": "1"})
+    social_telemetry, social_telemetry_errors = _parse_telemetry_record(social_proc.stderr or "")
+    social_errors: list[str] = []
+    if social_proc.returncode != 0:
+        social_errors.append(f"expected exit 0, got {social_proc.returncode}")
+    if "operational and ready" not in (social_proc.stdout or "").lower():
+        social_errors.append("expected deterministic social response text")
+    social_errors.extend(social_telemetry_errors)
+    if isinstance(social_telemetry, dict):
+        if social_telemetry.get("deterministic") is not True:
+            social_errors.append("expected telemetry deterministic=true")
+        if social_telemetry.get("answer_path") == "model_answer":
+            social_errors.append("social check-in must not route as model_answer")
+    _append("stage2f_c2_social_checkin_deterministic", social_proc, social_errors, social_cmd)
+
+    capability_cases = [
+        (
+            "stage2f_c2_models_installed_capability",
+            "what models are installed?",
+            "query_model",
+        ),
+        (
+            "stage2f_c2_model_using_capability",
+            "ok bond what model are you using?",
+            "query_model",
+        ),
+        (
+            "stage2f_c2_greek_understanding_capability",
+            "καταλαβαίνεις ελληνικά;",
+            "detect_utterance_language",
+        ),
+        (
+            "stage2f_c2_greek_response_policy_capability",
+            "απάντα ελληνικά",
+            "apply_response_language_policy",
+        ),
+    ]
+
+    for name, text, marker in capability_cases:
+        cmd = ["python3", str(AI_RUN), text]
+        proc = run_cmd(cmd, {"BOND_DEV_TELEMETRY": "1", "BOND_ACTION_DRY_RUN": "1"})
+        telemetry, telemetry_errors = _parse_telemetry_record(proc.stderr or "")
+        errors: list[str] = []
+
+        if proc.returncode != 0:
+            errors.append(f"expected exit 0, got {proc.returncode}")
+        output = (proc.stdout or "").strip()
+        if not output:
+            errors.append("expected non-empty deterministic capability answer")
+        if marker not in output:
+            errors.append(f"expected capability marker {marker!r} in answer")
+
+        if marker == "query_model" and output.strip().lower() == "bond":
+            errors.append("model question must not resolve to assistant_name fact answer")
+
+        errors.extend(telemetry_errors)
+        if isinstance(telemetry, dict):
+            if telemetry.get("answer_path") != "capability_answer":
+                errors.append("expected telemetry answer_path=capability_answer")
+            if telemetry.get("deterministic") is not True:
+                errors.append("expected telemetry deterministic=true")
+            if telemetry.get("answer_path") == "model_answer":
+                errors.append("capability question must not route as model_answer")
+
+        _append(name, proc, errors, cmd)
+
+    restart_cmd = ["python3", str(AI_RUN), "restart the laptop"]
+    restart_proc = run_cmd(restart_cmd, {"BOND_DEV_TELEMETRY": "1", "BOND_ACTION_DRY_RUN": "1"})
+    restart_payload = parse_stdout_json(restart_proc.stdout or "")
+    restart_telemetry, restart_telemetry_errors = _parse_telemetry_record(restart_proc.stderr or "")
+    restart_errors: list[str] = []
+
+    if restart_proc.returncode != 5:
+        restart_errors.append(f"expected exit 5, got {restart_proc.returncode}")
+    if not isinstance(restart_payload, dict):
+        restart_errors.append("expected JSON payload for confirmation-required response")
+    else:
+        if restart_payload.get("error") != "confirmation_required":
+            restart_errors.append("expected error=confirmation_required")
+        if restart_payload.get("requires_confirmation") is not True:
+            restart_errors.append("expected requires_confirmation=true")
+        if not str(restart_payload.get("confirmation_token", "")).strip():
+            restart_errors.append("expected non-empty confirmation_token")
+
+    restart_errors.extend(restart_telemetry_errors)
+    if isinstance(restart_telemetry, dict):
+        if restart_telemetry.get("answer_path") != "confirmation_required":
+            restart_errors.append("expected telemetry answer_path=confirmation_required")
+        if restart_telemetry.get("answer_path") == "model_answer":
+            restart_errors.append("restart command must not route as model_answer")
+
+    _append("stage2f_c2_restart_laptop_confirmation_required", restart_proc, restart_errors, restart_cmd)
+
+    return results
+
+
 def run_parse_contract_tests() -> list[dict]:
     results: list[dict] = []
 
@@ -2625,6 +2738,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_c_guardrail_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_c2_regression_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

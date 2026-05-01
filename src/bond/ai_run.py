@@ -245,6 +245,25 @@ def is_high_risk_command_like_text(text: str) -> bool:
     return any(re.search(pattern, simplified) for pattern in command_start_patterns)
 
 
+def is_social_checkin_text(text: str) -> bool:
+    stripped = strip_assistant_invocation_prefix(text)
+    simplified = simplify_text(stripped)
+    if not simplified:
+        return False
+
+    prompts = {
+        "how are you",
+        "how are you doing",
+        "hows it going",
+        "how is it going",
+        "πως εισαι",
+        "τι κανεις",
+    }
+
+    normalized = simplified.strip().rstrip("?.!")
+    return normalized in prompts
+
+
 def run_safe_action(text: str) -> tuple[bool, str]:
     normalized = normalize_action_text(text)
 
@@ -949,23 +968,6 @@ def main() -> int:
             chain_steps = None
             dev_telemetry["intent"] = gatekeeper_result
 
-    if gatekeeper_result in {"unknown", "pure_question"}:
-        capability_answer = maybe_answer_capability_question(text)
-        if capability_answer:
-            log_memory(
-                "chats",
-                f"capability_answer: {text}",
-                {
-                    "assistant_name": ASSISTANT_NAME,
-                    "override": bool(override_profile),
-                    "path": "registry_capability_answer",
-                    "route_decision": decision_to_log_meta(route_decision),
-                },
-            )
-            build_active_context()
-            print(capability_answer)
-            return finalize(0, answer_path="capability_answer", deterministic=True)
-
     parse_contract = build_parse_contract(classifier_text, gatekeeper_result, chain_steps)
     parse_contract_meta = parse_contract_to_log_meta(parse_contract)
 
@@ -1121,27 +1123,6 @@ def main() -> int:
         print(json.dumps(build_dry_run_response(action_contract, ASSISTANT_NAME), ensure_ascii=False))
         return finalize(0, answer_path="action_dry_run", deterministic=True, dry_run=True)
 
-    fact_spec = detect_fact_query(text)
-    if fact_spec:
-        answer = answer_fact_query(fact_spec, profiles)
-        if answer is not None:
-            log_memory(
-                "chats",
-                f"fact_answer: {text}",
-                {
-                    "answer": answer,
-                    "fact_spec": fact_spec,
-                    "assistant_name": ASSISTANT_NAME,
-                    "route_decision": decision_to_log_meta(route_decision),
-                    "policy_decision": policy_to_log_meta(policy_decision),
-                    "action_contract": action_contract_to_log_meta(action_contract),
-                    "parse_contract": parse_contract_meta,
-                },
-            )
-            build_active_context()
-            print(answer)
-            return finalize(0, answer_path="fact_answer", deterministic=True)
-
     if action_contract.mode == ACTION_EXECUTE:
         if policy_decision.mode == POLICY_MODE_ACTION_CHAIN:
             ok, _, result = run_action_chain(
@@ -1162,6 +1143,66 @@ def main() -> int:
         if ok:
             return finalize(0, answer_path="action_execute", deterministic=True)
         return finalize(3, answer_path="action_execute", deterministic=True, error_kind="action_execution_failed")
+
+    if gatekeeper_result in {"unknown", "pure_question"} and is_social_checkin_text(text):
+        reply = "Operational and ready. What do you need?"
+        log_memory(
+            "chats",
+            f"direct_social_answer: {text}",
+            {
+                "assistant_name": ASSISTANT_NAME,
+                "override": bool(override_profile),
+                "path": "direct_social_answer",
+                "route_decision": decision_to_log_meta(route_decision),
+                "policy_decision": policy_to_log_meta(policy_decision),
+                "action_contract": action_contract_to_log_meta(action_contract),
+                "parse_contract": parse_contract_meta,
+            },
+        )
+        build_active_context()
+        print(reply)
+        return finalize(0, answer_path="direct_answer", deterministic=True)
+
+    if gatekeeper_result in {"unknown", "pure_question"}:
+        capability_answer = maybe_answer_capability_question(text)
+        if capability_answer:
+            log_memory(
+                "chats",
+                f"capability_answer: {text}",
+                {
+                    "assistant_name": ASSISTANT_NAME,
+                    "override": bool(override_profile),
+                    "path": "registry_capability_answer",
+                    "route_decision": decision_to_log_meta(route_decision),
+                    "policy_decision": policy_to_log_meta(policy_decision),
+                    "action_contract": action_contract_to_log_meta(action_contract),
+                    "parse_contract": parse_contract_meta,
+                },
+            )
+            build_active_context()
+            print(capability_answer)
+            return finalize(0, answer_path="capability_answer", deterministic=True)
+
+    fact_spec = detect_fact_query(text)
+    if fact_spec:
+        answer = answer_fact_query(fact_spec, profiles)
+        if answer is not None:
+            log_memory(
+                "chats",
+                f"fact_answer: {text}",
+                {
+                    "answer": answer,
+                    "fact_spec": fact_spec,
+                    "assistant_name": ASSISTANT_NAME,
+                    "route_decision": decision_to_log_meta(route_decision),
+                    "policy_decision": policy_to_log_meta(policy_decision),
+                    "action_contract": action_contract_to_log_meta(action_contract),
+                    "parse_contract": parse_contract_meta,
+                },
+            )
+            build_active_context()
+            print(answer)
+            return finalize(0, answer_path="fact_answer", deterministic=True)
 
     if override_profile:
         chosen = override_profile
