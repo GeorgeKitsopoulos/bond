@@ -19,6 +19,14 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-C3 telemetry edge case cleanup
+
+- Fixed bare capability noun phrase detection: "installed models" and "local models" now recognized as capability questions and answered deterministically without requiring question markers or question phrases.
+- Added time-query handlers (`give me the time`, `what time is it`) to return bounded deterministic answer explaining local time queries are not yet a fully wired capability, preventing timeout/model fallback.
+- Added project-state-query handlers (`current state of the project`, `project state`) to return bounded deterministic answer directing to git status/docs/STATE/CHANGELOG, preventing timeout/model fallback.
+- Added four targeted Stage 2F-C3 edge-case tests in integrated selftest covering bare capability phrases and time/project-state queries.
+- Validation baseline remains 113/113 baseline with +4 edge-case tests.
+
 ### Stage 2F-C2 telemetry verification regression cleanup
 
 - Reordered `ai_run.py` guardrail flow so policy/action gating and action execution paths are handled before capability/fact/model fallback, then capability answers are checked before fact answers.

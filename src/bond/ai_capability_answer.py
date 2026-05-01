@@ -346,6 +346,23 @@ def is_general_capability_question(text: str) -> bool:
     return any(_contains_phrase(normalized, phrase) for phrase in _GENERAL_QUESTION_PHRASES)
 
 
+def _is_bare_capability_reference(text: str) -> bool:
+    stripped = strip_assistant_invocation_prefix(text)
+    normalized = normalize_text(stripped)
+    if not normalized:
+        return False
+
+    caps = mentioned_capabilities(normalized)
+    if not caps:
+        return False
+
+    word_count = len(normalized.split())
+    if word_count > 6:
+        return False
+
+    return True
+
+
 def is_specific_capability_question(text: str) -> bool:
     has_question_mark = "?" in text
     stripped = strip_assistant_invocation_prefix(text)
@@ -359,7 +376,10 @@ def is_specific_capability_question(text: str) -> bool:
     has_assertive_probe = any(
         _contains_phrase(normalized, phrase) for phrase in _ASSERTIVE_CAPABILITY_PROMPT_PHRASES
     )
-    if not has_question_phrase and not has_assertive_probe and not has_question_mark:
+
+    has_bare_reference = _is_bare_capability_reference(text)
+
+    if not has_question_phrase and not has_assertive_probe and not has_question_mark and not has_bare_reference:
         return False
 
     return bool(mentioned_capabilities(normalized))

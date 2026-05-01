@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest baseline is passing 113/113 in the current public-candidate baseline and includes Stage 2E parser-contract/action-preflight checks, Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-derived guardrail regression checks, and Stage 2F-C2 regression-cleanup checks.
+Current integrated selftest baseline is passing 113/113 baseline in the current public-candidate baseline and includes Stage 2E parser-contract/action-preflight checks, Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks, and Stage 2F-C3 edge-case cleanup checks (bare capability phrases, time queries, project-state queries).
 
 The current integrated suite covers:
 

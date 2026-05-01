@@ -264,6 +264,41 @@ def is_social_checkin_text(text: str) -> bool:
     return normalized in prompts
 
 
+def is_time_query_text(text: str) -> bool:
+    stripped = strip_assistant_invocation_prefix(text)
+    simplified = simplify_text(stripped)
+    if not simplified:
+        return False
+
+    patterns = [
+        r"\bgive me the time\b",
+        r"\bwhat time is it\b",
+        r"\bwhat time\b",
+        r"\bcurrent time\b",
+        r"\bthe time\b",
+    ]
+
+    normalized = simplified.strip().rstrip("?.!")
+    return any(re.search(pattern, normalized, flags=re.I) for pattern in patterns)
+
+
+def is_project_state_direct_query(text: str) -> bool:
+    stripped = strip_assistant_invocation_prefix(text)
+    simplified = simplify_text(stripped)
+    if not simplified:
+        return False
+
+    patterns = [
+        r"\bproject state\b",
+        r"\bcurrent state of the project\b",
+        r"\bcurrent project state\b",
+        r"\bthe project state\b",
+    ]
+
+    normalized = simplified.strip().rstrip("?.!")
+    return any(re.search(pattern, normalized, flags=re.I) for pattern in patterns)
+
+
 def run_safe_action(text: str) -> tuple[bool, str]:
     normalized = normalize_action_text(text)
 
@@ -1153,6 +1188,44 @@ def main() -> int:
                 "assistant_name": ASSISTANT_NAME,
                 "override": bool(override_profile),
                 "path": "direct_social_answer",
+                "route_decision": decision_to_log_meta(route_decision),
+                "policy_decision": policy_to_log_meta(policy_decision),
+                "action_contract": action_contract_to_log_meta(action_contract),
+                "parse_contract": parse_contract_meta,
+            },
+        )
+        build_active_context()
+        print(reply)
+        return finalize(0, answer_path="direct_answer", deterministic=True)
+
+    if gatekeeper_result in {"unknown", "pure_question"} and is_time_query_text(text):
+        reply = "Local time queries are not yet a fully wired capability. For current time, please check your system clock or use a terminal time command."
+        log_memory(
+            "chats",
+            f"time_query_bounded_answer: {text}",
+            {
+                "assistant_name": ASSISTANT_NAME,
+                "override": bool(override_profile),
+                "path": "direct_time_answer",
+                "route_decision": decision_to_log_meta(route_decision),
+                "policy_decision": policy_to_log_meta(policy_decision),
+                "action_contract": action_contract_to_log_meta(action_contract),
+                "parse_contract": parse_contract_meta,
+            },
+        )
+        build_active_context()
+        print(reply)
+        return finalize(0, answer_path="direct_answer", deterministic=True)
+
+    if gatekeeper_result in {"unknown", "pure_question"} and is_project_state_direct_query(text):
+        reply = "Live project-state retrieval is not yet fully wired. For current project state, please check: (1) git status, (2) docs/STATE.md, or (3) the CHANGELOG for recent changes."
+        log_memory(
+            "chats",
+            f"project_state_query_bounded_answer: {text}",
+            {
+                "assistant_name": ASSISTANT_NAME,
+                "override": bool(override_profile),
+                "path": "direct_project_state_answer",
                 "route_decision": decision_to_log_meta(route_decision),
                 "policy_decision": policy_to_log_meta(policy_decision),
                 "action_contract": action_contract_to_log_meta(action_contract),

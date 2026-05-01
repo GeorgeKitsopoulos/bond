@@ -1702,6 +1702,100 @@ def run_stage2f_c2_regression_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_c3_edge_case_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _parse_telemetry_record(stderr_text: str) -> tuple[dict | None, list[str]]:
+        errors = []
+        try:
+            for line in (stderr_text or "").splitlines():
+                if "BOND_DEV_TELEMETRY" not in line:
+                    continue
+                raw = line.split("BOND_DEV_TELEMETRY", 1)[1].strip()
+                if raw.startswith(":"):
+                    raw = raw[1:].strip()
+                return json.loads(raw), []
+        except Exception as e:
+            errors.append(f"telemetry_parse_error: {e}")
+        return None, errors
+
+    def _append(name: str, proc: subprocess.CompletedProcess, errors: list[str]) -> None:
+        results.append({
+            "name": name,
+            "ok": not errors,
+            "returncode": proc.returncode,
+            "stdout": proc.stdout or "",
+            "stderr": proc.stderr or "",
+            "errors": errors,
+        })
+
+    installed_models_cmd = ['env', 'BOND_DEV_TELEMETRY=1', 'BOND_ACTION_DRY_RUN=1', 'ai', 'installed models']
+    installed_proc = subprocess.run(installed_models_cmd, capture_output=True, text=True, timeout=35)
+    installed_telemetry, installed_telemetry_errors = _parse_telemetry_record(installed_proc.stderr or "")
+    installed_errors: list[str] = []
+    if installed_proc.returncode != 0:
+        installed_errors.append(f"expected exit 0, got {installed_proc.returncode}")
+    if not any("model" in line.lower() for line in (installed_proc.stdout or "").splitlines()):
+        installed_errors.append("expected capability answer mentioning models")
+    installed_errors.extend(installed_telemetry_errors)
+    if isinstance(installed_telemetry, dict):
+        if installed_telemetry.get("answer_path") != "capability_answer":
+            installed_errors.append("expected telemetry answer_path=capability_answer")
+        if installed_telemetry.get("deterministic") is not True:
+            installed_errors.append("expected telemetry deterministic=true")
+    _append("stage2f_c3_installed_models_bare_noun", installed_proc, installed_errors)
+
+    local_models_cmd = ['env', 'BOND_DEV_TELEMETRY=1', 'BOND_ACTION_DRY_RUN=1', 'ai', 'local models']
+    local_proc = subprocess.run(local_models_cmd, capture_output=True, text=True, timeout=35)
+    local_telemetry, local_telemetry_errors = _parse_telemetry_record(local_proc.stderr or "")
+    local_errors: list[str] = []
+    if local_proc.returncode != 0:
+        local_errors.append(f"expected exit 0, got {local_proc.returncode}")
+    if not any("model" in line.lower() for line in (local_proc.stdout or "").splitlines()):
+        local_errors.append("expected capability answer mentioning models")
+    local_errors.extend(local_telemetry_errors)
+    if isinstance(local_telemetry, dict):
+        if local_telemetry.get("answer_path") != "capability_answer":
+            local_errors.append("expected telemetry answer_path=capability_answer")
+        if local_telemetry.get("deterministic") is not True:
+            local_errors.append("expected telemetry deterministic=true")
+    _append("stage2f_c3_local_models_bare_noun", local_proc, local_errors)
+
+    time_cmd = ['env', 'BOND_DEV_TELEMETRY=1', 'BOND_ACTION_DRY_RUN=1', 'ai', 'hey Bond give me the time']
+    time_proc = subprocess.run(time_cmd, capture_output=True, text=True, timeout=35)
+    time_telemetry, time_telemetry_errors = _parse_telemetry_record(time_proc.stderr or "")
+    time_errors: list[str] = []
+    if time_proc.returncode != 0:
+        time_errors.append(f"expected exit 0, got {time_proc.returncode}")
+    if not any("time" in line.lower() or "clock" in line.lower() for line in (time_proc.stdout or "").splitlines()):
+        time_errors.append("expected answer mentioning time or clock")
+    time_errors.extend(time_telemetry_errors)
+    if isinstance(time_telemetry, dict):
+        if time_telemetry.get("deterministic") is not True:
+            time_errors.append("expected telemetry deterministic=true")
+        if time_telemetry.get("answer_path") == "model_answer":
+            time_errors.append("time query must not route as model_answer")
+    _append("stage2f_c3_time_query_bounded", time_proc, time_errors)
+
+    project_cmd = ['env', 'BOND_DEV_TELEMETRY=1', 'BOND_ACTION_DRY_RUN=1', 'ai', 'current state of the project']
+    project_proc = subprocess.run(project_cmd, capture_output=True, text=True, timeout=35)
+    project_telemetry, project_telemetry_errors = _parse_telemetry_record(project_proc.stderr or "")
+    project_errors: list[str] = []
+    if project_proc.returncode != 0:
+        project_errors.append(f"expected exit 0, got {project_proc.returncode}")
+    if not any(word in (project_proc.stdout or "").lower() for word in ["git", "state", "project", "docs"]):
+        project_errors.append("expected answer mentioning project state or checking mechanisms")
+    project_errors.extend(project_telemetry_errors)
+    if isinstance(project_telemetry, dict):
+        if project_telemetry.get("deterministic") is not True:
+            project_errors.append("expected telemetry deterministic=true")
+        if project_telemetry.get("answer_path") == "model_answer":
+            project_errors.append("project state query must not route as model_answer")
+    _append("stage2f_c3_project_state_bounded", project_proc, project_errors)
+
+    return results
+
+
 def run_parse_contract_tests() -> list[dict]:
     results: list[dict] = []
 
@@ -2760,6 +2854,16 @@ def main() -> None:
                 print(f"  - {err}")
             print_block("stdout", result["stdout"])
             print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_c3_edge_case_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
 
     for result in run_parse_contract_tests():
         if result["ok"]:
