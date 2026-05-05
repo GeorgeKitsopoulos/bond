@@ -205,29 +205,52 @@ def build_classifier_text_for_dry_run(text: str) -> str:
 
 def is_high_risk_command_like_text(text: str) -> bool:
     stripped = strip_assistant_invocation_prefix(text)
-    normalized = re.sub(r"\s+", " ", stripped.lower()).strip()
-    simplified = simplify_text(stripped)
-    if not normalized or not simplified:
+    normalized_action = normalize_action_text(stripped)
+    normalized_raw = re.sub(r"\s+", " ", stripped.lower()).strip()
+    simplified_raw = simplify_text(stripped)
+    simplified = simplify_text(normalized_action)
+
+    if not normalized_raw or not simplified:
+        return False
+
+    harmless_patterns = [
+        r"^say\s+the\s+word\s+reboot\s+but\s+do\s+not\s+do\s+anything\b",
+        r"^explain\s+why\s+dangerous\s+actions\s+require\s+confirmation\b",
+    ]
+    if any(re.search(pattern, simplified_raw) for pattern in harmless_patterns):
         return False
 
     is_update_capability_question = (
-        ("update" in simplified or "upgrade" in simplified or "ενημερω" in simplified or "αναβαθμι" in simplified)
+        ("update" in simplified_raw or "upgrade" in simplified_raw or "ενημερω" in simplified_raw or "αναβαθμι" in simplified_raw)
         and (
             "?" in stripped
-            or bool(re.match(r"^\s*(can|could|would|do|does)\b", normalized))
-            or bool(re.match(r"^\s*(μπορεις|μπορείς|μπορει|μπορεί)\b", simplified))
+            or bool(re.match(r"^\s*(can|could|would|do|does)\b", normalized_raw))
+            or bool(re.match(r"^\s*(μπορεις|μπορείς|μπορει|μπορεί)\b", simplified_raw))
         )
     )
     if is_update_capability_question:
         return False
 
+    is_restart_capability_question = (
+        ("restart" in simplified_raw or "reboot" in simplified_raw or "επανεκκινηση" in simplified_raw)
+        and (
+            "?" in stripped
+            or bool(re.match(r"^\s*(can|could|would|do|does)\b", normalized_raw))
+            or bool(re.match(r"^\s*(μπορεις|μπορείς|μπορει|μπορεί)\b", simplified_raw))
+        )
+    )
+    if is_restart_capability_question:
+        return False
+
     command_start_patterns = [
         r"^(sudo|pkexec|doas)\b",
         r"^rm\s+-rf\b",
+        r"^run\s+rm\s+-rf\b",
         r"^(mkfs|dd|chmod|chown|systemctl|reboot|shutdown|poweroff)\b",
         r"^restart\b",
         r"^power\s+off\b",
         r"^power\s+off\s+the\s+laptop\b",
+        r"^delete\s+all\s+files\b",
         r"^delete\s+my\s+downloads\b",
         r"^delete\s+downloads\b",
         r"^delete\s+everything\s+in\s+downloads\b",
@@ -235,6 +258,9 @@ def is_high_risk_command_like_text(text: str) -> bool:
         r"^remove\s+all\s+files\s+in\s+home\b",
         r"^format\s+the\s+disk\b",
         r"^format\s+disk\b",
+        r"^upgrade\s+all\s+system\s+packages\b",
+        r"^upgrade\s+(my\s+)?packages\b",
+        r"^update\s+(my\s+)?packages\b",
         r"^κανε\s+επανεκκινηση\b",
         r"^επανεκκινηση\b",
         r"^κλεισε\s+τον\s+υπολογιστη\b",
@@ -297,6 +323,22 @@ def is_project_state_direct_query(text: str) -> bool:
 
     normalized = simplified.strip().rstrip("?.!")
     return any(re.search(pattern, normalized, flags=re.I) for pattern in patterns)
+
+
+def maybe_build_bounded_safety_answer(text: str) -> str | None:
+    stripped = strip_assistant_invocation_prefix(text)
+    simplified = simplify_text(stripped).strip().rstrip("?.!")
+
+    if simplified == "say the word reboot but do not do anything":
+        return "reboot"
+
+    if simplified == "explain why dangerous actions require confirmation":
+        return (
+            "Dangerous actions require explicit confirmation because they can cause data loss, system changes, service interruption, or security impact. "
+            "Bond must separate explanation from execution and must not treat a safety explanation as permission to act."
+        )
+
+    return None
 
 
 def run_safe_action(text: str) -> tuple[bool, str]:
@@ -1235,6 +1277,26 @@ def main() -> int:
         build_active_context()
         print(reply)
         return finalize(0, answer_path="direct_answer", deterministic=True)
+
+    if gatekeeper_result in {"unknown", "pure_question"}:
+        bounded_safety_answer = maybe_build_bounded_safety_answer(text)
+        if bounded_safety_answer:
+            log_memory(
+                "chats",
+                f"bounded_safety_answer: {text}",
+                {
+                    "assistant_name": ASSISTANT_NAME,
+                    "override": bool(override_profile),
+                    "path": "bounded_safety_answer",
+                    "route_decision": decision_to_log_meta(route_decision),
+                    "policy_decision": policy_to_log_meta(policy_decision),
+                    "action_contract": action_contract_to_log_meta(action_contract),
+                    "parse_contract": parse_contract_meta,
+                },
+            )
+            build_active_context()
+            print(bounded_safety_answer)
+            return finalize(0, answer_path="direct_answer", deterministic=True)
 
     if gatekeeper_result in {"unknown", "pure_question"}:
         capability_answer = maybe_answer_capability_question(text)

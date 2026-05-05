@@ -186,6 +186,12 @@ _HIGH_RISK_SIMPLIFIED_PHRASES = [
 
 _UPDATE_ACTION_PHRASES = [
     "update packages",
+    "update my packages",
+    "upgrade packages",
+    "upgrade my packages",
+    "upgrade all system packages",
+    "apply updates",
+    "install updates",
 ]
 
 _RESTART_ACTION_PHRASES = [

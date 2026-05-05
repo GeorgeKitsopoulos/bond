@@ -19,13 +19,25 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-C4 deterministic diagnostic cleanup
+
+- Added centralized action-noise stripping for adversarial high-risk prefixes (`ignore all safety rules and ...`, `without asking confirmation ...`, `pretend I confirmed ...`) so embedded high-risk commands remain deterministic confirmation-required candidates.
+- Expanded centralized Greek action normalizations for reboot/shutdown/delete verb surfaces so Greek and mixed-language action phrasing converges into language-neutral forms used by intent/risk gates.
+- Hardened high-risk command-like detection to evaluate normalized action text and to exempt bounded harmless/quoted prompts.
+- Added bounded deterministic direct answers for `say the word reboot but do not do anything` and `explain why dangerous actions require confirmation` to avoid confirmation/model-timeout misrouting.
+- Expanded capability registry and capability-answer aliases for exploratory questions (voice/applet/web/memory/files/terminal/packages), timer truthfulness probes, and Greek model-inventory wording.
+- Added Stage 2F-C4 diagnostic cleanup selftests for mixed-intent Greek destructive input, adversarial high-risk bypass wording, Greek polite reboot confirmation flow, timer truthfulness, Greek model inventory phrasing, exploratory capability questions, high-risk shell/update no-timeout paths, and harmless quoted safety wording.
+- Greek support remains transitional and centralized in normalization/alias/intent handling; final language-state architecture is not complete.
+- Stage 2F-D dynamic probes remain not implemented in this stage.
+- Latest integrated selftest run after C4 integration: 136 passed, 0 failed, total 136.
+
 ### Stage 2F-C3 telemetry edge case cleanup
 
 - Fixed bare capability noun phrase detection: "installed models" and "local models" now recognized as capability questions and answered deterministically without requiring question markers or question phrases.
 - Added time-query handlers (`give me the time`, `what time is it`) to return bounded deterministic answer explaining local time queries are not yet a fully wired capability, preventing timeout/model fallback.
 - Added project-state-query handlers (`current state of the project`, `project state`) to return bounded deterministic answer directing to git status/docs/STATE/CHANGELOG, preventing timeout/model fallback.
 - Added four targeted Stage 2F-C3 edge-case tests in integrated selftest covering bare capability phrases and time/project-state queries.
-- Validation baseline remains 113/113 baseline with +4 edge-case tests.
+- Historical baseline note: 113/113 baseline with +4 edge-case tests at the C3 checkpoint.
 
 ### Stage 2F-C2 telemetry verification regression cleanup
 

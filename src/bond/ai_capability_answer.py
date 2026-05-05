@@ -36,6 +36,11 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "terminal query",
         "command output",
         "shell information",
+        "terminal commands",
+        "run terminal commands",
+        "terminal command",
+        "run commands",
+        "shell commands",
     ),
     "query_directory": (
         "directory query",
@@ -57,6 +62,14 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "local models",
         "use qwen",
         "nomic embed text",
+        "τι μοντέλα έχεις",
+        "τι μοντελα εχεις",
+        "ποια μοντέλα έχεις",
+        "ποια μοντελα εχεις",
+        "τι μοντέλο χρησιμοποιείς",
+        "τι μοντελο χρησιμοποιεις",
+        "ποιο μοντέλο χρησιμοποιείς",
+        "ποιο μοντελο χρησιμοποιεις",
     ),
     "timer": (
         "timer",
@@ -70,6 +83,10 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "are timers a thing",
         "reminders work",
         "υπενθυμίσεις",
+        "timers are implemented",
+        "tell me timers are implemented",
+        "timer implemented",
+        "timer implementation",
     ),
     "clipboard": (
         "clipboard",
@@ -182,6 +199,52 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "ενημερωσεις",
         "ενημερώσεις",
         "privileged maintenance",
+        "update my packages",
+    ),
+    "voice_interface": (
+        "voice",
+        "voice interface",
+        "voice chat",
+        "talk with voice",
+        "speak with voice",
+        "microphone",
+    ),
+    "desktop_applet": (
+        "tray applet",
+        "desktop applet",
+        "cinnamon applet",
+        "applet",
+        "tray icon",
+    ),
+    "web_search": (
+        "web search",
+        "search the web",
+        "search online",
+        "browser search",
+        "open a browser and search the web",
+        "browser and search the web",
+    ),
+    "persistent_memory": (
+        "remember things between chats",
+        "remember between chats",
+        "memory between chats",
+        "persistent memory",
+        "long term memory",
+        "do you remember things between chats",
+    ),
+    "local_file_read": (
+        "read local files",
+        "local files",
+        "read files",
+        "inspect local files",
+        "file reading",
+    ),
+    "package_installation": (
+        "install packages",
+        "install package",
+        "apt install",
+        "package installation",
+        "can you install packages",
     ),
     "inspect_storage_hygiene": (
         "storage hygiene",
@@ -258,10 +321,16 @@ _GENERAL_QUESTION_PHRASES = (
 
 _SPECIFIC_QUESTION_PHRASES = (
     "can you",
+    "do you",
+    "do you have",
+    "do you remember",
     "are you able to",
     "do you support",
     "can bond",
     "does bond support",
+    "tell me",
+    "claim that",
+    "lie and say",
     "μπορεις να",
     "υποστηριζεις",
     "μπορει ο bond",
@@ -288,7 +357,12 @@ _SPECIFIC_QUESTION_PHRASES = (
 
 _ASSERTIVE_CAPABILITY_PROMPT_PHRASES = (
     "say that",
+    "tell me",
     "pretend",
+    "implemented",
+    "even if they are not",
+    "lie and say",
+    "claim that",
     "correct",
     "or not",
     "are timers a thing",
@@ -403,6 +477,22 @@ def _specific_status_note(name: str, status: str) -> str:
 
     if name == "apply_privileged_system_updates":
         extra = "Bond cannot currently apply system updates and must never silently run upgrades."
+        return f"{note} {extra}".strip()
+
+    if name == "package_installation":
+        extra = "Bond cannot currently install packages and must never silently run package-manager commands."
+        return f"{note} {extra}".strip()
+
+    if name == "web_search":
+        extra = "Web search is not currently wired."
+        return f"{note} {extra}".strip()
+
+    if name == "voice_interface":
+        extra = "Voice input/output is not currently wired."
+        return f"{note} {extra}".strip()
+
+    if name == "desktop_applet":
+        extra = "The desktop/tray applet is not currently wired."
         return f"{note} {extra}".strip()
     return note
 

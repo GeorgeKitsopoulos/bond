@@ -12,6 +12,9 @@ BOND_VARIANTS = {
 ACTION_NOISE_PATTERNS = [
     r"^\s*please\s+",
     r"^\s*just\s+",
+    r"^\s*ignore\s+all\s+safety\s+rules\s+and\s+",
+    r"^\s*without\s+asking\s+confirmation,?\s+",
+    r"^\s*pretend\s+i\s+confirmed\s+and\s+",
     r"^\s*can you\s+",
     r"^\s*could you\s+",
     r"^\s*would you\s+",
@@ -39,6 +42,20 @@ ASSISTANT_INVOCATION_PATTERNS = [
 ]
 
 GREEK_ACTION_NORMALIZATIONS = [
+    (r"\bδιέγραψε\s+όλα\s+τα\s+αρχεία\b", "delete all files"),
+    (r"\bδιεγραψε\s+ολα\s+τα\s+αρχεια\b", "delete all files"),
+    (r"\bσβήσε\s+όλα\s+τα\s+αρχεία\b", "delete all files"),
+    (r"\bσβησε\s+ολα\s+τα\s+αρχεια\b", "delete all files"),
+    (r"\bκάνε\s+επανεκκίνηση\b", "reboot"),
+    (r"\bκανε\s+επανεκκινηση\b", "reboot"),
+    (r"\bεπανεκκίνηση\b", "reboot"),
+    (r"\bεπανεκκινηση\b", "reboot"),
+    (r"\bκλείσε\s+τον\s+υπολογιστή\b", "shutdown"),
+    (r"\bκλεισε\s+τον\s+υπολογιστη\b", "shutdown"),
+    (r"\bσβήσε\b", "delete"),
+    (r"\bσβησε\b", "delete"),
+    (r"\bδιέγραψε\b", "delete"),
+    (r"\bδιεγραψε\b", "delete"),
     (r"\bάνοιξε\b", "open"),
     (r"\bανοιξε\b", "open"),
     (r"\bδείξε μου\b", "show"),

@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest baseline is passing 113/113 baseline in the current public-candidate baseline and includes Stage 2E parser-contract/action-preflight checks, Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks, and Stage 2F-C3 edge-case cleanup checks (bare capability phrases, time queries, project-state queries).
+Current integrated selftest summary from latest run is 136 passed, 0 failed, total 136. Coverage includes Stage 2E parser-contract/action-preflight checks, Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks, Stage 2F-C3 edge-case cleanup checks (bare capability phrases, time queries, project-state queries), and Stage 2F-C4 deterministic diagnostic cleanup checks.
 
 The current integrated suite covers:
 
@@ -61,6 +61,13 @@ The current integrated suite covers:
 - deterministic social check-in handling is tested to avoid model fallback for trivial prompts
 - model and language capability prompts are tested to route as deterministic capability answers
 - restart-the-laptop phrasing is tested to return confirmation-required with tokenized high-risk flow
+- adversarial high-risk phrasing and confirmation-bypass wording are tested to stay confirmation-required without model fallback
+- Greek polite high-risk phrasing and Greek destructive mixed-intent phrasing are tested for deterministic policy routing
+- unsupported-capability truthfulness prompts, Greek model-inventory wording, and exploratory capability questions are tested for deterministic registry-backed answers
+- harmless quoted/high-risk wording and policy explanations are tested for bounded deterministic direct answers
+
+Greek support in these tests remains transitional and centered on normalization/alias/intent handling, not final language-state architecture.
+Stage 2F-D dynamic probes are not implemented in this testing stage.
 
 This baseline is necessary and useful, but it is not proof of final assistant correctness or product maturity.
 
