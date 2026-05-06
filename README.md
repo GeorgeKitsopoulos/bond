@@ -6,12 +6,13 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 
 - Bond is under active development.
 - The current validated baseline is Stage 2E plus P0 cleanup work.
-- Current documented validation baseline: compile passes and integrated selftest currently reports 154/154 after Stage 2F-C5 strict timeout and diagnostic-expectation cleanup integration (see docs/TESTING.md for exact summary).
+- Current documented validation baseline: compile passes and integrated selftest currently reports 157/157 after the Stage 2F-C5 follow-up strict timeout cleanup (see docs/TESTING.md for exact summary).
 - Stage 2F-C hardens deterministic guardrails from telemetry findings (assistant-prefix normalization, mixed-intent handling, high-risk command shaping, and capability alias coverage) while keeping telemetry opt-in and answers telemetry-free by default. 
 - Stage 2F-C2 follows with a small regression cleanup for model/language capability prompts, restart-laptop confirmation shaping, and deterministic social check-in handling.
 - Stage 2F-C3 addresses remaining telemetry edge cases: bare capability noun phrases ("installed models", "local models") now deterministically answer as capability questions, and time/project-state queries return bounded deterministic answers instead of timing out.
 - Stage 2F-C4 deterministic diagnostic cleanup adds centralized Greek/action normalization and capability alias hardening for adversarial high-risk phrasing, Greek polite high-risk commands, Greek destructive mixed-intent classification, unsupported-capability truthfulness prompts, Greek model-inventory wording, and exploratory capability questions.
 - Stage 2F-C5 strict timeout and diagnostic-expectation cleanup hardens deterministic handling for Greek voice/memory capability questions, unsupported reminder/file/email request surfaces, high-risk capability-question wording, and social/name diagnostic expectation alignment.
+- Stage 2F-C5 follow-up strict timeout cleanup closes the three remaining strict broad-regression timeout edges: Greek "can you answer in Greek?" language-policy wording, unsupported create-folder requests, and unsupported write-file requests.
 - Stage 2F-C5 keeps `notify me to stretch` as a current bounded action dry-run path and does not reclassify it as unsupported.
 - Stage 2F-C5 keeps `απάντα ελληνικά` as a registry-backed language-policy capability answer (`apply_response_language_policy`), not proof of complete Greek language-state architecture.
 - Greek support remains transitional and centered on normalization/alias/intent handling; final language-state architecture is not complete.

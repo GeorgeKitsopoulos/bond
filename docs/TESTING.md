@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is 154 passed, 0 failed, total 154. Coverage includes Stage 2E parser-contract/action-preflight checks, Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks, Stage 2F-C3 edge-case cleanup checks (bare capability phrases, time queries, project-state queries), Stage 2F-C4 deterministic diagnostic cleanup checks, and Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks.
+Current integrated selftest summary from latest run is 157 passed, 0 failed, total 157. Coverage includes Stage 2E parser-contract/action-preflight checks, Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks, Stage 2F-C3 edge-case cleanup checks (bare capability phrases, time queries, project-state queries), Stage 2F-C4 deterministic diagnostic cleanup checks, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, and the Stage 2F-C5 follow-up strict-timeout cleanup checks.
 
 The current integrated suite covers:
 
@@ -71,6 +71,8 @@ The current integrated suite covers:
 - social/name diagnostics are tested for expected deterministic alignment (`how are you?` includes Bond in direct answer; `what is your name?` remains fact answer)
 - `notify me to stretch` is tested to remain the current bounded action dry-run path
 - `απάντα ελληνικά` is tested to remain registry-backed `apply_response_language_policy` capability-answer behavior and is not treated as proof of complete Greek language-state architecture
+- Greek "can you answer in Greek?" wording is tested to route as the same bounded language-policy capability answer rather than timing out
+- unsupported create-folder and write-file side-effect requests are tested to reject deterministically with `action_not_parsed`
 
 Greek support in these tests remains transitional and centered on normalization/alias/intent handling, not final language-state architecture.
 Stage 2F-D dynamic probes are not implemented in this testing stage.

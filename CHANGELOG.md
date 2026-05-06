@@ -19,6 +19,14 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-C5 follow-up strict timeout cleanup
+
+- Added language-policy capability aliases for Greek and English "can you answer/respond in Greek" wording so those forms stay deterministic capability answers instead of timing out.
+- Expanded unsupported side-effect action-start detection for create-folder and write-file phrasing so those requests fail closed as deterministic parser-contract rejects.
+- Extended the existing Stage 2F-C5 integrated selftests with the three follow-up timeout-edge cases.
+- This follow-up does not implement Stage 2F-D dynamic probes, full Greek language-state architecture, file creation, or general observe/model-chat timeout handling.
+- Latest integrated selftest run after the C5 follow-up: 157 passed, 0 failed, total 157.
+
 ### Stage 2F-C5 strict timeout and diagnostic-expectation cleanup
 
 - Updated deterministic social check-in wording so `how are you?` responses include `Bond` while remaining direct deterministic answers.

@@ -2004,6 +2004,7 @@ def run_stage2f_c5_timeout_and_expectation_cleanup_tests() -> list[dict]:
         ("stage2f_c5_package_updates_capability", "do you support package updates?", "apply_privileged_system_updates"),
         ("stage2f_c5_greek_voice_capability", "Μποντ έχεις φωνή;", "voice_interface"),
         ("stage2f_c5_greek_memory_capability", "Μποντ έχεις μνήμη;", "persistent_memory"),
+        ("stage2f_c5_greek_can_answer_language_policy", "μπορείς να απαντήσεις στα ελληνικά;", "apply_response_language_policy"),
         ("stage2f_c5_reminder_capability", "remind me in 5 minutes", "timer"),
     ]
 
@@ -2026,6 +2027,8 @@ def run_stage2f_c5_timeout_and_expectation_cleanup_tests() -> list[dict]:
         ("stage2f_c5_open_nonexistent_target_reject", "open the secret folder that does not exist"),
         ("stage2f_c5_create_file_reject", "create a file named test.txt"),
         ("stage2f_c5_send_email_reject", "send an email to George"),
+        ("stage2f_c5_create_folder_reject", "create folder called test"),
+        ("stage2f_c5_write_file_reject", "write a file in Downloads"),
     ]
 
     for name, text in reject_cases:
