@@ -76,6 +76,10 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "timers",
         "reminder",
         "reminders",
+        "remind me",
+        "remind me in",
+        "set a reminder",
+        "set reminder",
         "χρονομετρο",
         "υπενθυμιση",
         "υπενθυμισεις",
@@ -200,6 +204,9 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "ενημερώσεις",
         "privileged maintenance",
         "update my packages",
+        "can you update my packages",
+        "package updates",
+        "do you support package updates",
     ),
     "voice_interface": (
         "voice",
@@ -208,6 +215,12 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "talk with voice",
         "speak with voice",
         "microphone",
+        "φωνη",
+        "φωνή",
+        "εχεις φωνη",
+        "έχεις φωνή",
+        "μιλας με φωνη",
+        "μιλάς με φωνή",
     ),
     "desktop_applet": (
         "tray applet",
@@ -231,6 +244,12 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "persistent memory",
         "long term memory",
         "do you remember things between chats",
+        "μνημη",
+        "μνήμη",
+        "εχεις μνημη",
+        "έχεις μνήμη",
+        "θυμασαι",
+        "θυμάσαι",
     ),
     "local_file_read": (
         "read local files",
@@ -245,6 +264,22 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "apt install",
         "package installation",
         "can you install packages",
+    ),
+    "dangerous_action_confirmation": (
+        "restart the laptop",
+        "restart laptop",
+        "reboot the computer",
+        "reboot computer",
+        "shutdown the system",
+        "shutdown system",
+        "delete files",
+        "delete file",
+        "delete my files",
+        "run rm -rf",
+        "rm -rf",
+        "destructive actions",
+        "dangerous actions",
+        "high risk actions",
     ),
     "inspect_storage_hygiene": (
         "storage hygiene",
@@ -481,6 +516,10 @@ def _specific_status_note(name: str, status: str) -> str:
 
     if name == "package_installation":
         extra = "Bond cannot currently install packages and must never silently run package-manager commands."
+        return f"{note} {extra}".strip()
+
+    if name == "dangerous_action_confirmation":
+        extra = "Bond can require explicit confirmation for recognized high-risk requests, but this is not silent execution or full privileged system control."
         return f"{note} {extra}".strip()
 
     if name == "web_search":

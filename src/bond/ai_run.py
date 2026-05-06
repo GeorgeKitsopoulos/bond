@@ -26,7 +26,7 @@ from ai_facts import (
     detect_fact_query,
     extract_model_from_profile,
 )
-from ai_intent import classify_request
+from ai_intent import classify_request, looks_like_capability_question_surface
 from ai_linguistics import normalize_action_text, simplify_text, strip_assistant_invocation_prefix
 from ai_action_contract import (
     ACTION_CHAT,
@@ -218,6 +218,9 @@ def is_high_risk_command_like_text(text: str) -> bool:
         r"^explain\s+why\s+dangerous\s+actions\s+require\s+confirmation\b",
     ]
     if any(re.search(pattern, simplified_raw) for pattern in harmless_patterns):
+        return False
+
+    if looks_like_capability_question_surface(stripped):
         return False
 
     is_update_capability_question = (
@@ -1222,7 +1225,7 @@ def main() -> int:
         return finalize(3, answer_path="action_execute", deterministic=True, error_kind="action_execution_failed")
 
     if gatekeeper_result in {"unknown", "pure_question"} and is_social_checkin_text(text):
-        reply = "Operational and ready. What do you need?"
+        reply = "Bond is operational and ready. What do you need?"
         log_memory(
             "chats",
             f"direct_social_answer: {text}",

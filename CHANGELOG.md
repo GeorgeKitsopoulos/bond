@@ -19,6 +19,20 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-C5 strict timeout and diagnostic-expectation cleanup
+
+- Updated deterministic social check-in wording so `how are you?` responses include `Bond` while remaining direct deterministic answers.
+- Added capability-question surface guarding for high-risk and capability phrasing to keep question forms (update/restart/shutdown/delete/rm-rf/Greek voice/memory) from being misclassified as executable action requests.
+- Added unsupported side-effect action starts (`remind`, `create a file`, `send an email`) in action-start detection to keep deterministic bounded handling and avoid model fallback.
+- Added parser rejection for fake/nonexistent open targets containing `does not exist` markers.
+- Added `dangerous_action_confirmation` capability registry entry and capability-answer aliases/status-note wiring for high-risk confirmation semantics.
+- Expanded capability aliases for timer reminder wording, Greek voice/memory wording, and package-update question forms.
+- Added Stage 2F-C5 integrated selftests covering strict timeout cleanup, capability-question wording, reject paths, and diagnostic expectation alignment.
+- `notify me to stretch` remains a current bounded action dry-run path.
+- `απάντα ελληνικά` remains a registry-backed `apply_response_language_policy` capability answer and is not treated as complete Greek language-state architecture.
+- Stage 2F-D dynamic probes remain not implemented in this stage.
+- Latest integrated selftest run after C5 integration: 154 passed, 0 failed, total 154.
+
 ### Stage 2F-C4 deterministic diagnostic cleanup
 
 - Added centralized action-noise stripping for adversarial high-risk prefixes (`ignore all safety rules and ...`, `without asking confirmation ...`, `pretend I confirmed ...`) so embedded high-risk commands remain deterministic confirmation-required candidates.

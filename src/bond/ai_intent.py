@@ -77,6 +77,9 @@ ACTION_START_PATTERNS = [
     r"^\s*go to\b",
     r"^\s*take me to\b",
     r"^\s*notify\b",
+    r"^\s*remind\b",
+    r"^\s*create\s+(a\s+)?file\b",
+    r"^\s*send\s+(an\s+)?email\b",
     r"^\s*set\b.*\bwallpaper\b",
     r"^\s*change\b.*\bwallpaper\b",
     r"^\s*open\s+https?://",
@@ -236,6 +239,44 @@ MIXED_QUESTION_CLAUSE_PATTERNS = [
 ]
 
 
+def looks_like_capability_question_surface(text: str) -> bool:
+    stripped = strip_assistant_invocation_prefix(text)
+    raw = simplify_text(stripped)
+    if not raw:
+        return False
+
+    question_like = (
+        "?" in stripped
+        or bool(re.match(r"^\s*(can|could|would|do|does)\b", raw))
+        or bool(re.match(r"^\s*(μπορεις|μπορείς|μπορει|μπορεί)\b", raw))
+        or bool(re.match(r"^\s*(εχεις|έχεις)\b", raw))
+    )
+    if not question_like:
+        return False
+
+    capability_surface_patterns = [
+        r"\bupdate\s+my\s+packages\b",
+        r"\bupdate\s+packages\b",
+        r"\bpackage\s+updates\b",
+        r"\binstall\s+packages\b",
+        r"\brestart\s+the\s+laptop\b",
+        r"\brestart\b",
+        r"\breboot\b",
+        r"\bshutdown\s+the\s+system\b",
+        r"\bshutdown\b",
+        r"\bdelete\s+files\b",
+        r"\bdelete\b",
+        r"\brm\s+-rf\b",
+        r"\brun\s+rm\s+-rf\b",
+        r"\bφωνη\b",
+        r"\bφωνή\b",
+        r"\bμνημη\b",
+        r"\bμνήμη\b",
+    ]
+
+    return any(re.search(pattern, raw) for pattern in capability_surface_patterns)
+
+
 def looks_like_question_request(text: str) -> bool:
     stripped = strip_assistant_invocation_prefix(text)
     t = simplify_text(stripped)
@@ -273,6 +314,9 @@ def looks_like_action_request(text: str) -> bool:
     if detect_fact_query(stripped):
         return False
 
+    if looks_like_capability_question_surface(stripped):
+        return False
+
     normalized = normalize_action_text(stripped)
     t = simplify_text(normalized)
     if not t:
@@ -290,6 +334,9 @@ def looks_like_action_request(text: str) -> bool:
     starts_like_action = _starts_like_action(t)
     has_target_hint = _has_action_target_hint(t)
     starts_like_high_risk_action = any(re.search(pattern, t) for pattern in HIGH_RISK_ACTION_START_PATTERNS)
+
+    if starts_like_action and re.search(r"^\s*create\s+(a\s+)?file\b", t):
+        return True
 
     if starts_like_high_risk_action:
         return True

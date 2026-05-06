@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is 136 passed, 0 failed, total 136. Coverage includes Stage 2E parser-contract/action-preflight checks, Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks, Stage 2F-C3 edge-case cleanup checks (bare capability phrases, time queries, project-state queries), and Stage 2F-C4 deterministic diagnostic cleanup checks.
+Current integrated selftest summary from latest run is 154 passed, 0 failed, total 154. Coverage includes Stage 2E parser-contract/action-preflight checks, Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks, Stage 2F-C3 edge-case cleanup checks (bare capability phrases, time queries, project-state queries), Stage 2F-C4 deterministic diagnostic cleanup checks, and Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks.
 
 The current integrated suite covers:
 
@@ -65,9 +65,16 @@ The current integrated suite covers:
 - Greek polite high-risk phrasing and Greek destructive mixed-intent phrasing are tested for deterministic policy routing
 - unsupported-capability truthfulness prompts, Greek model-inventory wording, and exploratory capability questions are tested for deterministic registry-backed answers
 - harmless quoted/high-risk wording and policy explanations are tested for bounded deterministic direct answers
+- Greek voice/memory capability-question forms are tested to remain deterministic capability answers
+- unsupported reminder/file/email request surfaces are tested to avoid model-timeout fallback (with reminder as capability answer and unsupported file/email requests as deterministic rejects)
+- high-risk capability-question wording is tested to stay capability answers while high-risk imperatives remain confirmation-required
+- social/name diagnostics are tested for expected deterministic alignment (`how are you?` includes Bond in direct answer; `what is your name?` remains fact answer)
+- `notify me to stretch` is tested to remain the current bounded action dry-run path
+- `απάντα ελληνικά` is tested to remain registry-backed `apply_response_language_policy` capability-answer behavior and is not treated as proof of complete Greek language-state architecture
 
 Greek support in these tests remains transitional and centered on normalization/alias/intent handling, not final language-state architecture.
 Stage 2F-D dynamic probes are not implemented in this testing stage.
+These C5 checks are strict deterministic guardrails and do not claim that general chat/model timeout behavior is solved.
 
 This baseline is necessary and useful, but it is not proof of final assistant correctness or product maturity.
 

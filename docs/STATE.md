@@ -90,11 +90,14 @@ P0F preparation update (current-doc reference cleanup):
 - Stage 2F-C2 regression cleanup complete/current: capability interception now runs after policy/action gating (with capability answers before fact answers), additional model/language capability aliases are covered, restart-the-laptop phrasing now follows confirmation-required high-risk handling, and trivial social check-ins avoid model fallback.
 - Stage 2F-C3 edge case cleanup complete/current: bare capability noun phrases ("installed models", "local models") are now recognized and answered deterministically without question markers; time queries and project-state queries return bounded deterministic answers instead of timing out on model fallback.
 - Stage 2F-C4 deterministic diagnostic cleanup integrated/current: deterministic handling is hardened for adversarial high-risk phrasing, Greek polite high-risk commands, Greek destructive mixed-intent classification, unsupported-capability truthfulness prompts, Greek model inventory wording, and exploratory capability questions.
+- Stage 2F-C5 strict timeout and diagnostic-expectation cleanup integrated/current: deterministic handling is hardened for Greek voice/memory capability-question forms, unsupported reminder/file/email request surfaces, high-risk capability-question wording, social-checkin wording expectations, and name-query answer-path expectations.
+- `notify me to stretch` remains a current bounded action dry-run path (not an unsupported capability).
+- `απάντα ελληνικά` remains a registry-backed language-policy capability answer (`apply_response_language_policy`) and is not evidence of complete Greek language-state architecture.
 - Greek support remains transitional and centralized in normalization/alias/intent handling; final language-state architecture is not complete.
-- Stage 2F-D dynamic probes are not implemented in this stage and remain next only after C4 validation is fully green.
+- Stage 2F-D dynamic probes are not implemented in this stage and remain next only after C5 validation is fully green.
 - Temporary dev/test telemetry exists behind `BOND_DEV_TELEMETRY=1`. It emits one JSON line to stderr with elapsed_ms and safe routing/decision metadata for testing. Normal Bond answers remain telemetry-free by default, and final product behavior must not include telemetry in assistant answers.
 - capability-registry honesty tests now verify planned/unsupported capabilities are not reported as available
-- current integrated selftest summary from latest run: 136 passed, 0 failed, total 136
+- current integrated selftest summary from latest run: 154 passed, 0 failed, total 154
 ## Partial, open, or not implemented yet
 
 - no privileged execution lane implementation

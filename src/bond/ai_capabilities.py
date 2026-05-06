@@ -349,6 +349,22 @@ _REGISTRY_ENTRIES: tuple[Capability, ...] = (
         notes="Blocked in the current phase. Bond must not install packages or run package-manager commands silently.",
     ),
     _cap(
+        name="dangerous_action_confirmation",
+        capability_class=CLASS_PRIVILEGED_LANE,
+        status=STATUS_PARTIAL,
+        execution_mode=EXECUTION_GUARDED_ACTION,
+        risk_level=RISK_HIGH,
+        read_only=False,
+        rootless=False,
+        side_effects=(
+            "may require confirmation",
+            "may affect files, session state, or system state if ever executed",
+        ),
+        requires_confirmation=True,
+        needs_elevated_lane=True,
+        notes="Bond can deterministically identify some high-risk action requests and require explicit confirmation. This must not be described as silent execution or full privileged control.",
+    ),
+    _cap(
         name="describe_capabilities",
         capability_class=CLASS_INSPECTOR,
         status=STATUS_PARTIAL,

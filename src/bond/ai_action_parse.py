@@ -131,6 +131,13 @@ def parse_request(text: str) -> dict | None:
 
     target = normalize_target_phrase(raw_target)
 
+    unsupported_open_target_markers = {
+        "does not exist",
+        "secret folder that does not exist",
+    }
+    if verb in {"open", "show", "view", "edit"} and any(marker in target for marker in unsupported_open_target_markers):
+        return None
+
     if target in {"browser", "firefox", "web", "web browser"}:
         return {"intent": "open_browser"}
 

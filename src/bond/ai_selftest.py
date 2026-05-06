@@ -1942,6 +1942,148 @@ def run_stage2f_c4_diagnostic_cleanup_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_c5_timeout_and_expectation_cleanup_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(name: str, proc: subprocess.CompletedProcess, errors: list[str], cmd: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": proc.returncode,
+                "stdout": (proc.stdout or "").strip(),
+                "stderr": (proc.stderr or "").strip(),
+                "errors": errors,
+                "cmd": cmd,
+            }
+        )
+
+    def _run(text: str) -> tuple[list[str], subprocess.CompletedProcess, dict | None, dict | None]:
+        cmd = ["python3", str(AI_RUN), text]
+        proc = run_cmd(cmd, {"BOND_DEV_TELEMETRY": "1", "BOND_ACTION_DRY_RUN": "1"})
+        payload = parse_stdout_json(proc.stdout or "")
+        telemetry, telemetry_errors = _parse_telemetry_record(proc.stderr or "")
+        return cmd, proc, payload, telemetry if not telemetry_errors else None
+
+    def _base_telemetry_errors(telemetry: dict | None) -> list[str]:
+        errors: list[str] = []
+        if not isinstance(telemetry, dict):
+            errors.append("expected one parseable telemetry record")
+            return errors
+        if telemetry.get("deterministic") is not True:
+            errors.append("expected telemetry deterministic=true")
+        if telemetry.get("answer_path") == "model_answer":
+            errors.append("must not route to model_answer")
+        return errors
+
+    social_cases = [
+        ("stage2f_c5_social_checkin_bond_word", "how are you?"),
+        ("stage2f_c5_prefixed_social_checkin_bond_word", "hey Bond how are you?"),
+    ]
+    for name, text in social_cases:
+        cmd, proc, payload, telemetry = _run(text)
+        output = (proc.stdout or "").strip()
+        errors: list[str] = []
+        if proc.returncode != 0:
+            errors.append(f"expected exit 0, got {proc.returncode}")
+        if "Bond" not in output:
+            errors.append("expected social response to include Bond")
+        if "operational and ready" not in output.lower():
+            errors.append("expected operational and ready wording")
+        errors.extend(_base_telemetry_errors(telemetry))
+        if isinstance(telemetry, dict) and telemetry.get("answer_path") != "direct_answer":
+            errors.append(f"expected direct_answer, got {telemetry.get('answer_path')!r}")
+        _append(name, proc, errors, cmd)
+
+    capability_cases = [
+        ("stage2f_c5_can_update_packages_capability", "can you update my packages?", "apply_privileged_system_updates"),
+        ("stage2f_c5_can_restart_laptop_capability", "can you restart the laptop?", "dangerous_action_confirmation"),
+        ("stage2f_c5_can_shutdown_system_capability", "can you shutdown the system?", "dangerous_action_confirmation"),
+        ("stage2f_c5_can_delete_files_capability", "can you delete files?", "dangerous_action_confirmation"),
+        ("stage2f_c5_could_run_rm_rf_capability", "could you run rm -rf?", "dangerous_action_confirmation"),
+        ("stage2f_c5_package_updates_capability", "do you support package updates?", "apply_privileged_system_updates"),
+        ("stage2f_c5_greek_voice_capability", "Μποντ έχεις φωνή;", "voice_interface"),
+        ("stage2f_c5_greek_memory_capability", "Μποντ έχεις μνήμη;", "persistent_memory"),
+        ("stage2f_c5_reminder_capability", "remind me in 5 minutes", "timer"),
+    ]
+
+    for name, text, marker in capability_cases:
+        cmd, proc, payload, telemetry = _run(text)
+        output = (proc.stdout or "").strip()
+        errors = []
+        if proc.returncode != 0:
+            errors.append(f"expected exit 0, got {proc.returncode}")
+        if not output:
+            errors.append("expected non-empty capability answer")
+        if marker not in output:
+            errors.append(f"expected capability marker {marker!r} in output")
+        errors.extend(_base_telemetry_errors(telemetry))
+        if isinstance(telemetry, dict) and telemetry.get("answer_path") != "capability_answer":
+            errors.append(f"expected capability_answer, got {telemetry.get('answer_path')!r}")
+        _append(name, proc, errors, cmd)
+
+    reject_cases = [
+        ("stage2f_c5_open_nonexistent_target_reject", "open the secret folder that does not exist"),
+        ("stage2f_c5_create_file_reject", "create a file named test.txt"),
+        ("stage2f_c5_send_email_reject", "send an email to George"),
+    ]
+
+    for name, text in reject_cases:
+        cmd, proc, payload, telemetry = _run(text)
+        errors = []
+        if proc.returncode != 3:
+            errors.append(f"expected exit 3, got {proc.returncode}")
+        if not isinstance(payload, dict):
+            errors.append("expected JSON payload")
+        elif payload.get("error") != "action_not_parsed":
+            errors.append("expected error=action_not_parsed")
+        errors.extend(_base_telemetry_errors(telemetry))
+        if isinstance(telemetry, dict) and telemetry.get("answer_path") != "reject":
+            errors.append(f"expected reject, got {telemetry.get('answer_path')!r}")
+        _append(name, proc, errors, cmd)
+
+    name_cases = [
+        ("stage2f_c5_name_fact_answer", "what is your name?"),
+        ("stage2f_c5_prefixed_name_fact_answer", "ok bond what is your name?"),
+    ]
+
+    for name, text in name_cases:
+        cmd, proc, payload, telemetry = _run(text)
+        output = (proc.stdout or "").strip()
+        errors = []
+        if proc.returncode != 0:
+            errors.append(f"expected exit 0, got {proc.returncode}")
+        if output != "Bond":
+            errors.append(f"expected stdout Bond, got {output!r}")
+        errors.extend(_base_telemetry_errors(telemetry))
+        if isinstance(telemetry, dict) and telemetry.get("answer_path") != "fact_answer":
+            errors.append(f"expected fact_answer, got {telemetry.get('answer_path')!r}")
+        _append(name, proc, errors, cmd)
+
+    notify_cmd, notify_proc, notify_payload, notify_telemetry = _run("notify me to stretch")
+    notify_errors: list[str] = []
+    if notify_proc.returncode != 0:
+        notify_errors.append(f"expected exit 0 for current notify dry-run, got {notify_proc.returncode}")
+    notify_errors.extend(_base_telemetry_errors(notify_telemetry))
+    if isinstance(notify_telemetry, dict) and notify_telemetry.get("answer_path") != "action_dry_run":
+        notify_errors.append(f"expected notify me to stretch to remain action_dry_run, got {notify_telemetry.get('answer_path')!r}")
+    _append("stage2f_c5_notify_to_stretch_remains_dry_run", notify_proc, notify_errors, notify_cmd)
+
+    language_cmd, language_proc, language_payload, language_telemetry = _run("απάντα ελληνικά")
+    language_output = (language_proc.stdout or "").strip()
+    language_errors: list[str] = []
+    if language_proc.returncode != 0:
+        language_errors.append(f"expected exit 0, got {language_proc.returncode}")
+    if "apply_response_language_policy" not in language_output:
+        language_errors.append("expected apply_response_language_policy capability marker")
+    language_errors.extend(_base_telemetry_errors(language_telemetry))
+    if isinstance(language_telemetry, dict) and language_telemetry.get("answer_path") != "capability_answer":
+        language_errors.append(f"expected capability_answer, got {language_telemetry.get('answer_path')!r}")
+    _append("stage2f_c5_greek_language_policy_remains_capability_answer", language_proc, language_errors, language_cmd)
+
+    return results
+
+
 def run_parse_contract_tests() -> list[dict]:
     results: list[dict] = []
 
@@ -3012,6 +3154,18 @@ def main() -> None:
                 print(f"  - {err}")
 
     for result in run_stage2f_c4_diagnostic_cleanup_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_c5_timeout_and_expectation_cleanup_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")
