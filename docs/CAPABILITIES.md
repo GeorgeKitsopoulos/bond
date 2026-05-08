@@ -167,6 +167,29 @@ Initial capabilities:
     This is not broad dynamic assistant capability discovery.
     Planned/blocked/unsupported capabilities remain unavailable.
 
+- name: describe_maintenance_readiness
+  class: inspector
+  status: partial
+  execution_mode: deterministic_probe
+  risk_level: low
+  read_only: true
+  required_tools: [host_baseline, session_baseline, tool_inventory, model_truth]
+  notes: |
+    Read-only readiness report only.
+    Uses existing read-only probes only.
+    This does not fix anything.
+    This does not install packages.
+    This does not write files.
+    This does not delete files.
+    This does not restart services.
+    This does not authorize execution.
+    This does not inspect real package freshness, real logs, or real storage usage.
+    `inspect_package_update_status`, `inspect_storage_hygiene`,
+    `inspect_boot_and_service_health`, `generate_periodic_health_report`,
+    `present_maintenance_dashboard`, and `apply_privileged_system_updates`
+    remain planned/unavailable.
+    Planned/blocked/unsupported capabilities remain unavailable.
+
 - name: preview_action
   class: inspector
   status: planned

@@ -148,7 +148,10 @@ Current checkpoint note:
 - Stage 2F-D-D adds bounded explicit context-capability discovery for explicit context questions using existing read-only probes only.
 - Stage 2F-E-A completes a deterministic classifier boundary between capability-question detection and capability answer generation.
 - Stage 2F-E-B completes the transitional linguistic intent normalization contract.
-- Stage 2F-E-C read-only maintenance/readiness report remains the next ordered step after this language-boundary contract stage.
+- Stage 2F-E-C read-only maintenance/readiness report is complete/current.
+- Stage 2F-E-C is a boundary/report step, not real maintenance automation.
+- Real read-only package/storage/log/service probes remain future work.
+- Any future fix/update/cleanup action remains separate, policy-gated, and confirmation-gated.
 - semantic/model-based language understanding remains future work and smart Greek/English linguistic support remains future work.
 - capability registry implementation has started with a code-level foundation; execution authorization/plugin capability loading remain open.
 
@@ -199,7 +202,7 @@ Current checkpoint note:
 - Stage 2F-D-D adds bounded explicit context-capability answers from existing read-only probes for explicit context question surfaces.
 - Stage 2F-E-A adds classifier-boundary scaffolding ahead of deeper language/intent normalization.
 - Stage 2F-E-B records the transitional linguistic intent normalization contract behind that classifier boundary.
-- Stage 2F-E-C read-only maintenance/readiness report work remains next after language-boundary hardening.
+- Stage 2F-E-C read-only maintenance/readiness report is complete/current.
 - M4 is not complete: broader probe domains, normal assistant answer grounding, telemetry direction, and action-planning integration remain open.
 
 Exit criteria:
@@ -252,7 +255,7 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest latest run summary is 208 passed, 0 failed, total 208.
+- integrated selftest latest run summary is 216 passed, 0 failed, total 216.
 - coverage includes routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, telemetry-derived guardrail regressions, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, and the C5 follow-up strict-timeout cleanup checks.
 - coverage also includes Stage 2F-D probe foundation/cleanup checks, Stage 2F-D-B bounded model-truth checks, Stage 2F-D-C model-truth fallback checks, Stage 2F-D-D bounded context-capability answer checks, Stage 2F-E-A classifier-boundary checks, events bucket, and core memory flows.
 - integrated selftest baseline now includes confirmation-token flow coverage (token creation, invalid/expired/consumed handling, confirmed dry-run, and non-reuse)

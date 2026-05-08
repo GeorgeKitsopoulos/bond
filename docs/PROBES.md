@@ -69,6 +69,21 @@ Boundaries for this step:
 - general `what can you do?` remains registry summary only
 - normal assistant answers remain not broadly dynamically probe-backed
 
+## Stage 2F-E-C read-only maintenance/readiness report
+
+Stage 2F-E-C adds a bounded explicit read-only maintenance/readiness report.
+
+Boundaries for this step:
+
+- no new probes are added
+- the report uses existing read-only probes only
+- it summarizes readiness boundaries from `host_baseline`, `session_baseline`, `tool_inventory`, and `model_truth`
+- it does not inspect real package freshness
+- it does not inspect real logs
+- it does not inspect real storage usage
+- it does not expose raw probe payloads, raw local paths, executable paths, or exception text
+- it does not authorize execution
+
 ## Core principles
 
 - deterministic probes, not LLM guessing

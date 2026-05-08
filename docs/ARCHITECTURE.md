@@ -237,6 +237,16 @@ Stage 2F-E-B adds `src/bond/ai_linguistic_intent_contract.py`.
 - this stage does not implement smart linguistic support, semantic classification, model-based classification, fuzzy matching, translation, embeddings, or model calls
 - classification must not execute actions, run probes, or authorize execution
 
+### Read-only maintenance/readiness report
+
+Stage 2F-E-C adds a bounded explicit maintenance/readiness answer path.
+
+- it is routed through the existing capability classifier as a specific capability answer
+- it uses existing read-only probes only
+- it does not add new probe domains
+- it does not perform package checks, log checks, storage checks, fixes, package installs, cleanup, service restarts, file writes/deletes, privileged operations, or autonomous repair
+- future real maintenance probes must be separate read-only capabilities with explicit contracts before any fix/update action is considered
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

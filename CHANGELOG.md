@@ -19,6 +19,16 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-E-C read-only maintenance/readiness report
+
+- Added `describe_maintenance_readiness` as a partial read-only capability.
+- Added a bounded explicit maintenance/readiness report answer surface.
+- The report uses existing read-only probes only.
+- It does not fix anything, install packages, write files, delete files, restart services, or authorize execution.
+- It does not inspect real package freshness, logs, or storage usage.
+- Existing `inspect_package_update_status`, `inspect_storage_hygiene`, `inspect_boot_and_service_health`, `generate_periodic_health_report`, `present_maintenance_dashboard`, and `apply_privileged_system_updates` capabilities remain planned/unavailable.
+- Latest integrated selftest run after Stage 2F-E-C: 216 passed, 0 failed, total 216.
+
 ### Stage 2F-E-B CI recovery
 
 - Replaced the non-hermetic `/tmp` source snapshot selftest with a CI-safe contract-only guard.

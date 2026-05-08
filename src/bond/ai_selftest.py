@@ -45,6 +45,9 @@ from ai_policy import (
 )
 from ai_router import route_request
 from ai_capabilities import (
+    CLASS_INSPECTOR,
+    EXECUTION_DETERMINISTIC_PROBE,
+    RISK_LOW,
     STATUS_PARTIAL,
     STATUS_PLANNED,
     STATUS_UNSUPPORTED,
@@ -3646,6 +3649,371 @@ def run_stage2f_e_b_linguistic_intent_contract_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_e_c_maintenance_readiness_report_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(
+        name: str,
+        errors: list[str],
+        *,
+        stdout: str = "",
+        stderr: str = "",
+        returncode: int = 0,
+        cmd: list[str] | None = None,
+    ) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": returncode,
+                "stdout": stdout,
+                "stderr": stderr,
+                "errors": errors,
+                "cmd": cmd or ["stage2f_e_c", name],
+            }
+        )
+
+    errors: list[str] = []
+    capability = get_capability("describe_maintenance_readiness")
+    if capability is None:
+        errors.append("expected describe_maintenance_readiness capability")
+    else:
+        if capability.status != STATUS_PARTIAL:
+            errors.append(f"expected status={STATUS_PARTIAL!r}, got {capability.status!r}")
+        if capability.capability_class != CLASS_INSPECTOR:
+            errors.append(f"expected class={CLASS_INSPECTOR!r}, got {capability.capability_class!r}")
+        if capability.execution_mode != EXECUTION_DETERMINISTIC_PROBE:
+            errors.append(
+                "expected execution_mode="
+                f"{EXECUTION_DETERMINISTIC_PROBE!r}, got {capability.execution_mode!r}"
+            )
+        if capability.risk_level != RISK_LOW:
+            errors.append(f"expected risk_level={RISK_LOW!r}, got {capability.risk_level!r}")
+        if capability.read_only is not True:
+            errors.append("expected read_only=True")
+        if capability.rootless is not True:
+            errors.append("expected rootless=True")
+        if capability.side_effects != ():
+            errors.append(f"expected side_effects=(), got {capability.side_effects!r}")
+        if capability.requires_confirmation is not False:
+            errors.append("expected requires_confirmation=False")
+        if capability.needs_elevated_lane is not False:
+            errors.append("expected needs_elevated_lane=False")
+        if capability.required_tools != (
+            "host_baseline",
+            "session_baseline",
+            "tool_inventory",
+            "model_truth",
+        ):
+            errors.append(f"expected required_tools tuple, got {capability.required_tools!r}")
+        if capability.result_schema != "maintenance_readiness_report":
+            errors.append(
+                "expected result_schema='maintenance_readiness_report', "
+                f"got {capability.result_schema!r}"
+            )
+        if capability.audit_tag != "describe_maintenance_readiness":
+            errors.append(
+                "expected audit_tag='describe_maintenance_readiness', "
+                f"got {capability.audit_tag!r}"
+            )
+
+    if not is_capability_available("describe_maintenance_readiness"):
+        errors.append("expected describe_maintenance_readiness to be available")
+
+    for name in [
+        "inspect_package_update_status",
+        "inspect_storage_hygiene",
+        "inspect_boot_and_service_health",
+        "generate_periodic_health_report",
+        "present_maintenance_dashboard",
+        "apply_privileged_system_updates",
+    ]:
+        if is_capability_available(name):
+            errors.append(f"expected {name} to remain unavailable")
+
+    _append(
+        "stage2f_e_c_registry_maintenance_readiness_capability",
+        errors,
+        stdout=str(capability),
+    )
+
+    errors = []
+    checks = [
+        ("maintenance readiness report", ANSWER_KIND_SPECIFIC, True),
+        ("system readiness report", ANSWER_KIND_SPECIFIC, True),
+        ("αναφορά ετοιμότητας συντήρησης", ANSWER_KIND_SPECIFIC, True),
+        ("what can you do?", ANSWER_KIND_GENERAL, False),
+        ("what can you do here?", ANSWER_KIND_CONTEXT, False),
+        ("how are you?", ANSWER_KIND_NONE, False),
+    ]
+    outcomes: list[dict[str, object]] = []
+    for text, expected_kind, expects_maintenance in checks:
+        classification = classify_capability_question(text)
+        outcomes.append(
+            {
+                "text": text,
+                "answer_kind": classification.answer_kind,
+                "mentioned_capabilities": list(classification.mentioned_capabilities),
+                "is_capability_question": classification.is_capability_question,
+            }
+        )
+        if classification.answer_kind != expected_kind:
+            errors.append(
+                f"{text!r}: expected answer_kind={expected_kind!r}, got {classification.answer_kind!r}"
+            )
+        has_maintenance = "describe_maintenance_readiness" in classification.mentioned_capabilities
+        if has_maintenance is not expects_maintenance:
+            errors.append(
+                f"{text!r}: expected maintenance mention={expects_maintenance!r}, got {has_maintenance!r}"
+            )
+    if classify_capability_question("how are you?").is_capability_question:
+        errors.append("expected how are you? to remain non-capability question")
+    _append(
+        "stage2f_e_c_classifier_detects_readiness_as_specific_only",
+        errors,
+        stdout=json.dumps(outcomes, ensure_ascii=False),
+    )
+
+    errors = []
+    answer = answer_capability_question("maintenance readiness report")
+    if not answer:
+        errors.append("expected non-empty maintenance readiness answer")
+    else:
+        required = [
+            "Maintenance/readiness summary:",
+            "Probe basis:",
+            "Host/session readiness:",
+            "Tool readiness:",
+            "Model/runtime readiness:",
+            "Maintenance capability status:",
+            "Current safe next actions:",
+            "Safety boundary:",
+            "read-only readiness report",
+            "existing read-only probes only",
+            "does not fix anything",
+            "does not install packages",
+            "does not write files",
+            "does not delete files",
+            "does not restart services",
+            "does not authorize execution",
+            "does not inspect real package freshness",
+            "does not inspect real logs",
+            "does not inspect real storage usage",
+        ]
+        for needle in required:
+            if needle not in answer:
+                errors.append(f"missing required answer phrase: {needle}")
+
+        forbidden = [
+            "updates are available",
+            "safe to update",
+            "system is healthy",
+            "storage is healthy",
+            "services are healthy",
+            "I fixed",
+            "I installed",
+            "I deleted",
+            "I restarted",
+        ]
+        for needle in forbidden:
+            if needle in answer:
+                errors.append(f"forbidden phrase present: {needle}")
+    _append("stage2f_e_c_maintenance_answer_shape", errors, stdout=answer or "")
+
+    errors = []
+    answer = answer_capability_question("maintenance readiness report")
+    if not answer:
+        errors.append("expected non-empty maintenance readiness answer")
+    else:
+        required = [
+            "describe_maintenance_readiness",
+            "inspect_package_update_status",
+            "inspect_storage_hygiene",
+            "inspect_boot_and_service_health",
+            "generate_periodic_health_report",
+            "present_maintenance_dashboard",
+            "apply_privileged_system_updates",
+            "partial",
+            "planned",
+            "unavailable",
+        ]
+        for needle in required:
+            if needle not in answer:
+                errors.append(f"missing required answer phrase: {needle}")
+
+        forbidden = [
+            "package update inspection is available",
+            "storage hygiene inspection is available",
+            "boot and service health inspection is available",
+            "periodic health reports are available",
+            "maintenance dashboard is available",
+            "privileged " + "system updates are " + "available",
+        ]
+        for needle in forbidden:
+            if needle in answer:
+                errors.append(f"forbidden overclaim phrase present: {needle}")
+    _append(
+        "stage2f_e_c_maintenance_answer_capability_status_boundaries",
+        errors,
+        stdout=answer or "",
+    )
+
+    original_run_named_probe = ai_capability_answer.run_named_probe
+    errors = []
+    answer = ""
+    try:
+        def _fake_probe_exception(name: str):
+            raise RuntimeError("maintenance probe boom")
+
+        ai_capability_answer.run_named_probe = _fake_probe_exception
+        answer = answer_capability_question("maintenance readiness report") or ""
+        if not answer:
+            errors.append("expected non-empty maintenance readiness answer")
+        if "Maintenance/readiness summary:" not in answer:
+            errors.append("missing maintenance summary header")
+        if "unavailable" not in answer and "unknown" not in answer:
+            errors.append("expected unavailable or unknown fallback wording")
+        if "Safety boundary:" not in answer:
+            errors.append("missing Safety boundary section")
+        if "does not authorize execution" not in answer:
+            errors.append("missing does not authorize execution boundary")
+        if "maintenance probe boom" in answer:
+            errors.append("must not leak probe exception text")
+    except Exception as exc:
+        errors.append(f"answer_capability_question raised unexpectedly: {exc}")
+    finally:
+        ai_capability_answer.run_named_probe = original_run_named_probe
+    _append("stage2f_e_c_maintenance_probe_exception_fallback", errors, stdout=answer)
+
+    errors = []
+    cmd = [str(AI_WRAPPER), "maintenance readiness report"]
+    proc = run_cmd(cmd, {"BOND_DEV_TELEMETRY": "1", "BOND_ACTION_DRY_RUN": None})
+    out = (proc.stdout or "").strip()
+    err = (proc.stderr or "").strip()
+    telemetry, telemetry_errors = _parse_telemetry_record(err)
+    errors.extend(telemetry_errors)
+    if proc.returncode != 0:
+        errors.append(f"expected exit 0, got {proc.returncode}")
+    for needle in [
+        "Maintenance/readiness summary:",
+        "read-only readiness report",
+        "does not fix anything",
+        "does not install packages",
+        "does not authorize execution",
+    ]:
+        if needle not in out:
+            errors.append(f"missing stdout phrase: {needle}")
+    if isinstance(telemetry, dict):
+        if telemetry.get("deterministic") is not True:
+            errors.append("expected telemetry deterministic=true")
+        if telemetry.get("answer_path") != "capability_answer":
+            errors.append(
+                "expected telemetry answer_path='capability_answer', "
+                f"got {telemetry.get('answer_path')!r}"
+            )
+    else:
+        errors.append("missing telemetry payload")
+    if "model_answer" in out or "model_answer" in err:
+        errors.append("stdout/stderr should not include model_answer")
+    _append(
+        "stage2f_e_c_cli_maintenance_readiness_report",
+        errors,
+        stdout=out,
+        stderr=err,
+        returncode=proc.returncode,
+        cmd=cmd,
+    )
+
+    errors = []
+    general = answer_capability_question("what can you do?") or ""
+    if "Capability summary:" not in general:
+        errors.append("general capability answer missing Capability summary")
+    if "Maintenance/readiness summary:" in general:
+        errors.append("general capability answer should not include maintenance summary")
+
+    context = answer_capability_question("what can you do here?") or ""
+    if "Context capability summary:" not in context:
+        errors.append("context capability answer missing Context capability summary")
+    if "Maintenance/readiness summary:" in context:
+        errors.append("context capability answer should not include maintenance summary")
+
+    models = answer_capability_question("installed models") or ""
+    if "Model truth probe:" not in models:
+        errors.append("model capability answer missing Model truth probe")
+    if "Maintenance/readiness summary:" in models:
+        errors.append("model capability answer should not include maintenance summary")
+
+    if answer_capability_question("how are you?") is not None:
+        errors.append("normal chat should remain non-capability answer")
+
+    _append(
+        "stage2f_e_c_existing_capability_paths_unchanged",
+        errors,
+        stdout=json.dumps(
+            {
+                "general": general,
+                "context": context,
+                "models": models,
+            },
+            ensure_ascii=False,
+        ),
+    )
+
+    errors = []
+    docs_paths = [
+        BOND_ROOT / "README.md",
+        BOND_ROOT / "CHANGELOG.md",
+        BOND_ROOT / "ROADMAP.md",
+        BOND_ROOT / "docs" / "ARCHITECTURE.md",
+        BOND_ROOT / "docs" / "CAPABILITIES.md",
+        BOND_ROOT / "docs" / "PROBES.md",
+        BOND_ROOT / "docs" / "STATE.md",
+        BOND_ROOT / "docs" / "TESTING.md",
+    ]
+    combined = "\n".join(path.read_text(encoding="utf-8", errors="ignore") for path in docs_paths)
+
+    required = [
+        "Stage 2F-E-C",
+        "read-only maintenance/readiness report",
+        "existing read-only probes only",
+        "does not fix anything",
+        "does not install packages",
+        "does not write files",
+        "does not delete files",
+        "does not authorize execution",
+        "does not inspect real package freshness",
+        "does not inspect real logs",
+        "does not inspect real storage usage",
+    ]
+    for needle in required:
+        if needle not in combined:
+            errors.append(f"missing docs phrase: {needle}")
+
+    def _s(*parts: str) -> str:
+        return "".join(parts)
+
+    forbidden = [
+        _s("maintenance fixes", " are implemented"),
+        _s("package installation", " is available"),
+        _s("system updates", " are available"),
+        _s("storage cleanup", " is available"),
+        _s("service restart", " is available"),
+        _s("autonomous repair", " is available"),
+        _s("arbitrary shell execution", " is available"),
+        _s("normal assistant answers are ", "dynamically probe-backed"),
+    ]
+    for needle in forbidden:
+        if needle in combined:
+            errors.append(f"forbidden docs phrase present: {needle}")
+
+    _append(
+        "stage2f_e_c_docs_record_read_only_maintenance_boundary",
+        errors,
+    )
+
+    return results
+
+
 def run_parse_contract_tests() -> list[dict]:
     results: list[dict] = []
 
@@ -4815,6 +5183,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_e_b_linguistic_intent_contract_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_e_c_maintenance_readiness_report_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

@@ -315,9 +315,200 @@ def _build_context_capability_answer() -> str:
     return "\n".join(lines)
 
 
+def _is_explicit_maintenance_readiness_alias(text: str) -> bool:
+    normalized = normalize_text(text)
+    aliases = {
+        "maintenance readiness",
+        "maintenance readiness report",
+        "readiness report",
+        "system readiness report",
+        "maintenance report",
+        "system maintenance report",
+        "can you check maintenance readiness",
+        "bond maintenance readiness",
+        "αναφορα ετοιμοτητας συντηρησης",
+        "αναφορά ετοιμότητας συντήρησης",
+        "ετοιμοτητα συντηρησης",
+        "ετοιμότητα συντήρησης",
+        "αναφορα συντηρησης",
+        "αναφορά συντήρησης",
+    }
+    return normalized in aliases
+
+
+def _build_maintenance_readiness_report() -> str:
+    def _validated_probe_data(probe_name: str) -> dict[str, Any] | None:
+        try:
+            result = run_named_probe(probe_name)
+            validation_errors = validate_probe_result(result)
+            if validation_errors:
+                return None
+            if getattr(result, "ok", False) is not True:
+                return None
+            if not isinstance(result.data, dict):
+                return None
+            return result.data
+        except Exception:
+            return None
+
+    def _value(data: dict[str, Any] | None, key: str, fallback: str = "unknown") -> str:
+        if not isinstance(data, dict):
+            return fallback
+        raw = data.get(key)
+        if isinstance(raw, str):
+            cleaned = raw.strip()
+            return cleaned if cleaned else fallback
+        if raw is None:
+            return fallback
+        return str(raw)
+
+    def _bool_value(data: dict[str, Any] | None, key: str) -> str:
+        if not isinstance(data, dict):
+            return "unknown"
+        raw = data.get(key)
+        if isinstance(raw, bool):
+            return "yes" if raw else "no"
+        return "unknown"
+
+    host_data = _validated_probe_data("host_baseline")
+    session_data = _validated_probe_data("session_baseline")
+    tools_data = _validated_probe_data("tool_inventory")
+    model_data = _validated_probe_data("model_truth")
+
+    probe_basis = {
+        "host_baseline": "available" if host_data is not None else "unavailable",
+        "session_baseline": "available" if session_data is not None else "unavailable",
+        "tool_inventory": "available" if tools_data is not None else "unavailable",
+        "model_truth": "available" if model_data is not None else "unavailable",
+    }
+
+    tools_node = tools_data.get("tools") if isinstance(tools_data, dict) else None
+    tool_names = (
+        "apt",
+        "snap",
+        "flatpak",
+        "systemctl",
+        "journalctl",
+        "systemd-analyze",
+        "xdg-open",
+        "gio",
+        "notify-send",
+        "ollama",
+    )
+    tool_status: dict[str, str] = {}
+    for tool_name in tool_names:
+        state = "unknown"
+        if isinstance(tools_node, dict):
+            entry = tools_node.get(tool_name)
+            if isinstance(entry, dict):
+                available = entry.get("available")
+                if isinstance(available, bool):
+                    state = "available" if available else "unavailable"
+        tool_status[tool_name] = state
+
+    model_truth_status = _value(model_data, "truth_status")
+    inventory_raw = model_data.get("inventory_available") if isinstance(model_data, dict) else None
+    if isinstance(inventory_raw, bool):
+        model_inventory_status = "available" if inventory_raw else "unavailable"
+    else:
+        model_inventory_status = "unavailable"
+
+    status_names = [
+        "describe_maintenance_readiness",
+        "inspect_package_update_status",
+        "inspect_storage_hygiene",
+        "inspect_boot_and_service_health",
+        "generate_periodic_health_report",
+        "present_maintenance_dashboard",
+        "apply_privileged_system_updates",
+    ]
+
+    capability_lines: list[str] = []
+    for name in status_names:
+        cap = get_capability(name)
+        status = cap.status if cap is not None else "unknown"
+        if name == "describe_maintenance_readiness":
+            capability_lines.append(f"- {name}: status={status} (partial/read-only)")
+        elif status in {STATUS_PLANNED, STATUS_BLOCKED, STATUS_UNSUPPORTED}:
+            capability_lines.append(f"- {name}: status={status} (unavailable)")
+        else:
+            capability_lines.append(f"- {name}: status={status}")
+
+    lines = [
+        "Maintenance/readiness summary:",
+        "This is a read-only readiness report based on existing read-only probes only.",
+        "It does not fix anything, does not install packages, does not write files, does not delete files, does not restart services, and does not authorize execution.",
+        "It does not inspect real package freshness, does not inspect real logs, and does not inspect real storage usage.",
+        "",
+        "Probe basis:",
+        f"- host_baseline: {probe_basis['host_baseline']}",
+        f"- session_baseline: {probe_basis['session_baseline']}",
+        f"- tool_inventory: {probe_basis['tool_inventory']}",
+        f"- model_truth: {probe_basis['model_truth']}",
+        "",
+        "Host/session readiness:",
+        f"- platform_system: {_value(host_data, 'platform_system')}",
+        f"- platform_release: {_value(host_data, 'platform_release')}",
+        f"- platform_machine: {_value(host_data, 'platform_machine')}",
+        f"- python_version: {_value(host_data, 'python_version')}",
+        f"- xdg_current_desktop: {_value(session_data, 'xdg_current_desktop')}",
+        f"- desktop_session: {_value(session_data, 'desktop_session')}",
+        f"- xdg_session_type: {_value(session_data, 'xdg_session_type')}",
+        f"- has_display: {_bool_value(session_data, 'has_display')}",
+        f"- has_wayland_display: {_bool_value(session_data, 'has_wayland_display')}",
+        f"- has_dbus_session_bus: {_bool_value(session_data, 'has_dbus_session_bus')}",
+        "",
+        "Tool readiness:",
+    ]
+
+    for tool_name in tool_names:
+        lines.append(f"- {tool_name}: {tool_status[tool_name]}")
+
+    lines.extend(
+        [
+            "",
+            "Model/runtime readiness:",
+            "- configured route targets and installed local model inventory are separate facts",
+            f"- installed local model inventory status for this run: {model_inventory_status} (truth_status={model_truth_status})",
+            "- installed inventory may be unavailable",
+            "- this does not prove which model is currently answering, runtime health, model quality, or privileged/system capability",
+            "",
+            "Maintenance capability status:",
+            *capability_lines,
+            "- planned/blocked capabilities remain unavailable",
+            "",
+            "Current safe next actions:",
+            "- The user can ask for this bounded read-only readiness report.",
+            "- Future work can add real read-only maintenance probes under explicit contracts.",
+            "- Any future fix/update/cleanup action must be separately designed, policy-gated, and confirmation-gated.",
+            "",
+            "Safety boundary:",
+            "- no package installation",
+            "- no system updates",
+            "- no file creation/writing/deletion",
+            "- no cleanup",
+            "- no service restart",
+            "- no privileged operations",
+            "- no autonomous repair",
+            "- no background maintenance daemon",
+            "- no arbitrary shell execution",
+            "- does not authorize execution",
+        ]
+    )
+
+    return "\n".join(lines)
+
+
 def _build_specific_answer(text: str, names: tuple[str, ...] | None = None) -> str:
     if names is None:
         names = tuple(mentioned_capabilities(text))
+
+    if "describe_maintenance_readiness" in names:
+        if _is_explicit_maintenance_readiness_alias(text):
+            return _build_maintenance_readiness_report()
+        if "query_model" not in names:
+            return _build_maintenance_readiness_report()
+
     lines = ["Capability check:"]
 
     for name in names:

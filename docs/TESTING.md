@@ -33,8 +33,8 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is 208 passed, 0 failed,
-total 208. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is 216 passed, 0 failed,
+total 216. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -95,6 +95,7 @@ Stage 2F-D-C tests verify bounded fallback hardening for `model_truth` capabilit
 Stage 2F-D-D tests verify bounded explicit context-capability handling: context detection, context answer shape, plain general capability answers not context-expanded, CLI English context answer behavior, CLI Greek context answer behavior, and probe-exception fallback behavior without exception leakage.
 Stage 2F-E-A tests verify classifier boundary behavior: classifier module public contract, context precedence, general capability staying general, specific model-inventory classification, normal chat rejection, backward-compatible helper imports, no probe side effects during classification, and unchanged CLI behavior after classifier split.
 Stage 2F-E-B tests verify the transitional linguistic intent contract: linguistic contract module public contract, aliases marked transitional and not final NLP, boundary and scope fields, prohibitions and safety invariants, validation and summary lines, contract module has no runtime coupling to classifier, answer generation, probes, subprocess, network, or file I/O, existing classifier behavior unchanged, and docs recording the contract without overclaim.
+Stage 2F-E-C tests verify bounded read-only maintenance/readiness behavior: registry capability shape and planned maintenance capabilities remaining unavailable, classifier detection as specific-only, maintenance answer shape, capability status boundary wording, probe exception fallback without exception leakage, CLI maintenance/readiness report behavior, existing capability paths unchanged, and docs recording the read-only maintenance boundary without overclaim.
 These C5 checks are strict deterministic guardrails and do not claim that general chat/model timeout behavior is solved.
 
 This baseline is necessary and useful, but it is not proof of final assistant correctness or product maturity.

@@ -116,11 +116,16 @@ P0F preparation update (current-doc reference cleanup):
 - Stage 2F-E-B does not implement semantic classification.
 - Stage 2F-E-B does not implement model-based classification.
 - Stage 2F-E-B adds no new aliases, probes, actions, or execution authority.
-- the next ordered stage is Stage 2F-E-C read-only maintenance/readiness report.
+- Stage 2F-E-C is integrated/current: a bounded explicit read-only maintenance/readiness report is available.
+- Stage 2F-E-C remains partial and read-only.
+- Stage 2F-E-C uses existing read-only probes only.
+- Stage 2F-E-C added no new probes, actions, writes, deletes, fixes, package installs, service restarts, privileged operations, or autonomous repair.
+- Stage 2F-E-C does not inspect real package freshness, logs, or storage usage.
+- real read-only maintenance probes remain future work.
 - Normal assistant answers are not yet dynamically probe-backed; general capability discovery is still not dynamically probe-backed.
 - Temporary dev/test telemetry exists behind `BOND_DEV_TELEMETRY=1`. It emits one JSON line to stderr with elapsed_ms and safe routing/decision metadata for testing. Normal Bond answers remain telemetry-free by default, and final product behavior must not include telemetry in assistant answers.
 - capability-registry honesty tests now verify planned/unsupported capabilities are not reported as available
-- current integrated selftest summary from latest run: 208 passed, 0 failed, total 208
+- current integrated selftest summary from latest run: 216 passed, 0 failed, total 216
 ## Partial, open, or not implemented yet
 
 - no privileged execution lane implementation
