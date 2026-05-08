@@ -26,7 +26,20 @@ Current implementation boundaries:
 - `model_truth` explicitly separates configured route targets from installed local model inventory
 - installed inventory is not proof of runtime health or route reachability
 - probe results are not yet used to authorize actions
-- probe results are not yet used directly in normal assistant capability answers
+- probe results are not broadly used in normal assistant capability answers
+
+## Stage 2F-D-B bounded answer integration
+
+Stage 2F-D-B wires existing read-only `model_truth` probe output into bounded `query_model` capability answers only.
+
+Boundaries for this step:
+
+- integration scope is model-inventory/model-identity capability-answer surfaces only
+- general `what can you do` capability discovery is not dynamically probe-backed
+- normal assistant answers are not broadly dynamically probe-backed
+- configured route targets remain separate from installed local model inventory
+- installed local model inventory may be unavailable in a run when Ollama is missing, down, or times out
+- this bounded answer detail does not prove which model is currently answering, runtime health, model quality, or privileged/system capability
 
 ## Core principles
 

@@ -19,6 +19,16 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-D-B bounded model-truth capability answers
+
+- Wired existing read-only `model_truth` probe output into bounded `query_model` capability answers for model-inventory/model-identity question surfaces only.
+- Added deterministic `model_truth` answer formatting with validation and bounded fallback behavior; fallback explicitly keeps configured route targets and installed local model inventory distinct.
+- Kept general capability discovery and normal assistant answers non-probe-backed.
+- Reordered unknown/pure-question handling so precise fact queries run before capability answers, while guarding model-capability surfaces from assistant-name fact alias interception.
+- Added Stage 2F-D-B integrated selftests for unit and CLI model-truth answer behavior, telemetry answer-path expectations (`capability_answer` vs `fact_answer`), non-probe-expanded general capability answers, and probe-shape compatibility.
+- Latest integrated selftest run after Stage 2F-D-B integration: 181 passed, 0 failed, total 181.
+- This stage does not complete Stage 2F-D, does not implement maintenance advisor/package update planning, and does not complete M4.
+
 ### Stage 2F-D-A2 cleanup and CI hardening
 
 - updates CI to Node 24-compatible GitHub Actions majors

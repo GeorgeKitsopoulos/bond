@@ -190,6 +190,7 @@ Goal:
 Current checkpoint note:
 
 - Stage 2F-D-A implements the first structured read-only probe foundation with a deterministic probe contract, a bounded probe runner, and a thin `ai_scan_system.py` CLI wrapper that writes the compatibility state snapshot.
+- Stage 2F-D-B wires existing read-only `model_truth` probe output into bounded `query_model` capability answers only, with fact-first protection for precise model fact queries.
 - M4 is not complete: normal assistant answers are not yet probe-backed, and broader probe domains, telemetry direction, and action-planning integration remain open.
 
 Exit criteria:

@@ -53,6 +53,7 @@ from ai_capabilities import (
     validate_registry,
 )
 from ai_capability_answer import (
+    _build_model_truth_detail,
     answer_capability_question,
     is_capability_question,
     mentioned_capabilities,
@@ -2475,6 +2476,175 @@ def run_stage2f_d_a2_cleanup_hardening_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_d_b_model_truth_answer_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(
+        name: str,
+        errors: list[str],
+        *,
+        stdout: str = "",
+        stderr: str = "",
+        returncode: int = 0,
+        cmd: list[str] | None = None,
+    ) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": returncode,
+                "stdout": stdout,
+                "stderr": stderr,
+                "errors": errors,
+                "cmd": cmd or ["stage2f_d_b", name],
+            }
+        )
+
+    answer = answer_capability_question("installed models")
+    errors: list[str] = []
+    if answer is None:
+        errors.append("expected non-empty capability answer for installed models")
+    else:
+        required_parts = [
+            "Capability check:",
+            "query_model",
+            "Model truth probe:",
+            "configured route targets:",
+            "installed local model inventory:",
+            "inventory_available=",
+            "truth_status=",
+            "Boundary:",
+        ]
+        for part in required_parts:
+            if part not in answer:
+                errors.append(f"missing expected text: {part}")
+
+        forbidden_parts = [
+            "normal assistant answers are dynamically probe-backed",
+            "all capabilities are probe-backed",
+        ]
+        for part in forbidden_parts:
+            if part in answer:
+                errors.append(f"unexpected overclaim text present: {part}")
+
+    _append(
+        "stage2f_d_b_unit_model_truth_answer",
+        errors,
+        stdout=answer or "",
+    )
+
+    def _run_cli(name: str, prompt: str) -> tuple[subprocess.CompletedProcess, dict | None, list[str], list[str]]:
+        cmd = [str(AI_WRAPPER), prompt]
+        proc = run_cmd(cmd, {"BOND_DEV_TELEMETRY": "1", "BOND_ACTION_DRY_RUN": None})
+        telemetry, telemetry_errors = _parse_telemetry_record(proc.stderr or "")
+        local_errors: list[str] = []
+        local_errors.extend(telemetry_errors)
+        if isinstance(telemetry, dict):
+            if telemetry.get("deterministic") is not True:
+                local_errors.append("expected deterministic=true in telemetry")
+        else:
+            local_errors.append("missing telemetry payload")
+        return proc, telemetry, local_errors, cmd
+
+    proc, telemetry, errors, cmd = _run_cli("stage2f_d_b_cli_installed_models", "installed models")
+    out = (proc.stdout or "").strip()
+    err = (proc.stderr or "").strip()
+    if proc.returncode != 0:
+        errors.append(f"expected exit 0, got {proc.returncode}")
+    for part in [
+        "Model truth probe:",
+        "configured route targets:",
+        "installed local model inventory:",
+        "Boundary:",
+    ]:
+        if part not in out:
+            errors.append(f"missing stdout text: {part}")
+    if isinstance(telemetry, dict) and telemetry.get("answer_path") != "capability_answer":
+        errors.append(f"expected answer_path=capability_answer, got {telemetry.get('answer_path')!r}")
+    if "model_answer" in out or "model_answer" in err:
+        errors.append("stdout/stderr should not include model_answer")
+    _append("stage2f_d_b_cli_installed_models", errors, stdout=out, stderr=err, returncode=proc.returncode, cmd=cmd)
+
+    proc, telemetry, errors, cmd = _run_cli("stage2f_d_b_cli_greek_models", "Μποντ τι μοντέλα έχεις;")
+    out = (proc.stdout or "").strip()
+    err = (proc.stderr or "").strip()
+    if proc.returncode != 0:
+        errors.append(f"expected exit 0, got {proc.returncode}")
+    for part in ["query_model", "Model truth probe:", "configured route targets:"]:
+        if part not in out:
+            errors.append(f"missing stdout text: {part}")
+    if isinstance(telemetry, dict) and telemetry.get("answer_path") != "capability_answer":
+        errors.append(f"expected answer_path=capability_answer, got {telemetry.get('answer_path')!r}")
+    _append("stage2f_d_b_cli_greek_models", errors, stdout=out, stderr=err, returncode=proc.returncode, cmd=cmd)
+
+    proc, telemetry, errors, cmd = _run_cli("stage2f_d_b_fact_not_stolen", "what model does stuart use?")
+    out = (proc.stdout or "").strip()
+    err = (proc.stderr or "").strip()
+    if proc.returncode != 0:
+        errors.append(f"expected exit 0, got {proc.returncode}")
+    if "qwen2.5:3b-instruct" not in out:
+        errors.append("expected qwen2.5:3b-instruct in stdout")
+    if isinstance(telemetry, dict) and telemetry.get("answer_path") != "fact_answer":
+        errors.append(f"expected answer_path=fact_answer, got {telemetry.get('answer_path')!r}")
+    if "Model truth probe:" in out:
+        errors.append("fact answer should not include Model truth probe")
+    if "Capability check:" in out:
+        errors.append("fact answer should not include Capability check")
+    _append("stage2f_d_b_fact_not_stolen", errors, stdout=out, stderr=err, returncode=proc.returncode, cmd=cmd)
+
+    proc, telemetry, errors, cmd = _run_cli(
+        "stage2f_d_b_default_model_fact",
+        "what model do you use by default?",
+    )
+    out = (proc.stdout or "").strip()
+    err = (proc.stderr or "").strip()
+    if proc.returncode != 0:
+        errors.append(f"expected exit 0, got {proc.returncode}")
+    if "qwen2.5:3b-instruct" not in out:
+        errors.append("expected qwen2.5:3b-instruct in stdout")
+    if isinstance(telemetry, dict) and telemetry.get("answer_path") != "fact_answer":
+        errors.append(f"expected answer_path=fact_answer, got {telemetry.get('answer_path')!r}")
+    if "Model truth probe:" in out:
+        errors.append("default model fact answer should not include Model truth probe")
+    _append("stage2f_d_b_default_model_fact", errors, stdout=out, stderr=err, returncode=proc.returncode, cmd=cmd)
+
+    answer = answer_capability_question("what can you do?")
+    errors = []
+    if answer is None:
+        errors.append("expected non-empty general capability answer")
+    else:
+        if "Capability summary:" not in answer:
+            errors.append("missing Capability summary in general answer")
+        if "Model truth probe:" in answer:
+            errors.append("general capability answer must not include model truth probe details")
+    _append(
+        "stage2f_d_b_general_capability_not_probe_expanded",
+        errors,
+        stdout=answer or "",
+    )
+
+    errors = []
+    probe_result = run_named_probe("model_truth")
+    validation_errors = validate_probe_result(probe_result)
+    if validation_errors:
+        errors.extend([f"probe validation error: {item}" for item in validation_errors])
+    data = probe_result.data if isinstance(probe_result.data, dict) else {}
+    for key in ["configured_models", "installed_models", "inventory_available", "missing_configured_models", "extra_installed_models", "truth_status"]:
+        if key not in data:
+            errors.append(f"model_truth probe payload missing key: {key}")
+    detail = _build_model_truth_detail()
+    for required in ["Model truth probe:", "configured route targets:", "installed local model inventory:", "inventory_available=", "truth_status=", "Boundary:"]:
+        if required not in detail:
+            errors.append(f"detail output missing required text: {required}")
+    _append(
+        "stage2f_d_b_probe_shape_compatible_with_detail_builder",
+        errors,
+        stdout=json.dumps({"probe_data": data, "detail": detail}, ensure_ascii=False),
+    )
+
+    return results
+
+
 def run_parse_contract_tests() -> list[dict]:
     results: list[dict] = []
 
@@ -3584,6 +3754,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_d_a2_cleanup_hardening_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_d_b_model_truth_answer_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

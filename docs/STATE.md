@@ -87,7 +87,7 @@ P0F preparation update (current-doc reference cleanup):
 - Stage 2F-B complete/current: read-only capability questions are answered from the static registry through `src/bond/ai_capability_answer.py` and `ai_run.py` integration
 - Post-Stage 2F-B correction: describe_capabilities registry wording now reflects that read-only assistant answer integration exists; dynamic context-aware discovery remains planned.
 - Stage 2F-C telemetry-driven guardrail hardening complete/current: assistant-invocation stripping, high-risk natural command shaping, mixed-intent preemption safeguards, expanded capability aliases, and single-action dry-run step metadata are implemented in deterministic paths.
-- Stage 2F-C2 regression cleanup complete/current: capability interception now runs after policy/action gating (with capability answers before fact answers), additional model/language capability aliases are covered, restart-the-laptop phrasing now follows confirmation-required high-risk handling, and trivial social check-ins avoid model fallback.
+- Stage 2F-C2 regression cleanup complete/current: capability interception now runs after policy/action gating, additional model/language capability aliases are covered, restart-the-laptop phrasing now follows confirmation-required high-risk handling, and trivial social check-ins avoid model fallback.
 - Stage 2F-C3 edge case cleanup complete/current: bare capability noun phrases ("installed models", "local models") are now recognized and answered deterministically without question markers; time queries and project-state queries return bounded deterministic answers instead of timing out on model fallback.
 - Stage 2F-C4 deterministic diagnostic cleanup integrated/current: deterministic handling is hardened for adversarial high-risk phrasing, Greek polite high-risk commands, Greek destructive mixed-intent classification, unsupported-capability truthfulness prompts, Greek model inventory wording, and exploratory capability questions.
 - Stage 2F-C5 strict timeout and diagnostic-expectation cleanup integrated/current: deterministic handling is hardened for Greek voice/memory capability-question forms, unsupported reminder/file/email request surfaces, high-risk capability-question wording, social-checkin wording expectations, and name-query answer-path expectations.
@@ -97,10 +97,14 @@ P0F preparation update (current-doc reference cleanup):
 - Greek support remains transitional and centralized in normalization/alias/intent handling; final language-state architecture is not complete.
 - Stage 2F-D-A probe foundation is now integrated/current: the legacy broad system scanner has been replaced by a structured probe CLI wrapper, and current probes are `host_baseline`, `session_baseline`, `tool_inventory`, `router_config_models`, `ollama_model_inventory`, and `model_truth`.
 - Stage 2F-D-A2 cleanup/hardening is integrated/current: CI now uses Node 24-compatible official GitHub Actions majors (`actions/checkout@v5`, `actions/setup-python@v6`) with the transition opt-in `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`, and integrated selftests now include workflow/docs formatting hygiene checks plus a bounded `model_truth` future-answer-shape readiness check.
-- Normal assistant answers are not yet dynamically probe-backed; probe results are currently exposed only through the explicit scan/probe CLI and state snapshot output.
+- Stage 2F-D-B is integrated/current as a narrow step: existing read-only `model_truth` probe data is now appended only in bounded `query_model` capability answers for model-inventory/model-identity questions.
+- Stage 2F-D-B preserves fact-first handling for precise model fact queries (for example, `what model does stuart use?`) while keeping model capability/inventory question surfaces on `answer_path=capability_answer`.
+- Stage 2F-D-B keeps configured route targets distinct from installed local model inventory; inventory may be unavailable when Ollama is missing, down, or times out.
+- Stage 2F-D-B does not prove currently answering model identity, runtime health, model quality, or privileged/system capability.
+- Normal assistant answers are not yet dynamically probe-backed; general capability discovery is still not dynamically probe-backed.
 - Temporary dev/test telemetry exists behind `BOND_DEV_TELEMETRY=1`. It emits one JSON line to stderr with elapsed_ms and safe routing/decision metadata for testing. Normal Bond answers remain telemetry-free by default, and final product behavior must not include telemetry in assistant answers.
 - capability-registry honesty tests now verify planned/unsupported capabilities are not reported as available
-- current integrated selftest summary from latest run: 174 passed, 0 failed, total 174
+- current integrated selftest summary from latest run: 181 passed, 0 failed, total 181
 ## Partial, open, or not implemented yet
 
 - no privileged execution lane implementation

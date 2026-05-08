@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unicodedata
+from typing import Any
 
 from ai_capabilities import (
     STATUS_BLOCKED,
@@ -13,6 +14,8 @@ from ai_capabilities import (
     list_capabilities,
 )
 from ai_linguistics import strip_assistant_invocation_prefix
+from ai_probe_contract import validate_probe_result
+from ai_probes import run_named_probe
 
 
 _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
@@ -570,6 +573,78 @@ def _build_general_answer() -> str:
     return "\n".join(lines)
 
 
+def _safe_list_to_text(value: Any) -> str:
+    try:
+        if isinstance(value, (list, tuple)):
+            items = [str(item).strip() for item in value if str(item).strip()]
+            return ", ".join(items) if items else "none"
+    except Exception:
+        return "none"
+    return "none"
+
+
+def _build_model_truth_detail() -> str:
+    fallback_lines = [
+        "Model truth probe: unavailable in this run.",
+        "configured route targets: unavailable",
+        "installed local model inventory: unavailable",
+        "inventory_available=false",
+        "truth_status=unavailable",
+        "missing configured models: none",
+        "extra installed models: none",
+        "Boundary: configured route targets and installed model inventory must not be treated as the same thing. This does not prove which model is currently answering, runtime health, model quality, or privileged/system capability.",
+    ]
+
+    try:
+        result = run_named_probe("model_truth")
+        validation_errors = validate_probe_result(result)
+        if validation_errors:
+            return "\n".join(fallback_lines)
+
+        data = result.data if isinstance(result.data, dict) else {}
+        configured_models = _safe_list_to_text(data.get("configured_models"))
+        inventory_available = bool(data.get("inventory_available"))
+        truth_status = str(data.get("truth_status", "unknown")).strip() or "unknown"
+        warnings = _safe_list_to_text(getattr(result, "warnings", ()))
+
+        lines = [
+            "Model truth probe:",
+            f"configured route targets: {configured_models}",
+            f"inventory_available={str(inventory_available).lower()}",
+            f"truth_status={truth_status}",
+        ]
+
+        if inventory_available:
+            installed_models = _safe_list_to_text(data.get("installed_models"))
+            missing_models = _safe_list_to_text(data.get("missing_configured_models"))
+            extra_models = _safe_list_to_text(data.get("extra_installed_models"))
+            lines.extend(
+                [
+                    f"installed local model inventory: {installed_models}",
+                    f"missing configured models: {missing_models}",
+                    f"extra installed models: {extra_models}",
+                ]
+            )
+        else:
+            lines.extend(
+                [
+                    "installed local model inventory: unavailable in this run",
+                    f"missing configured models: {configured_models}",
+                    "extra installed models: none",
+                ]
+            )
+
+        if warnings != "none":
+            lines.append(f"warnings: {warnings}")
+
+        lines.append(
+            "Boundary: configured route targets and installed local model inventory are separate facts. This does not prove which model is currently answering, runtime health, model quality, or privileged/system capability."
+        )
+        return "\n".join(lines)
+    except Exception:
+        return "\n".join(fallback_lines)
+
+
 def _build_specific_answer(text: str) -> str:
     names = mentioned_capabilities(text)
     lines = ["Capability check:"]
@@ -590,6 +665,8 @@ def _build_specific_answer(text: str) -> str:
         lines.append(
             f"- {name}: {availability}; status={status}; risk={risk}. {details}".strip()
         )
+        if name == "query_model":
+            lines.append(_build_model_truth_detail())
 
     return "\n".join(lines)
 

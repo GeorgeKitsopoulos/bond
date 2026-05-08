@@ -63,7 +63,7 @@ from ai_parse_contract import (
     parse_contract_to_log_meta,
 )
 from ai_router import decision_to_log_meta, route_request
-from ai_capability_answer import maybe_answer_capability_question
+from ai_capability_answer import maybe_answer_capability_question, mentioned_capabilities
 from ai_dev_telemetry import maybe_emit_dev_telemetry, now_perf
 
 try:
@@ -1302,6 +1302,34 @@ def main() -> int:
             return finalize(0, answer_path="direct_answer", deterministic=True)
 
     if gatekeeper_result in {"unknown", "pure_question"}:
+        fact_spec = detect_fact_query(text)
+        if (
+            isinstance(fact_spec, dict)
+            and fact_spec.get("source") == "assistant_name"
+            and "query_model" in mentioned_capabilities(text)
+        ):
+            fact_spec = None
+        if fact_spec:
+            answer = answer_fact_query(fact_spec, profiles)
+            if answer is not None:
+                log_memory(
+                    "chats",
+                    f"fact_answer: {text}",
+                    {
+                        "answer": answer,
+                        "fact_spec": fact_spec,
+                        "assistant_name": ASSISTANT_NAME,
+                        "route_decision": decision_to_log_meta(route_decision),
+                        "policy_decision": policy_to_log_meta(policy_decision),
+                        "action_contract": action_contract_to_log_meta(action_contract),
+                        "parse_contract": parse_contract_meta,
+                    },
+                )
+                build_active_context()
+                print(answer)
+                return finalize(0, answer_path="fact_answer", deterministic=True)
+
+    if gatekeeper_result in {"unknown", "pure_question"}:
         capability_answer = maybe_answer_capability_question(text)
         if capability_answer:
             log_memory(
@@ -1320,27 +1348,6 @@ def main() -> int:
             build_active_context()
             print(capability_answer)
             return finalize(0, answer_path="capability_answer", deterministic=True)
-
-    fact_spec = detect_fact_query(text)
-    if fact_spec:
-        answer = answer_fact_query(fact_spec, profiles)
-        if answer is not None:
-            log_memory(
-                "chats",
-                f"fact_answer: {text}",
-                {
-                    "answer": answer,
-                    "fact_spec": fact_spec,
-                    "assistant_name": ASSISTANT_NAME,
-                    "route_decision": decision_to_log_meta(route_decision),
-                    "policy_decision": policy_to_log_meta(policy_decision),
-                    "action_contract": action_contract_to_log_meta(action_contract),
-                    "parse_contract": parse_contract_meta,
-                },
-            )
-            build_active_context()
-            print(answer)
-            return finalize(0, answer_path="fact_answer", deterministic=True)
 
     if override_profile:
         chosen = override_profile

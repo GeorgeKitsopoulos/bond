@@ -102,7 +102,26 @@ Initial capabilities:
   execution_mode: deterministic_probe
   risk_level: low
   required_tools: [route_config_probe, model_inventory_probe, model_runtime_probe]
-  notes: Model/runtime identity query must distinguish configured route targets, installed local model inventory, and runtime reachability. Route names and configured model strings are not installation proof and not runtime-health proof. Stage 2F-D-A now provides the first read-only probe foundation for configured router models and optional installed Ollama inventory through the explicit scan/probe CLI, but normal assistant capability answers are not yet dynamically probe-backed. Current documented baseline roster is qwen2.5:3b-instruct, gemma2:2b, qwen2.5:7b-instruct, and nomic-embed-text:latest; qwen2.5:7b-instruct is the highest-capability local baseline currently assumed. No current heavyweight local model tier should be assumed; capability design should compensate through structure, decomposition, retrieval, validation, and tighter contracts rather than hidden model-size assumptions.
+  notes: |
+    Model/runtime identity query must distinguish configured route targets,
+    installed local model inventory, and runtime reachability.
+    Route names and configured model strings are not installation proof and not
+    runtime-health proof.
+    Stage 2F-D-A provides the read-only probe foundation.
+    Stage 2F-D-B wires bounded `model_truth` detail into `query_model`
+    capability-answer surfaces only (model-inventory/model-identity questions).
+    General capability discovery and normal assistant answers remain not
+    dynamically probe-backed.
+    Installed inventory can be unavailable when Ollama is missing, down, or
+    times out.
+    This bounded detail does not prove which model is currently answering,
+    runtime health, model quality, or privileged/system capability.
+    Current documented baseline roster is qwen2.5:3b-instruct, gemma2:2b,
+    qwen2.5:7b-instruct, and nomic-embed-text:latest; qwen2.5:7b-instruct is
+    the highest-capability local baseline currently assumed.
+    No current heavyweight local model tier should be assumed; capability
+    design should compensate through structure, decomposition, retrieval,
+    validation, and tighter contracts rather than hidden model-size assumptions.
 
 - name: timer
   status: unsupported
