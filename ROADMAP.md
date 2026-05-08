@@ -187,6 +187,11 @@ Goal:
 
 - establish deterministic probe-grounded system inspection with practical telemetry direction
 
+Current checkpoint note:
+
+- Stage 2F-D-A implements the first structured read-only probe foundation with a deterministic probe contract, a bounded probe runner, and a thin `ai_scan_system.py` CLI wrapper that writes the compatibility state snapshot.
+- M4 is not complete: normal assistant answers are not yet probe-backed, and broader probe domains, telemetry direction, and action-planning integration remain open.
+
 Exit criteria:
 
 - probe categories and probe output schema are documented

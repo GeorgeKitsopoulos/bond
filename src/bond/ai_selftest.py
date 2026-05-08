@@ -64,6 +64,23 @@ from ai_dev_telemetry import (
     format_dev_telemetry_line,
     maybe_emit_dev_telemetry,
 )
+from ai_probe_contract import (
+    CERTAINTY_AUTHORITATIVE,
+    REFRESH_LOW_CHURN,
+    SOURCE_OS_API,
+    probe_error,
+    probe_ok,
+    standard_error,
+    validate_probe_result,
+)
+from ai_probes import (
+    probe_host_baseline,
+    probe_model_truth,
+    probe_ollama_model_inventory,
+    probe_router_config_models,
+    probe_session_baseline,
+    probe_tool_inventory,
+)
 
 SRC_BOND = BOND_ROOT / "src" / "bond"
 AI_RUN = SRC_BOND / "ai_run.py"
@@ -71,10 +88,14 @@ AI_EXEC = SRC_BOND / "ai_exec.py"
 AI_CONFIRMATION = SRC_BOND / "ai_confirmation.py"
 AI_PARSE_CONTRACT = SRC_BOND / "ai_parse_contract.py"
 AI_WRAPPER = BOND_ROOT / "scripts" / "ai"
+AI_SCAN_SYSTEM = SRC_BOND / "ai_scan_system.py"
+AI_PROBE_CONTRACT = SRC_BOND / "ai_probe_contract.py"
+AI_PROBES = SRC_BOND / "ai_probes.py"
 AI_MEMORY = SRC_BOND / "ai_memory.py"
 AI_MEMORY_QUERY = SRC_BOND / "ai_memory_query.py"
 AI_MEMORY_REFLECT = SRC_BOND / "ai_memory_reflect.py"
 AI_MEMORY_ROTATE = SRC_BOND / "ai_memory_rotate.py"
+SCAN_SYSTEM_WRAPPER = BOND_ROOT / "scripts" / "bond-scan-system"
 
 MEMORY_ROOT = get_memory_root()
 STATE_ROOT = get_state_root()
@@ -2098,6 +2119,177 @@ def run_stage2f_c5_timeout_and_expectation_cleanup_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_d_probe_foundation_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(
+        name: str,
+        ok: bool,
+        errors: list[str],
+        stdout: str = "",
+        stderr: str = "",
+        returncode: int = 0,
+    ) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": ok,
+                "returncode": returncode,
+                "stdout": stdout,
+                "stderr": stderr,
+                "errors": errors,
+            }
+        )
+
+    normal_result = probe_ok(
+        probe_name="contract_ok_probe",
+        layer=0,
+        source_type=SOURCE_OS_API,
+        certainty_class=CERTAINTY_AUTHORITATIVE,
+        refresh_class=REFRESH_LOW_CHURN,
+        supports_live_truth=True,
+        data={"python_version": "test"},
+    )
+    normal_errors = validate_probe_result(normal_result)
+    _append("stage2f_d_probe_contract_ok_validates", not normal_errors, normal_errors)
+
+    failed_result = probe_error(
+        probe_name="contract_error_probe",
+        layer=1,
+        source_type=SOURCE_OS_API,
+        certainty_class=CERTAINTY_AUTHORITATIVE,
+        refresh_class=REFRESH_LOW_CHURN,
+        supports_live_truth=True,
+        data={},
+        error=standard_error("test_error", "structured failure"),
+    )
+    failed_errors = validate_probe_result(failed_result)
+    if not isinstance(failed_result.error, dict):
+        failed_errors.append("expected structured error dict on failed ProbeResult")
+    _append("stage2f_d_probe_contract_error_validates", not failed_errors, failed_errors)
+
+    host_result = probe_host_baseline()
+    host_errors = validate_probe_result(host_result)
+    if not host_result.ok:
+        host_errors.append("host_baseline should return ok=True")
+    if "python_version" not in host_result.data:
+        host_errors.append("host_baseline missing python_version")
+    if "bond_root" not in host_result.data:
+        host_errors.append("host_baseline missing bond_root")
+    _append("stage2f_d_probe_host_baseline", not host_errors, host_errors)
+
+    session_result = probe_session_baseline()
+    session_errors = validate_probe_result(session_result)
+    for key in ["has_display", "has_wayland_display", "has_dbus_session_bus"]:
+        if not isinstance(session_result.data.get(key), bool):
+            session_errors.append(f"session_baseline missing boolean field {key}")
+    _append("stage2f_d_probe_session_baseline", not session_errors, session_errors)
+
+    tool_result = probe_tool_inventory()
+    tool_errors = validate_probe_result(tool_result)
+    python3_info = tool_result.data.get("tools", {}).get("python3", {})
+    if tool_result.ok is not True:
+        tool_errors.append("tool_inventory should return ok=True")
+    if python3_info.get("available") is not True:
+        tool_errors.append("tool_inventory should report python3 available=True")
+    _append("stage2f_d_probe_tool_inventory", not tool_errors, tool_errors)
+
+    router_result = probe_router_config_models()
+    router_errors = validate_probe_result(router_result)
+    if router_result.ok is not True:
+        router_errors.append("router_config_models should return ok=True")
+    if not isinstance(router_result.data.get("configured_models"), list):
+        router_errors.append("router_config_models missing configured_models list")
+    _append("stage2f_d_probe_router_config_models", not router_errors, router_errors)
+
+    ollama_result = probe_ollama_model_inventory()
+    ollama_errors = validate_probe_result(ollama_result)
+    if ollama_result.probe_name != "ollama_model_inventory":
+        ollama_errors.append("unexpected probe name for ollama inventory")
+    if ollama_result.layer != 1:
+        ollama_errors.append("ollama inventory should be layer 1")
+    if "installed_models" not in ollama_result.data:
+        ollama_errors.append("ollama inventory missing installed_models")
+    _append("stage2f_d_probe_ollama_inventory_structured", not ollama_errors, ollama_errors)
+
+    truth_result = probe_model_truth()
+    truth_errors = validate_probe_result(truth_result)
+    if truth_result.ok is not True:
+        truth_errors.append("model_truth should return ok=True")
+    for key in ["configured_models", "installed_models", "inventory_available", "truth_status"]:
+        if key not in truth_result.data:
+            truth_errors.append(f"model_truth missing {key}")
+    _append("stage2f_d_probe_model_truth", not truth_errors, truth_errors)
+
+    list_proc = run_cmd(["python3", str(AI_SCAN_SYSTEM), "--list"])
+    list_errors: list[str] = []
+    if list_proc.returncode != 0:
+        list_errors.append(f"expected exit 0, got {list_proc.returncode}")
+    if "host_baseline" not in (list_proc.stdout or "").splitlines():
+        list_errors.append("--list output missing host_baseline")
+    _append(
+        "stage2f_d_scan_system_list_cli",
+        not list_errors,
+        list_errors,
+        stdout=list_proc.stdout or "",
+        stderr=list_proc.stderr or "",
+        returncode=list_proc.returncode,
+    )
+
+    host_json_proc = run_cmd(["python3", str(AI_SCAN_SYSTEM), "--probe", "host_baseline", "--json"])
+    host_json_errors: list[str] = []
+    host_json_payload = None
+    if host_json_proc.returncode != 0:
+        host_json_errors.append(f"expected exit 0, got {host_json_proc.returncode}")
+    try:
+        host_json_payload = json.loads(host_json_proc.stdout or "")
+    except Exception as exc:
+        host_json_errors.append(f"stdout did not parse as JSON: {exc}")
+    if isinstance(host_json_payload, dict):
+        results_node = host_json_payload.get("results", [])
+        if not results_node or results_node[0].get("probe_name") != "host_baseline":
+            host_json_errors.append("host_baseline JSON payload missing expected result")
+    _append(
+        "stage2f_d_scan_system_host_json_cli",
+        not host_json_errors,
+        host_json_errors,
+        stdout=host_json_proc.stdout or "",
+        stderr=host_json_proc.stderr or "",
+        returncode=host_json_proc.returncode,
+    )
+
+    wrapper_json_proc = run_cmd([str(SCAN_SYSTEM_WRAPPER), "--probe", "model_truth", "--json"])
+    wrapper_json_errors: list[str] = []
+    wrapper_json_payload = None
+    if wrapper_json_proc.returncode != 0:
+        wrapper_json_errors.append(f"expected exit 0, got {wrapper_json_proc.returncode}")
+    try:
+        wrapper_json_payload = json.loads(wrapper_json_proc.stdout or "")
+    except Exception as exc:
+        wrapper_json_errors.append(f"stdout did not parse as JSON: {exc}")
+    if isinstance(wrapper_json_payload, dict):
+        results_node = wrapper_json_payload.get("results", [])
+        if not results_node or results_node[0].get("probe_name") != "model_truth":
+            wrapper_json_errors.append("model_truth JSON payload missing expected result")
+    _append(
+        "stage2f_d_scan_system_wrapper_model_truth_json",
+        not wrapper_json_errors,
+        wrapper_json_errors,
+        stdout=wrapper_json_proc.stdout or "",
+        stderr=wrapper_json_proc.stderr or "",
+        returncode=wrapper_json_proc.returncode,
+    )
+
+    static_errors: list[str] = []
+    for path in [AI_SCAN_SYSTEM, AI_PROBES, AI_PROBE_CONTRACT]:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if "shell=True" in text:
+            static_errors.append(f"shell=True found in {path}")
+    _append("stage2f_d_probe_source_no_shell_true", not static_errors, static_errors)
+
+    return results
+
+
 def run_parse_contract_tests() -> list[dict]:
     results: list[dict] = []
 
@@ -3022,6 +3214,9 @@ def main() -> None:
         AI_EXEC,
         AI_CONFIRMATION,
         AI_PARSE_CONTRACT,
+        AI_SCAN_SYSTEM,
+        AI_PROBE_CONTRACT,
+        AI_PROBES,
         AI_WRAPPER,
         AI_MEMORY,
         AI_MEMORY_QUERY,
@@ -3180,6 +3375,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_c5_timeout_and_expectation_cleanup_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_d_probe_foundation_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

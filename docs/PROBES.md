@@ -7,6 +7,27 @@ This document is the canonical probe-layer specification for deterministic syste
 Probes gather real local facts. They do not perform model reasoning.
 Probe truth feeds capability truth and live-truth answers.
 
+## Implemented foundation: Stage 2F-D-A
+
+Stage 2F-D-A implements the first read-only, rootless probe foundation.
+
+Current implemented probe names:
+
+- `host_baseline`
+- `session_baseline`
+- `tool_inventory`
+- `router_config_models`
+- `ollama_model_inventory`
+- `model_truth`
+
+Current implementation boundaries:
+
+- probes are read-only and rootless
+- `model_truth` explicitly separates configured route targets from installed local model inventory
+- installed inventory is not proof of runtime health or route reachability
+- probe results are not yet used to authorize actions
+- probe results are not yet used directly in normal assistant capability answers
+
 ## Core principles
 
 - deterministic probes, not LLM guessing

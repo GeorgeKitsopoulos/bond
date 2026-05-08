@@ -6,7 +6,7 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 
 - Bond is under active development.
 - The current validated baseline is Stage 2E plus P0 cleanup work.
-- Current documented validation baseline: compile passes and integrated selftest currently reports 157/157 after the Stage 2F-C5 follow-up strict timeout cleanup (see docs/TESTING.md for exact summary).
+- Current documented validation baseline: compile passes and integrated selftest currently reports 169/169 after Stage 2F-D-A probe foundation validation (see docs/TESTING.md for exact summary).
 - Stage 2F-C hardens deterministic guardrails from telemetry findings (assistant-prefix normalization, mixed-intent handling, high-risk command shaping, and capability alias coverage) while keeping telemetry opt-in and answers telemetry-free by default. 
 - Stage 2F-C2 follows with a small regression cleanup for model/language capability prompts, restart-laptop confirmation shaping, and deterministic social check-in handling.
 - Stage 2F-C3 addresses remaining telemetry edge cases: bare capability noun phrases ("installed models", "local models") now deterministically answer as capability questions, and time/project-state queries return bounded deterministic answers instead of timing out.
@@ -16,7 +16,8 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 - Stage 2F-C5 keeps `notify me to stretch` as a current bounded action dry-run path and does not reclassify it as unsupported.
 - Stage 2F-C5 keeps `απάντα ελληνικά` as a registry-backed language-policy capability answer (`apply_response_language_policy`), not proof of complete Greek language-state architecture.
 - Greek support remains transitional and centered on normalization/alias/intent handling; final language-state architecture is not complete.
-- Stage 2F-D dynamic probe work is not implemented yet and remains the next stage only after C5 validation is fully green.
+- Stage 2F-D-A introduces the first read-only structured probe foundation through the explicit scan/probe CLI.
+- Probe-backed capability discovery in normal assistant answers is still not implemented.
 - Bond is not yet a general-purpose desktop assistant.
 - Bond should not be used for unattended automation, privileged/system changes, or safety-critical workflows.
 
@@ -36,7 +37,7 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 
 ## What does not work yet
 
-- no dynamic probe-backed capability discovery yet; the registry-backed capability answer path is read-only and does not authorize execution
+- no dynamic probe-backed capability discovery yet in normal assistant answers; the registry-backed capability answer path remains read-only and does not authorize execution, and the new probe foundation is exposed only through the explicit scan/probe CLI
 - no privileged execution lane
 - no service/app/applet layer
 - no system maintenance advisor, monthly health report, or GUI maintenance dashboard yet

@@ -95,17 +95,18 @@ P0F preparation update (current-doc reference cleanup):
 - `notify me to stretch` remains a current bounded action dry-run path (not an unsupported capability).
 - `απάντα ελληνικά` remains a registry-backed language-policy capability answer (`apply_response_language_policy`) and is not evidence of complete Greek language-state architecture.
 - Greek support remains transitional and centralized in normalization/alias/intent handling; final language-state architecture is not complete.
-- Stage 2F-D dynamic probes are not implemented in this stage and remain next only after C5 validation is fully green.
+- Stage 2F-D-A probe foundation is now integrated/current: the legacy broad system scanner has been replaced by a structured probe CLI wrapper, and current probes are `host_baseline`, `session_baseline`, `tool_inventory`, `router_config_models`, `ollama_model_inventory`, and `model_truth`.
+- Normal assistant answers are not yet dynamically probe-backed; probe results are currently exposed only through the explicit scan/probe CLI and state snapshot output.
 - Temporary dev/test telemetry exists behind `BOND_DEV_TELEMETRY=1`. It emits one JSON line to stderr with elapsed_ms and safe routing/decision metadata for testing. Normal Bond answers remain telemetry-free by default, and final product behavior must not include telemetry in assistant answers.
 - capability-registry honesty tests now verify planned/unsupported capabilities are not reported as available
-- current integrated selftest summary from latest run: 157 passed, 0 failed, total 157
+- current integrated selftest summary from latest run: 169 passed, 0 failed, total 169
 ## Partial, open, or not implemented yet
 
 - no privileged execution lane implementation
 - action parser remains heuristic and partial
 - action catalog and executor remain narrow/rootless
-- no dynamic probe-backed capability discovery yet; current capability-answer integration is read-only and does not authorize execution
-- probes are partial
+- no dynamic probe-backed capability discovery yet in normal assistant answers; current capability-answer integration is read-only and does not authorize execution
+- probes now have a first structured read-only foundation, but the broader planned probe surface remains partial
 - memory retrieval remains shallow/lexical relative to the documented target architecture
 - no document ingestion/drop-folder knowledge pipeline yet
 - no service/daemon, applet, voice, or final packaging implementation yet

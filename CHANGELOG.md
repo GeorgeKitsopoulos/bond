@@ -19,6 +19,15 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-D-A dynamic probe foundation
+
+- Added `src/bond/ai_probe_contract.py` with the deterministic structured probe-result contract for Layer 0/1/2 probe snapshots.
+- Added `src/bond/ai_probes.py` with the first read-only probe set: `host_baseline`, `session_baseline`, `tool_inventory`, `router_config_models`, `ollama_model_inventory`, and `model_truth`.
+- Replaced the legacy broad `src/bond/ai_scan_system.py` scanner with a thin structured probe CLI wrapper that preserves the compatibility state snapshot path.
+- Added Stage 2F-D-A integrated selftests for probe contract validation, structured probe behavior, CLI JSON output, wrapper execution, and static `shell=True` absence checks.
+- Updated README, STATE, TESTING, PROBES, CAPABILITIES, and ROADMAP docs to distinguish the new read-only probe foundation from future probe-backed capability discovery.
+- This stage does not implement probe-backed normal answers, privileged actions, maintenance advisor behavior, or package updates.
+
 ### Stage 2F-C3 CI selftest portability fix
 
 - Fixed Stage 2F-C3 selftest portability by using the repository-local `scripts/ai` wrapper instead of assuming a globally installed `ai` command in CI.

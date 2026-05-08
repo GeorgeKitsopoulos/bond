@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is 157 passed, 0 failed, total 157. Coverage includes Stage 2E parser-contract/action-preflight checks, Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks, Stage 2F-C3 edge-case cleanup checks (bare capability phrases, time queries, project-state queries), Stage 2F-C4 deterministic diagnostic cleanup checks, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, and the Stage 2F-C5 follow-up strict-timeout cleanup checks.
+Current integrated selftest summary from latest run is 169 passed, 0 failed, total 169. Coverage includes Stage 2E parser-contract/action-preflight checks, Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks, Stage 2F-C3 edge-case cleanup checks (bare capability phrases, time queries, project-state queries), Stage 2F-C4 deterministic diagnostic cleanup checks, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, the Stage 2F-C5 follow-up strict-timeout cleanup checks, and the Stage 2F-D-A probe foundation checks.
 
 The current integrated suite covers:
 
@@ -75,7 +75,7 @@ The current integrated suite covers:
 - unsupported create-folder and write-file side-effect requests are tested to reject deterministically with `action_not_parsed`
 
 Greek support in these tests remains transitional and centered on normalization/alias/intent handling, not final language-state architecture.
-Stage 2F-D dynamic probes are not implemented in this testing stage.
+Stage 2F-D-A probe foundation tests verify schema validation, structured failure behavior, read-only host/session/tool/router/model probe behavior, CLI JSON output, wrapper execution, no `shell=True` in the new probe code, and no hard requirement for Ollama, GUI, or network.
 These C5 checks are strict deterministic guardrails and do not claim that general chat/model timeout behavior is solved.
 
 This baseline is necessary and useful, but it is not proof of final assistant correctness or product maturity.
