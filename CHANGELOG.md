@@ -19,6 +19,13 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-E-B CI recovery
+
+- Replaced the non-hermetic `/tmp` source snapshot selftest with a CI-safe contract-only guard.
+- Preserved classifier and answer runtime behavior.
+- No aliases, probes, actions, capabilities, or execution authority were added.
+- Latest integrated selftest run after recovery: 208 passed, 0 failed, total 208.
+
 ### Stage 2F-E-B transitional linguistic intent normalization contract
 
 - Added `src/bond/ai_linguistic_intent_contract.py` as a contract-only module.

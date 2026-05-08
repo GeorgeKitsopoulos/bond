@@ -3472,20 +3472,98 @@ def run_stage2f_e_b_linguistic_intent_contract_tests() -> list[dict]:
     )
 
     errors = []
-    before_classifier = Path("/tmp/bond-stage2feb-before-ai_capability_classifier.py")
-    before_answer = Path("/tmp/bond-stage2feb-before-ai_capability_answer.py")
-    current_classifier = SRC_BOND / "ai_capability_classifier.py"
-    current_answer = SRC_BOND / "ai_capability_answer.py"
+    contract_source = (SRC_BOND / "ai_linguistic_intent_contract.py").read_text(
+        encoding="utf-8", errors="ignore"
+    )
 
-    if not before_classifier.exists():
-        errors.append("missing /tmp/bond-stage2feb-before-ai_capability_classifier.py")
-    if not before_answer.exists():
-        errors.append("missing /tmp/bond-stage2feb-before-ai_capability_answer.py")
-    if before_classifier.exists() and before_classifier.read_bytes() != current_classifier.read_bytes():
-        errors.append("src/bond/ai_capability_classifier.py changed during Stage 2F-E-B")
-    if before_answer.exists() and before_answer.read_bytes() != current_answer.read_bytes():
-        errors.append("src/bond/ai_capability_answer.py changed during Stage 2F-E-B")
-    _append("stage2f_e_b_classifier_and_answer_sources_unchanged", errors)
+    forbidden_source_snippets = [
+        "import ai_capability_classifier",
+        "from ai_capability_classifier",
+        "import ai_capability_answer",
+        "from ai_capability_answer",
+        "run_named_probe",
+        "subprocess",
+        "requests",
+        "urllib",
+        "socket",
+        "Path(",
+        "open(",
+        "classify_capability_question(",
+        "answer_capability_question(",
+    ]
+    for needle in forbidden_source_snippets:
+        if needle in contract_source:
+            errors.append(f"forbidden runtime coupling found in contract source: {needle}")
+
+    for line in contract_source.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("#"):
+            continue
+        if stripped.startswith("probe_") or " probe_" in stripped:
+            errors.append("forbidden runtime coupling found in contract source: probe_")
+            break
+
+    required_source_snippets = [
+        "LinguisticIntentNormalizationContract",
+        "get_linguistic_intent_normalization_contract",
+        "is_transitional_linguistic_scaffolding",
+        "validate_linguistic_intent_contract",
+        "classification must not execute actions",
+        "classification must not run probes",
+        "classification must not authorize execution",
+    ]
+    for needle in required_source_snippets:
+        if needle not in contract_source:
+            errors.append(f"missing expected contract source snippet: {needle}")
+
+    contract = get_linguistic_intent_normalization_contract()
+    if contract.final_nlp_layer is not False:
+        errors.append("expected final_nlp_layer=False")
+    if contract.smart_linguistic_support_available is not False:
+        errors.append("expected smart_linguistic_support_available=False")
+    if contract.semantic_classification_available is not False:
+        errors.append("expected semantic_classification_available=False")
+    if contract.model_based_classification_available is not False:
+        errors.append("expected model_based_classification_available=False")
+    if is_transitional_linguistic_scaffolding() is not True:
+        errors.append("expected is_transitional_linguistic_scaffolding()=True")
+    ok, validation_errors = validate_linguistic_intent_contract()
+    if ok is not True:
+        errors.append("expected validate_linguistic_intent_contract ok=True")
+    if validation_errors != ():
+        errors.append(f"expected validation errors=(), got {validation_errors!r}")
+
+    context_answer = answer_capability_question("what can you do here?")
+    general_answer = answer_capability_question("what can you do?")
+    specific_answer = answer_capability_question("installed models")
+    chat_answer = answer_capability_question("how are you?")
+
+    if "Context capability summary:" not in (context_answer or ""):
+        errors.append("context answer missing expected header")
+    if "Capability summary:" not in (general_answer or ""):
+        errors.append("general answer missing expected header")
+    if "Context capability summary:" in (general_answer or ""):
+        errors.append("general answer should not include context header")
+    if "Model truth probe:" not in (specific_answer or ""):
+        errors.append("specific model answer missing expected header")
+    if chat_answer is not None:
+        errors.append("normal chat should not become capability answer")
+
+    _append(
+        "stage2f_e_b_contract_module_has_no_runtime_coupling",
+        errors,
+        stdout=json.dumps(
+            {
+                "context_answer_present": context_answer is not None,
+                "general_answer_present": general_answer is not None,
+                "specific_answer_present": specific_answer is not None,
+                "chat_answer_is_none": chat_answer is None,
+            },
+            ensure_ascii=False,
+        ),
+    )
 
     errors = []
     checks = [
