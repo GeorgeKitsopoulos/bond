@@ -36,3 +36,11 @@ Security reports are most useful when they involve:
 - unsafe parsing of action-looking requests;
 - secret leakage through logs or diagnostics;
 - public-repository leakage of private paths, credentials, memory, or local runtime data.
+
+## Confirmation token local-state permissions
+
+Pending high-risk confirmation tokens are local state.
+
+On POSIX systems, Bond hardens the confirmation directory to `0700` and the pending token file to `0600`.
+
+Tokens are treated as short-lived local control data. They must not be synced, published, or treated as portable project documentation.

@@ -32,9 +32,27 @@ def _safe_ttl_seconds() -> int:
     return value
 
 
+def _harden_pending_store_permissions(path: Path) -> None:
+    if os.name != "posix":
+        return
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        path.parent.chmod(0o700)
+    except PermissionError:
+        pass
+
+    if path.exists():
+        try:
+            path.chmod(0o600)
+        except PermissionError:
+            pass
+
+
 def _write_pending(data: dict) -> None:
     path = _pending_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
+    _harden_pending_store_permissions(path)
 
     fd, temp_name = tempfile.mkstemp(prefix="pending.", suffix=".tmp", dir=str(path.parent))
     temp_path = Path(temp_name)
@@ -43,6 +61,7 @@ def _write_pending(data: dict) -> None:
             json.dump(data, handle, ensure_ascii=False, indent=2)
             handle.write("\n")
         os.replace(temp_path, path)
+        _harden_pending_store_permissions(path)
     finally:
         if temp_path.exists():
             temp_path.unlink()

@@ -19,6 +19,11 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-E-D confirmation-token hardening
+
+- Hardened pending confirmation token storage permissions on POSIX systems.
+- Added selftest coverage for private confirmation-token file modes.
+
 ### Stage 2F-E-D timeout hardening
 
 - Added bounded subprocess timeout handling for model invocation and safe-action execution.

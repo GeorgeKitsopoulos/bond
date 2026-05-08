@@ -2,9 +2,12 @@
 import io
 import json
 import os
+import shutil
+import stat
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+import ai_confirmation
 import ai_exec
 import ai_run
 import ai_capability_answer
@@ -4575,6 +4578,64 @@ def run_confirmation_token_tests() -> list[dict]:
                 "stderr": create_stderr,
                 "errors": create_errors,
                 "cmd": ["python3", str(AI_RUN), "sudo rm -rf /"],
+            }
+        )
+
+        permission_errors: list[str] = []
+        permission_stdout = ""
+        original_state_root = os.environ.get("BOND_STATE_ROOT")
+        isolated_state_root = TEST_ARCHIVE_ROOT / "confirmation-token-permissions"
+        isolated_pending_path = isolated_state_root / "confirmations" / "pending.json"
+        try:
+            shutil.rmtree(isolated_state_root, ignore_errors=True)
+            os.environ["BOND_STATE_ROOT"] = str(isolated_state_root)
+            created = ai_confirmation.create_pending_confirmation(
+                "sudo rm -rf /",
+                "high",
+                ["sudo rm -rf /"],
+                "dangerous_action_confirmation",
+            )
+            if not isolated_pending_path.exists():
+                permission_errors.append("expected isolated pending confirmation file to exist")
+            if os.name == "posix" and isolated_pending_path.exists():
+                dir_mode = stat.S_IMODE(isolated_pending_path.parent.stat().st_mode)
+                file_mode = stat.S_IMODE(isolated_pending_path.stat().st_mode)
+                if dir_mode != 0o700:
+                    permission_errors.append(f"expected confirmations dir mode 0o700, got {oct(dir_mode)}")
+                if file_mode != 0o600:
+                    permission_errors.append(f"expected pending.json mode 0o600, got {oct(file_mode)}")
+                permission_stdout = json.dumps(
+                    {
+                        "token": created.get("token"),
+                        "dir_mode": oct(dir_mode),
+                        "file_mode": oct(file_mode),
+                    },
+                    ensure_ascii=False,
+                )
+            else:
+                permission_stdout = json.dumps(
+                    {
+                        "token": created.get("token"),
+                        "skipped": True,
+                        "reason": "non_posix",
+                    },
+                    ensure_ascii=False,
+                )
+        finally:
+            if original_state_root is None:
+                os.environ.pop("BOND_STATE_ROOT", None)
+            else:
+                os.environ["BOND_STATE_ROOT"] = original_state_root
+
+        results.append(
+            {
+                "name": "confirmation_token_pending_store_permissions_private_on_posix",
+                "ok": not permission_errors,
+                "returncode": 0,
+                "stdout": permission_stdout,
+                "stderr": "",
+                "errors": permission_errors,
+                "cmd": ["confirmation_permission_check"],
             }
         )
 
