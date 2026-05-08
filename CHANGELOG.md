@@ -19,6 +19,15 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-E-A capability classifier boundary
+
+- Moved capability-question detection/classification into `src/bond/ai_capability_classifier.py`.
+- Kept capability answer generation in `src/bond/ai_capability_answer.py`.
+- Preserved existing public helper behavior through compatibility imports in `ai_capability_answer.py`.
+- Preserved existing context/general/specific capability answer behavior.
+- No aliases, probes, actions, or execution authority were added.
+- Latest integrated selftest run after Stage 2F-E-A: 200 passed, 0 failed, total 200.
+
 ### Stage 2F-D-D bounded context capability answers
 
 - Moved `describe_context_capabilities` from planned to partial.

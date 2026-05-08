@@ -6,7 +6,7 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 
 - Bond is under active development.
 - The current validated baseline is Stage 2E plus P0 cleanup work.
-- Current documented validation baseline: compile passes and integrated selftest currently reports 192/192 after Stage 2F-D-D bounded context-capability answer validation (see docs/TESTING.md for exact summary).
+- Current documented validation baseline: compile passes and integrated selftest currently reports 200/200 after Stage 2F-E-A capability-classifier-boundary validation (see docs/TESTING.md for exact summary).
 - Stage 2F-C hardens deterministic guardrails from telemetry findings (assistant-prefix normalization, mixed-intent handling, high-risk command shaping, and capability alias coverage) while keeping telemetry opt-in and answers telemetry-free by default. 
 - Stage 2F-C2 follows with a small regression cleanup for model/language capability prompts, restart-laptop confirmation shaping, and deterministic social check-in handling.
 - Stage 2F-C3 addresses remaining telemetry edge cases: bare capability noun phrases ("installed models", "local models") now deterministically answer as capability questions, and time/project-state queries return bounded deterministic answers instead of timing out.
@@ -25,6 +25,8 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 - Stage 2F-D-C narrowly hardens bounded `model_truth` answer fallback wording and tests for unavailable-inventory, validation-failure, and exception paths without broadening probe-backed answer scope or adding new probes.
 - Stage 2F-D-D adds bounded explicit context-capability answers for "what can you do here/on this system" surfaces using existing read-only probes only.
 - Stage 2F-D-D keeps plain general capability discovery (`what can you do?`) and normal assistant answers not broadly dynamically probe-backed.
+- Stage 2F-E-A separates capability question detection/classification behind a deterministic classifier boundary before capability answer generation.
+- Stage 2F-E-A is a structural seam for future smarter linguistic handling and does not add semantic NLP, model-based classification, new probes, new actions, or broader probe-backed normal answers.
 - Stage 2F-D-C keeps unavailable inventory explicit: missing/extra installed-model sets are unknown for that run, not zero.
 - Probe-backed capability discovery in normal assistant answers is still not implemented.
 - Bond is not yet a general-purpose desktop assistant.

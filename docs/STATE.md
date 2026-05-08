@@ -107,10 +107,13 @@ P0F preparation update (current-doc reference cleanup):
 - Stage 2F-D-D is integrated/current as a bounded explicit context-capability step: explicit context-capability questions can now return bounded probe-informed answers from existing read-only probes (`host_baseline`, `session_baseline`, `tool_inventory`, `model_truth`).
 - Stage 2F-D-D preserves boundaries: general capability discovery remains not dynamically probe-backed, and normal assistant answers remain not broadly probe-backed.
 - Stage 2F-D-D adds no new probes, no new actions, no privileged lane, no maintenance advisor, no voice/applet/service layer, and no document RAG ingestion/execution path.
+- Stage 2F-E-A is integrated/current as a structural boundary step: capability-question classification is now separated from capability answer generation through `src/bond/ai_capability_classifier.py`.
+- Stage 2F-E-A preserves current behavior for context/general/specific capability questions while adding no new aliases, probes, or actions.
+- Stage 2F-E-A prepares the next linguistic normalization contract stage and does not add semantic/model-based classification.
 - Normal assistant answers are not yet dynamically probe-backed; general capability discovery is still not dynamically probe-backed.
 - Temporary dev/test telemetry exists behind `BOND_DEV_TELEMETRY=1`. It emits one JSON line to stderr with elapsed_ms and safe routing/decision metadata for testing. Normal Bond answers remain telemetry-free by default, and final product behavior must not include telemetry in assistant answers.
 - capability-registry honesty tests now verify planned/unsupported capabilities are not reported as available
-- current integrated selftest summary from latest run: 192 passed, 0 failed, total 192
+- current integrated selftest summary from latest run: 200 passed, 0 failed, total 200
 ## Partial, open, or not implemented yet
 
 - no privileged execution lane implementation

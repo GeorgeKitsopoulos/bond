@@ -215,6 +215,16 @@ The capability truth layer should be usable by:
 
 Stage 2F-B adds `src/bond/ai_capability_answer.py` and an early `ai_run.py` read-only answer path for capability questions. This path is deterministic and registry-backed; it does not execute actions, perform probes, or authorize capabilities.
 
+### Capability classifier boundary
+
+Stage 2F-E-A introduces a deterministic classifier boundary for capability answers.
+
+- `src/bond/ai_capability_classifier.py` owns deterministic capability-question classification.
+- `src/bond/ai_capability_answer.py` owns capability answer construction.
+- the current classifier is deterministic transitional scaffolding, not smart language understanding
+- this boundary is where smarter language handling can later replace or augment phrase-based detection
+- this boundary must preserve safety contracts and must not directly execute actions or run probes
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

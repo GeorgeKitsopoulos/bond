@@ -6,6 +6,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 import ai_capability_answer
+import ai_capability_classifier
 from ai_action_contract import (
     ACTION_CHAT,
     ACTION_CONFIRM_REQUIRED,
@@ -59,6 +60,13 @@ from ai_capability_answer import (
     is_capability_question,
     is_context_capability_question,
     mentioned_capabilities,
+)
+from ai_capability_classifier import (
+    ANSWER_KIND_CONTEXT,
+    ANSWER_KIND_GENERAL,
+    ANSWER_KIND_NONE,
+    ANSWER_KIND_SPECIFIC,
+    classify_capability_question,
 )
 from ai_dev_telemetry import (
     build_dev_telemetry_record,
@@ -2466,7 +2474,7 @@ def run_stage2f_d_a2_cleanup_hardening_tests() -> list[dict]:
         BOND_ROOT / "ROADMAP.md",
     ]
     banned_phrases = [
-        "normal assistant answers are dynamically probe-backed",
+        "normal assistant answers are dynamically " + "probe-backed",
         "probe-backed capability discovery is implemented in normal assistant answers",
         "maintenance advisor is implemented",
         "package update planning is implemented",
@@ -2535,8 +2543,8 @@ def run_stage2f_d_b_model_truth_answer_tests() -> list[dict]:
                 errors.append(f"missing expected text: {part}")
 
         forbidden_parts = [
-            "normal assistant answers are dynamically probe-backed",
-            "all capabilities are probe-backed",
+            "normal assistant answers are dynamically " + "probe-backed",
+            "all capabilities are " + "probe-backed",
         ]
         for part in forbidden_parts:
             if part in answer:
@@ -2896,10 +2904,10 @@ def run_stage2f_d_d_context_capability_answer_tests() -> list[dict]:
                 errors.append(f"missing expected text: {part}")
 
         forbidden_parts = [
-            "all capabilities are probe-backed",
-            "normal assistant answers are dynamically probe-backed",
-            "privileged updates are available",
-            "arbitrary shell execution is available",
+            "all capabilities are " + "probe-backed",
+            "normal assistant answers are dynamically " + "probe-backed",
+            "privileged updates are " + "available",
+            "arbitrary shell execution is " + "available",
         ]
         for part in forbidden_parts:
             if part in answer:
@@ -3006,6 +3014,311 @@ def run_stage2f_d_d_context_capability_answer_tests() -> list[dict]:
     finally:
         ai_capability_answer.run_named_probe = original_run_named_probe
     _append("stage2f_d_d_context_probe_exception_fallback", errors, stdout=answer)
+
+    return results
+
+
+def run_stage2f_e_a_capability_classifier_boundary_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(
+        name: str,
+        errors: list[str],
+        *,
+        stdout: str = "",
+        stderr: str = "",
+        returncode: int = 0,
+        cmd: list[str] | None = None,
+    ) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": returncode,
+                "stdout": stdout,
+                "stderr": stderr,
+                "errors": errors,
+                "cmd": cmd or ["stage2f_e_a", name],
+            }
+        )
+
+    errors: list[str] = []
+    for attr in [
+        "classify_capability_question",
+        "CapabilityClassification",
+        "ANSWER_KIND_NONE",
+        "ANSWER_KIND_CONTEXT",
+        "ANSWER_KIND_GENERAL",
+        "ANSWER_KIND_SPECIFIC",
+    ]:
+        if not hasattr(ai_capability_classifier, attr):
+            errors.append(f"missing expected attribute on ai_capability_classifier: {attr}")
+
+    sample = classify_capability_question("how are you?")
+    for attr in [
+        "is_capability_question",
+        "answer_kind",
+        "mentioned_capabilities",
+        "normalized_text",
+        "reason",
+    ]:
+        if not hasattr(sample, attr):
+            errors.append(f"classification object missing attribute: {attr}")
+    _append(
+        "stage2f_e_a_classifier_module_public_contract",
+        errors,
+        stdout=str(sample),
+    )
+
+    errors = []
+    classification = classify_capability_question("What can you do here?")
+    if classification.is_capability_question is not True:
+        errors.append("expected is_capability_question=True")
+    if classification.answer_kind != ANSWER_KIND_CONTEXT:
+        errors.append(f"expected answer_kind={ANSWER_KIND_CONTEXT!r}, got {classification.answer_kind!r}")
+    if classification.mentioned_capabilities != ("describe_context_capabilities",):
+        errors.append(
+            "expected mentioned_capabilities=('describe_context_capabilities',)"
+        )
+    if classification.reason != "context_capability_question":
+        errors.append(
+            f"expected reason='context_capability_question', got {classification.reason!r}"
+        )
+    answer = answer_capability_question("What can you do here?") or ""
+    if "Context capability summary:" not in answer:
+        errors.append("expected Context capability summary in answer")
+    if "Capability summary:" in answer and answer.find("Capability summary:") < answer.find("Context capability summary:"):
+        errors.append("general capability header should not appear before context header")
+    _append(
+        "stage2f_e_a_classifier_context_precedence",
+        errors,
+        stdout=json.dumps(
+            {
+                "classification": {
+                    "is_capability_question": classification.is_capability_question,
+                    "answer_kind": classification.answer_kind,
+                    "mentioned_capabilities": list(classification.mentioned_capabilities),
+                    "normalized_text": classification.normalized_text,
+                    "reason": classification.reason,
+                },
+                "answer": answer,
+            },
+            ensure_ascii=False,
+        ),
+    )
+
+    errors = []
+    classification = classify_capability_question("what can you do?")
+    if classification.is_capability_question is not True:
+        errors.append("expected is_capability_question=True")
+    if classification.answer_kind != ANSWER_KIND_GENERAL:
+        errors.append(f"expected answer_kind={ANSWER_KIND_GENERAL!r}, got {classification.answer_kind!r}")
+    if classification.mentioned_capabilities != ("describe_capabilities",):
+        errors.append("expected mentioned_capabilities=('describe_capabilities',)")
+    if classification.reason != "general_capability_question":
+        errors.append(
+            f"expected reason='general_capability_question', got {classification.reason!r}"
+        )
+    answer = answer_capability_question("what can you do?") or ""
+    if "Capability summary:" not in answer:
+        errors.append("expected Capability summary in answer")
+    if "Context capability summary:" in answer:
+        errors.append("general capability answer should not include context summary")
+    if "Capability-relevant tools:" in answer:
+        errors.append("general capability answer should not include capability-relevant tools")
+    _append(
+        "stage2f_e_a_classifier_general_stays_general",
+        errors,
+        stdout=json.dumps(
+            {
+                "classification": {
+                    "is_capability_question": classification.is_capability_question,
+                    "answer_kind": classification.answer_kind,
+                    "mentioned_capabilities": list(classification.mentioned_capabilities),
+                    "normalized_text": classification.normalized_text,
+                    "reason": classification.reason,
+                },
+                "answer": answer,
+            },
+            ensure_ascii=False,
+        ),
+    )
+
+    errors = []
+    classification = classify_capability_question("installed models")
+    if classification.is_capability_question is not True:
+        errors.append("expected is_capability_question=True")
+    if classification.answer_kind != ANSWER_KIND_SPECIFIC:
+        errors.append(f"expected answer_kind={ANSWER_KIND_SPECIFIC!r}, got {classification.answer_kind!r}")
+    if "query_model" not in classification.mentioned_capabilities:
+        errors.append("expected query_model in mentioned_capabilities")
+    if classification.reason != "specific_capability_question":
+        errors.append(
+            f"expected reason='specific_capability_question', got {classification.reason!r}"
+        )
+    answer = answer_capability_question("installed models") or ""
+    if "Model truth probe:" not in answer:
+        errors.append("expected Model truth probe in specific answer")
+    if "Context capability summary:" in answer:
+        errors.append("specific answer should not include context summary")
+    _append(
+        "stage2f_e_a_classifier_specific_model_inventory",
+        errors,
+        stdout=json.dumps(
+            {
+                "classification": {
+                    "is_capability_question": classification.is_capability_question,
+                    "answer_kind": classification.answer_kind,
+                    "mentioned_capabilities": list(classification.mentioned_capabilities),
+                    "normalized_text": classification.normalized_text,
+                    "reason": classification.reason,
+                },
+                "answer": answer,
+            },
+            ensure_ascii=False,
+        ),
+    )
+
+    errors = []
+    for text in [
+        "how are you?",
+        "tell me a joke",
+        "write a short paragraph about discipline",
+    ]:
+        classification = classify_capability_question(text)
+        if classification.is_capability_question is not False:
+            errors.append(f"{text!r}: expected is_capability_question=False")
+        if classification.answer_kind != ANSWER_KIND_NONE:
+            errors.append(f"{text!r}: expected answer_kind={ANSWER_KIND_NONE!r}, got {classification.answer_kind!r}")
+        if classification.mentioned_capabilities != ():
+            errors.append(f"{text!r}: expected empty mentioned_capabilities")
+        if answer_capability_question(text) is not None:
+            errors.append(f"{text!r}: expected answer_capability_question to return None")
+    _append("stage2f_e_a_classifier_rejects_normal_chat", errors)
+
+    errors = []
+    if ai_capability_answer.is_capability_question("what can you do?") is not True:
+        errors.append("expected ai_capability_answer.is_capability_question to remain True for general capability question")
+    if ai_capability_answer.is_context_capability_question("what can you do here?") is not True:
+        errors.append("expected ai_capability_answer.is_context_capability_question to remain True for context question")
+    if ai_capability_answer.is_context_capability_question("what can you do?") is not False:
+        errors.append("expected ai_capability_answer.is_context_capability_question to remain False for general question")
+    if "query_model" not in ai_capability_answer.mentioned_capabilities("installed models"):
+        errors.append("expected ai_capability_answer.mentioned_capabilities to include query_model")
+    normalized = ai_capability_answer.normalize_text(" Μποντ, ΤΙ μπορείς να κάνεις εδώ; ")
+    if not normalized:
+        errors.append("expected non-empty normalized output from ai_capability_answer.normalize_text")
+    if ai_capability_answer.is_capability_question("how are you?") is not False:
+        errors.append("expected ai_capability_answer.is_capability_question to remain False for normal chat")
+    _append(
+        "stage2f_e_a_answer_module_backward_compatible_helpers",
+        errors,
+        stdout=json.dumps({"normalized": normalized}, ensure_ascii=False),
+    )
+
+    original_run_named_probe = ai_capability_answer.run_named_probe
+    errors = []
+    try:
+        def _fake_probe_raise(name: str):
+            raise RuntimeError("classifier must not call probes")
+
+        ai_capability_answer.run_named_probe = _fake_probe_raise
+
+        checks = [
+            ("what can you do here?", ANSWER_KIND_CONTEXT),
+            ("what can you do?", ANSWER_KIND_GENERAL),
+            ("installed models", ANSWER_KIND_SPECIFIC),
+            ("how are you?", ANSWER_KIND_NONE),
+        ]
+        for text, expected in checks:
+            try:
+                classification = classify_capability_question(text)
+            except Exception as exc:
+                errors.append(f"{text!r}: classify_capability_question raised unexpectedly: {exc}")
+                continue
+            if classification.answer_kind != expected:
+                errors.append(
+                    f"{text!r}: expected answer_kind={expected!r}, got {classification.answer_kind!r}"
+                )
+    finally:
+        ai_capability_answer.run_named_probe = original_run_named_probe
+    _append("stage2f_e_a_classifier_no_probe_or_answer_generation_side_effects", errors)
+
+    errors = []
+
+    def _run_cli(prompt: str) -> tuple[subprocess.CompletedProcess, dict | None, list[str]]:
+        proc = run_cmd([str(AI_WRAPPER), prompt], {"BOND_DEV_TELEMETRY": "1", "BOND_ACTION_DRY_RUN": None})
+        telemetry, telemetry_errors = _parse_telemetry_record(proc.stderr or "")
+        return proc, telemetry, telemetry_errors
+
+    proc, telemetry, telemetry_errors = _run_cli("what can you do here?")
+    out = (proc.stdout or "").strip()
+    err = (proc.stderr or "").strip()
+    errors.extend([f"case A: {item}" for item in telemetry_errors])
+    if proc.returncode != 0:
+        errors.append(f"case A: expected exit 0, got {proc.returncode}")
+    if "Context capability summary:" not in out:
+        errors.append("case A: missing Context capability summary in stdout")
+    if "existing read-only probes only" not in out:
+        errors.append("case A: missing existing read-only probes only in stdout")
+    if isinstance(telemetry, dict):
+        if telemetry.get("answer_path") != "capability_answer":
+            errors.append(f"case A: expected answer_path=capability_answer, got {telemetry.get('answer_path')!r}")
+    else:
+        errors.append("case A: missing telemetry payload")
+    if "model_answer" in out or "model_answer" in err:
+        errors.append("case A: stdout/stderr should not include model_answer")
+
+    proc, telemetry, telemetry_errors = _run_cli("what can you do?")
+    out = (proc.stdout or "").strip()
+    err = (proc.stderr or "").strip()
+    errors.extend([f"case B: {item}" for item in telemetry_errors])
+    if proc.returncode != 0:
+        errors.append(f"case B: expected exit 0, got {proc.returncode}")
+    if "Capability summary:" not in out:
+        errors.append("case B: missing Capability summary in stdout")
+    if "Context capability summary:" in out:
+        errors.append("case B: stdout should not include Context capability summary")
+    if isinstance(telemetry, dict):
+        if telemetry.get("answer_path") != "capability_answer":
+            errors.append(f"case B: expected answer_path=capability_answer, got {telemetry.get('answer_path')!r}")
+    else:
+        errors.append("case B: missing telemetry payload")
+    if "model_answer" in out or "model_answer" in err:
+        errors.append("case B: stdout/stderr should not include model_answer")
+
+    proc, telemetry, telemetry_errors = _run_cli("installed models")
+    out = (proc.stdout or "").strip()
+    err = (proc.stderr or "").strip()
+    errors.extend([f"case C: {item}" for item in telemetry_errors])
+    if proc.returncode != 0:
+        errors.append(f"case C: expected exit 0, got {proc.returncode}")
+    if "Model truth probe:" not in out:
+        errors.append("case C: missing Model truth probe in stdout")
+    if "Context capability summary:" in out:
+        errors.append("case C: stdout should not include Context capability summary")
+    if isinstance(telemetry, dict):
+        if telemetry.get("answer_path") != "capability_answer":
+            errors.append(f"case C: expected answer_path=capability_answer, got {telemetry.get('answer_path')!r}")
+    else:
+        errors.append("case C: missing telemetry payload")
+    if "model_answer" in out or "model_answer" in err:
+        errors.append("case C: stdout/stderr should not include model_answer")
+
+    proc, _, _ = _run_cli("how are you?")
+    out = (proc.stdout or "").strip()
+    err = (proc.stderr or "").strip()
+    if proc.returncode != 0:
+        errors.append(f"case D: expected exit 0, got {proc.returncode}")
+    for forbidden in [
+        "Context capability summary:",
+        "Capability summary:",
+        "Model truth probe:",
+    ]:
+        if forbidden in out or forbidden in err:
+            errors.append(f"case D: stdout/stderr should not include {forbidden!r}")
+
+    _append("stage2f_e_a_cli_behavior_unchanged_after_classifier_split", errors)
 
     return results
 
@@ -4155,6 +4468,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_d_d_context_capability_answer_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_e_a_capability_classifier_boundary_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

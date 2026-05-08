@@ -131,6 +131,10 @@ Serious Greek support requires:
 
 Greek support is partial. Bond must not claim full Greek support until the acceptance criteria above are implemented and tested.
 
+Stage 2F-E-A does not implement smart linguistic support. It introduces a deterministic capability-classifier boundary (`src/bond/ai_capability_classifier.py`) before capability answer generation so future Greek/English improvements can be implemented safely behind one seam.
+
+Deterministic aliases remain transitional scaffolding. Future stages should improve language handling behind this boundary without spreading phrase lists across answer-generation code.
+
 ## Cross references
 
 - `docs/ARCHITECTURE.md`
