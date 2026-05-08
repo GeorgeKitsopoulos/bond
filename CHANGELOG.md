@@ -19,6 +19,10 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-C3 CI selftest portability fix
+
+- Fixed Stage 2F-C3 selftest portability by using the repository-local `scripts/ai` wrapper instead of assuming a globally installed `ai` command in CI.
+
 ### Stage 2F-C5 follow-up strict timeout cleanup
 
 - Added language-policy capability aliases for Greek and English "can you answer/respond in Greek" wording so those forms stay deterministic capability answers instead of timing out.

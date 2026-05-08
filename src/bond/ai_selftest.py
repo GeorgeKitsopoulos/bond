@@ -1729,8 +1729,22 @@ def run_stage2f_c3_edge_case_tests() -> list[dict]:
             "errors": errors,
         })
 
-    installed_models_cmd = ['env', 'BOND_DEV_TELEMETRY=1', 'BOND_ACTION_DRY_RUN=1', 'ai', 'installed models']
-    installed_proc = subprocess.run(installed_models_cmd, capture_output=True, text=True, timeout=35)
+    def _run_ai_wrapper(text: str) -> tuple[list[str], subprocess.CompletedProcess]:
+        cmd = [str(AI_WRAPPER), text]
+        env = selftest_env()
+        env["BOND_DEV_TELEMETRY"] = "1"
+        env["BOND_ACTION_DRY_RUN"] = "1"
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=35,
+            env=env,
+            check=False,
+        )
+        return cmd, proc
+
+    installed_models_cmd, installed_proc = _run_ai_wrapper("installed models")
     installed_telemetry, installed_telemetry_errors = _parse_telemetry_record(installed_proc.stderr or "")
     installed_errors: list[str] = []
     if installed_proc.returncode != 0:
@@ -1745,8 +1759,7 @@ def run_stage2f_c3_edge_case_tests() -> list[dict]:
             installed_errors.append("expected telemetry deterministic=true")
     _append("stage2f_c3_installed_models_bare_noun", installed_proc, installed_errors)
 
-    local_models_cmd = ['env', 'BOND_DEV_TELEMETRY=1', 'BOND_ACTION_DRY_RUN=1', 'ai', 'local models']
-    local_proc = subprocess.run(local_models_cmd, capture_output=True, text=True, timeout=35)
+    local_models_cmd, local_proc = _run_ai_wrapper("local models")
     local_telemetry, local_telemetry_errors = _parse_telemetry_record(local_proc.stderr or "")
     local_errors: list[str] = []
     if local_proc.returncode != 0:
@@ -1761,8 +1774,7 @@ def run_stage2f_c3_edge_case_tests() -> list[dict]:
             local_errors.append("expected telemetry deterministic=true")
     _append("stage2f_c3_local_models_bare_noun", local_proc, local_errors)
 
-    time_cmd = ['env', 'BOND_DEV_TELEMETRY=1', 'BOND_ACTION_DRY_RUN=1', 'ai', 'hey Bond give me the time']
-    time_proc = subprocess.run(time_cmd, capture_output=True, text=True, timeout=35)
+    time_cmd, time_proc = _run_ai_wrapper("hey Bond give me the time")
     time_telemetry, time_telemetry_errors = _parse_telemetry_record(time_proc.stderr or "")
     time_errors: list[str] = []
     if time_proc.returncode != 0:
@@ -1777,8 +1789,7 @@ def run_stage2f_c3_edge_case_tests() -> list[dict]:
             time_errors.append("time query must not route as model_answer")
     _append("stage2f_c3_time_query_bounded", time_proc, time_errors)
 
-    project_cmd = ['env', 'BOND_DEV_TELEMETRY=1', 'BOND_ACTION_DRY_RUN=1', 'ai', 'current state of the project']
-    project_proc = subprocess.run(project_cmd, capture_output=True, text=True, timeout=35)
+    project_cmd, project_proc = _run_ai_wrapper("current state of the project")
     project_telemetry, project_telemetry_errors = _parse_telemetry_record(project_proc.stderr or "")
     project_errors: list[str] = []
     if project_proc.returncode != 0:
