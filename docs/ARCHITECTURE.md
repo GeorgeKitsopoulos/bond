@@ -246,6 +246,10 @@ Stage 2F-E-C adds a bounded explicit maintenance/readiness answer path.
 - it does not add new probe domains
 - it does not perform package checks, log checks, storage checks, fixes, package installs, cleanup, service restarts, file writes/deletes, privileged operations, or autonomous repair
 - future real maintenance probes must be separate read-only capabilities with explicit contracts before any fix/update action is considered
+- Stage 2F-E-C cleanup keeps explicit maintenance-readiness alias detection behind `ai_capability_classifier.py`
+- `ai_capability_answer.py` must not own maintenance-readiness alias tables
+- answer generation may ask the classifier boundary whether a specific capability was explicitly requested, but it must not duplicate phrase lists
+- this preserves the Stage 2F-E-A/E-B separation between intent detection and answer construction
 
 ### Rootless-first capability ordering
 

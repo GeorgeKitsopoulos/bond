@@ -475,6 +475,23 @@ _NORMALIZED_ALIASES: dict[str, tuple[str, ...]] = {
 }
 
 
+def is_explicit_capability_alias(text: str, capability_name: str) -> bool:
+    stripped = strip_assistant_invocation_prefix(text)
+    normalized = normalize_text(stripped)
+    if not normalized:
+        return False
+
+    aliases = _NORMALIZED_ALIASES.get(capability_name)
+    if not aliases:
+        return False
+
+    return any(_contains_phrase(normalized, alias) for alias in aliases)
+
+
+def is_explicit_maintenance_readiness_question(text: str) -> bool:
+    return is_explicit_capability_alias(text, "describe_maintenance_readiness")
+
+
 def mentioned_capabilities(text: str) -> list[str]:
     stripped = strip_assistant_invocation_prefix(text)
     normalized = normalize_text(stripped)

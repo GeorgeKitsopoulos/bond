@@ -19,6 +19,14 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-E-C classifier-boundary cleanup
+
+- Centralized explicit maintenance-readiness alias detection behind `ai_capability_classifier.py`.
+- Removed duplicated maintenance-readiness alias ownership from `ai_capability_answer.py`.
+- Preserved maintenance/readiness, context, general capability, and model inventory answer behavior.
+- No aliases, probes, actions, capabilities, or execution authority were added.
+- Latest integrated selftest run after cleanup: 218 passed, 0 failed, total 218.
+
 ### Stage 2F-E-C read-only maintenance/readiness report
 
 - Added `describe_maintenance_readiness` as a partial read-only capability.

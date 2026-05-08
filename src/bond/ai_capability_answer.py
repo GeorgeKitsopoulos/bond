@@ -17,6 +17,7 @@ from ai_capability_classifier import (
     ANSWER_KIND_GENERAL,
     ANSWER_KIND_SPECIFIC,
     classify_capability_question,
+    is_explicit_maintenance_readiness_question,
     is_capability_question,
     is_context_capability_question,
     is_general_capability_question,
@@ -315,27 +316,6 @@ def _build_context_capability_answer() -> str:
     return "\n".join(lines)
 
 
-def _is_explicit_maintenance_readiness_alias(text: str) -> bool:
-    normalized = normalize_text(text)
-    aliases = {
-        "maintenance readiness",
-        "maintenance readiness report",
-        "readiness report",
-        "system readiness report",
-        "maintenance report",
-        "system maintenance report",
-        "can you check maintenance readiness",
-        "bond maintenance readiness",
-        "αναφορα ετοιμοτητας συντηρησης",
-        "αναφορά ετοιμότητας συντήρησης",
-        "ετοιμοτητα συντηρησης",
-        "ετοιμότητα συντήρησης",
-        "αναφορα συντηρησης",
-        "αναφορά συντήρησης",
-    }
-    return normalized in aliases
-
-
 def _build_maintenance_readiness_report() -> str:
     def _validated_probe_data(probe_name: str) -> dict[str, Any] | None:
         try:
@@ -504,7 +484,7 @@ def _build_specific_answer(text: str, names: tuple[str, ...] | None = None) -> s
         names = tuple(mentioned_capabilities(text))
 
     if "describe_maintenance_readiness" in names:
-        if _is_explicit_maintenance_readiness_alias(text):
+        if is_explicit_maintenance_readiness_question(text):
             return _build_maintenance_readiness_report()
         if "query_model" not in names:
             return _build_maintenance_readiness_report()

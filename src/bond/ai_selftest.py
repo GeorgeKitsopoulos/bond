@@ -71,6 +71,8 @@ from ai_capability_classifier import (
     ANSWER_KIND_NONE,
     ANSWER_KIND_SPECIFIC,
     classify_capability_question,
+    is_explicit_capability_alias,
+    is_explicit_maintenance_readiness_question,
 )
 from ai_linguistic_intent_contract import (
     CURRENT_MECHANISM,
@@ -4014,6 +4016,174 @@ def run_stage2f_e_c_maintenance_readiness_report_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_e_c_cleanup_classifier_boundary_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(
+        name: str,
+        errors: list[str],
+        *,
+        stdout: str = "",
+        stderr: str = "",
+        returncode: int = 0,
+        cmd: list[str] | None = None,
+    ) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": returncode,
+                "stdout": stdout,
+                "stderr": stderr,
+                "errors": errors,
+                "cmd": cmd or ["stage2f_e_c_cleanup", name],
+            }
+        )
+
+    errors: list[str] = []
+    checks = [
+        (
+            is_explicit_capability_alias(
+                "maintenance readiness report",
+                "describe_maintenance_readiness",
+            ),
+            True,
+            "maintenance readiness report alias",
+        ),
+        (
+            is_explicit_capability_alias(
+                "system readiness report",
+                "describe_maintenance_readiness",
+            ),
+            True,
+            "system readiness report alias",
+        ),
+        (
+            is_explicit_capability_alias(
+                "αναφορά ετοιμότητας συντήρησης",
+                "describe_maintenance_readiness",
+            ),
+            True,
+            "greek maintenance readiness alias",
+        ),
+        (
+            is_explicit_maintenance_readiness_question("maintenance readiness report"),
+            True,
+            "maintenance helper english",
+        ),
+        (
+            is_explicit_maintenance_readiness_question("αναφορά ετοιμότητας συντήρησης"),
+            True,
+            "maintenance helper greek",
+        ),
+        (
+            is_explicit_maintenance_readiness_question("installed models"),
+            False,
+            "maintenance helper installed models",
+        ),
+        (
+            is_explicit_maintenance_readiness_question("what can you do?"),
+            False,
+            "maintenance helper general",
+        ),
+        (
+            is_explicit_maintenance_readiness_question("how are you?"),
+            False,
+            "maintenance helper chat",
+        ),
+        (
+            is_explicit_capability_alias("installed models", "query_model"),
+            True,
+            "query_model helper positive",
+        ),
+        (
+            is_explicit_capability_alias("how are you?", "query_model"),
+            False,
+            "query_model helper negative",
+        ),
+        (
+            is_explicit_capability_alias(
+                "maintenance readiness report",
+                "missing_capability",
+            ),
+            False,
+            "missing capability",
+        ),
+    ]
+    outcomes: list[dict[str, object]] = []
+    for actual, expected, label in checks:
+        outcomes.append({"label": label, "actual": actual, "expected": expected})
+        if actual is not expected:
+            errors.append(f"{label}: expected {expected!r}, got {actual!r}")
+    _append(
+        "stage2f_e_c_cleanup_classifier_owns_maintenance_alias_detection",
+        errors,
+        stdout=json.dumps(outcomes, ensure_ascii=False),
+    )
+
+    errors = []
+    source = (SRC_BOND / "ai_capability_answer.py").read_text(encoding="utf-8", errors="ignore")
+    forbidden = [
+        "_is_explicit_maintenance_readiness_alias",
+        "maintenance readiness report",
+        "system readiness report",
+        "bond maintenance readiness",
+        "αναφορά ετοιμότητας συντήρησης",
+        "ετοιμότητα συντήρησης",
+        "αναφορά συντήρησης",
+    ]
+    for needle in forbidden:
+        if needle in source:
+            errors.append(f"forbidden maintenance alias text remained in answer module: {needle}")
+
+    for needle in [
+        "is_explicit_maintenance_readiness_question",
+        "_build_maintenance_readiness_report",
+    ]:
+        if needle not in source:
+            errors.append(f"missing required bridge/helper usage in answer module source: {needle}")
+
+    maintenance = answer_capability_question("maintenance readiness report")
+    if not maintenance or "Maintenance/readiness summary:" not in maintenance:
+        errors.append("maintenance readiness report answer missing Maintenance/readiness summary")
+
+    maintenance_el = answer_capability_question("αναφορά ετοιμότητας συντήρησης")
+    if not maintenance_el or "Maintenance/readiness summary:" not in maintenance_el:
+        errors.append("greek maintenance readiness answer missing Maintenance/readiness summary")
+
+    models = answer_capability_question("installed models")
+    if not models or "Model truth probe:" not in models:
+        errors.append("installed models answer missing Model truth probe")
+
+    general = answer_capability_question("what can you do?")
+    if not general or "Capability summary:" not in general:
+        errors.append("general capability answer missing Capability summary")
+
+    context = answer_capability_question("what can you do here?")
+    if not context or "Context capability summary:" not in context:
+        errors.append("context capability answer missing Context capability summary")
+
+    if answer_capability_question("how are you?") is not None:
+        errors.append("normal chat should remain non-capability answer")
+
+    _append(
+        "stage2f_e_c_cleanup_answer_module_has_no_maintenance_alias_table",
+        errors,
+        stdout=json.dumps(
+            {
+                "maintenance": bool(maintenance),
+                "maintenance_el": bool(maintenance_el),
+                "models": bool(models),
+                "general": bool(general),
+                "context": bool(context),
+            },
+            ensure_ascii=False,
+        ),
+    )
+
+    return results
+
+
 def run_parse_contract_tests() -> list[dict]:
     results: list[dict] = []
 
@@ -5195,6 +5365,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_e_c_maintenance_readiness_report_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_e_c_cleanup_classifier_boundary_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")
