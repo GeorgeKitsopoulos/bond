@@ -526,7 +526,7 @@ The project should not solve its current problems by:
 - introducing fake multi-agent complexity without real boundaries (narrow contract-bound routed roles are acceptable; uncontrolled persona-based or boundary-free agent behavior is not)
 - prioritizing UI polish over core truthfulness
 
-# Execution Contracts (MANDATORY)
+## Execution Contracts (MANDATORY)
 
 Execution contracts define the required schemas for parse, policy, and execution interfaces. These contracts exist to prevent hidden coupling, reduce behavioral drift, and keep subsystem communication auditable.
 

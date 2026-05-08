@@ -16,14 +16,13 @@ This file exists to prevent drift between:
 
 ## Current Checkpoint
 
-Date: 25 April 2026 (Stage 2E baseline; P0 cleanup/publication preparation active)
+Date: 8 May 2026 (Stage 2F-E-C cleanup current; earlier April 2026 Stage 2E / 61/61 checkpoint preserved below)
 
 Current baseline note:
 
-- P0 cleanup/publication preparation reached P0E validation.
-- Stage 2F is no longer blocked by Gitea/docs mismatch after P0E validation.
-- Code baseline remains Stage 2E behavior; current repository baseline for cleanup work started from commit `ef6f16d`.
-- Compile and integrated selftest baseline remains passing at 61/61.
+- Stage 2F-E-C cleanup is the current repository checkpoint.
+- Compile and integrated selftest baseline remains passing at 218/218.
+- The older April 2026 Stage 2E / 61/61 checkpoint is preserved below as historical context.
 
 P0B update (source/config/deploy sanitation):
 
@@ -125,7 +124,8 @@ P0F preparation update (current-doc reference cleanup):
 - Normal assistant answers are not yet dynamically probe-backed; general capability discovery is still not dynamically probe-backed.
 - Temporary dev/test telemetry exists behind `BOND_DEV_TELEMETRY=1`. It emits one JSON line to stderr with elapsed_ms and safe routing/decision metadata for testing. Normal Bond answers remain telemetry-free by default, and final product behavior must not include telemetry in assistant answers.
 - capability-registry honesty tests now verify planned/unsupported capabilities are not reported as available
-- current integrated selftest summary from latest run: 216 passed, 0 failed, total 216
+- current integrated selftest summary from latest run: 218 passed, 0 failed, total 218
+
 ## Partial, open, or not implemented yet
 
 - no privileged execution lane implementation

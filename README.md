@@ -5,9 +5,9 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 ## Current status
 
 - Bond is under active development.
-- The current validated baseline is Stage 2E plus P0 cleanup work.
-- Current documented validation baseline: compile passes and integrated selftest currently reports 216/216 after Stage 2F-E-C read-only maintenance/readiness report validation (see docs/TESTING.md for exact summary).
-- Stage 2F-C hardens deterministic guardrails from telemetry findings (assistant-prefix normalization, mixed-intent handling, high-risk command shaping, and capability alias coverage) while keeping telemetry opt-in and answers telemetry-free by default. 
+- The current validated baseline is Stage 2F-E-C cleanup work.
+- Current documented validation baseline: compile passes and integrated selftest currently reports 218/218 after Stage 2F-E-C read-only maintenance/readiness report validation (see docs/TESTING.md for exact summary).
+- Stage 2F-C hardens deterministic guardrails from telemetry findings (assistant-prefix normalization, mixed-intent handling, high-risk command shaping, and capability alias coverage) while keeping telemetry opt-in and answers telemetry-free by default.
 - Stage 2F-C2 follows with a small regression cleanup for model/language capability prompts, restart-laptop confirmation shaping, and deterministic social check-in handling.
 - Stage 2F-C3 addresses remaining telemetry edge cases: bare capability noun phrases ("installed models", "local models") now deterministically answer as capability questions, and time/project-state queries return bounded deterministic answers instead of timing out.
 - Stage 2F-C4 deterministic diagnostic cleanup adds centralized Greek/action normalization and capability alias hardening for adversarial high-risk phrasing, Greek polite high-risk commands, Greek destructive mixed-intent classification, unsupported-capability truthfulness prompts, Greek model-inventory wording, and exploratory capability questions.

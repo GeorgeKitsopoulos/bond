@@ -19,6 +19,7 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+
 ### Stage 2F-E-D archive-pruning hardening
 
 - Hardened archive pruning so corrupted archive metadata cannot delete files outside the archive root.
@@ -215,6 +216,7 @@ Until formal release tagging is established, this changelog should follow these 
 - Clarified that maintenance reports are recommendations only and must not perform privileged updates, cleanup, deletion, or service changes without future privileged-lane, confirmation, audit, and validation support.
 
 ### P0F-A2 - Public repository truth alignment and hygiene
+
 - Aligned current validation baseline references on 61/61.
 - Added public security, contribution, and license files.
 - Moved the root checkpoint transcript into the historical archive.
@@ -222,11 +224,13 @@ Until formal release tagging is established, this changelog should follow these 
 - Preserved current behavior; no product capabilities were added.
 
 ### P0F-A1 - Current documentation reference cleanup
+
 - Replaced stale current-doc references to pre-archive analysis/report paths with archive paths.
 - Removed or redirected references to obsolete tool-specific workflow documents.
 - Preserved current behavior; no product capabilities were added.
 
 ### P0E - Gitea and roadmap reconciliation
+
 - Reconciled local Gitea milestones with the repository roadmap model.
 - Created/opened roadmap-aligned tracker milestones for P0, M1-M6, and backlog work.
 - Closed legacy Phase 1-6 milestones as historical tracker structure without deleting them.
@@ -235,6 +239,7 @@ Until formal release tagging is established, this changelog should follow these 
 - Preserved Stage 2E behavior; no product capabilities were added.
 
 ### P0D - Historical documentation archival
+
 - Moved historical design analysis and implementation reports under `docs/archive/`.
 - Preserved historical reasoning while preventing archived material from acting as current project truth.
 - Added archive guidance for using historical documents safely.
@@ -327,7 +332,8 @@ Until formal release tagging is established, this changelog should follow these 
 - Central path resolver now supports Windows, macOS, Linux, and Android-like (Termux) environments with proper XDG and platform-native fallbacks.
 - All wrapper scripts now repository-relative via dynamic BOND_ROOT discovery and PYTHONPATH injection.
 - Config paths now support URI-like prefixes (repo://, config://, data://, state://, cache://) and variable expansion for portable configuration.
-### Documentation
+
+### Repository documentation foundation
 
 - README expanded into a real project front page describing Bond’s identity, current state, goals, repository layout, documentation map, workflow expectations, and documentation limits.
 - Documentation effort explicitly reframed around making the repository, not chat history, the durable source of truth.

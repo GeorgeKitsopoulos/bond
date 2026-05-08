@@ -267,7 +267,7 @@ Bond must not:
 - produce long vague answers without substance
 - hide lack of capability behind verbosity
 
-# Decision Matrix (MANDATORY)
+## Decision Matrix (MANDATORY)
 
 This matrix defines required behavior selection for high-impact request classes.
 
@@ -327,6 +327,7 @@ These response patterns are required and should map directly to policy outcomes.
 ### Informational
 
 - direct answer
+
 ## Parser preflight rule
 
 Action-looking input must not be guessed into execution.

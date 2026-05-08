@@ -79,7 +79,7 @@ This milestone view is the primary tracking index for near-term planning. It int
 This snapshot is a repository-side read/update view. It does not overwrite external tracker metadata.
 
 | Milestone | Status | Read state | Progress |
-|-----------|--------|------------|----------|
+| ----------- | ------ | ------------ | ---------- |
 | M0 - Docs + Repo structure | closed | read | 100% ██████████ |
 | M1 - CLI + packaging baseline | in progress | read | 55% ██████░░░░ |
 | M2 - Policy + capability registry | in progress | read | 80% ████████░░ |

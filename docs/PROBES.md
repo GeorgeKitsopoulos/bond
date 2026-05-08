@@ -100,51 +100,63 @@ Bond uses a three-layer fact hierarchy.
 ### Layer 0 — authoritative OS facts
 
 What belongs here:
+
 - host identity, OS release, kernel, architecture, session type, desktop environment
 - baseline path facts such as XDG directories and executable path resolution
 - portal and session-bus presence facts as raw inspectable state
 
 Refresh expectations:
+
 - low-churn refresh class; collect at startup and re-probe on explicit invalidation or environment change events
 
 Authority level:
+
 - highest authority for machine/environment baseline truth
 
 Model consumption rules:
+
 - the model may not consume raw Layer 0 dumps directly
 - Layer 0 facts must be normalized into Layer 2 assistant-usable facts first
 
 ### Layer 1 — user-environment facts
 
 What belongs here:
+
 - default app/handler resolution state
 - app inventory and package-surface visibility
 - clipboard, notification, and desktop interaction availability
 - user-session capability surfaces (portals, D-Bus, session integrations)
 
 Refresh expectations:
+
 - medium-churn refresh class; periodic refresh and on-demand re-probe for action planning
 
 Authority level:
+
 - authoritative for user/session environment, but lower than Layer 0 for host identity baseline
 
 Model consumption rules:
+
 - the model may not consume raw Layer 1 dumps directly
 - Layer 1 facts must be interpreted into Layer 2 statements before policy/model reasoning
 
 ### Layer 2 — derived assistant-usable facts
 
 What belongs here:
+
 - interpreted capability-relevant facts derived from Layer 0/1
 - explicit assistant-usable truths such as safe-open availability, guarded-action constraints, and runtime reachability state
 
 Refresh expectations:
+
 - derived on refresh of Layer 0/1 inputs and recomputed when source facts change
 
 Authority level:
+
 - authoritative model-facing operational truth, traceable to Layer 0/1 evidence
 
 Model consumption rules:
+
 - the model reasons from Layer 2 only
 - Layer 2 derivations must preserve provenance links back to source probe records
 
@@ -201,7 +213,7 @@ The current documented baseline roster is qwen2.5:3b-instruct, gemma2:2b, qwen2.
 
 Canonical structured probe result schema:
 
-```
+```text
 ok:                  boolean
 probe_name:          stable probe identifier
 source_type:         "os_api" | "desktop_api" | "wrapped_command" | "config" | "runtime_probe"

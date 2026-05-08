@@ -277,9 +277,9 @@ These capabilities must follow the same doctrine as every other Bond capability:
   needs_elevated_lane: false
   backends:
     linux:
-      - apt_update_probe
-      - snap_refresh_probe
-      - flatpak_update_probe
+  - apt_update_probe
+    - snap_refresh_probe
+    - flatpak_update_probe
   degraded_modes:
     - report unavailable package surfaces explicitly
     - separate stale cache state from no-updates state
@@ -310,9 +310,9 @@ These capabilities must follow the same doctrine as every other Bond capability:
   needs_elevated_lane: false
   backends:
     linux:
-      - apt_simulation_probe
-      - snap_refresh_plan_probe
-      - flatpak_update_plan_probe
+  - apt_simulation_probe
+    - snap_refresh_plan_probe
+    - flatpak_update_plan_probe
   degraded_modes:
     - provide partial plan per available package surface
     - mark unknown package-manager state as degraded rather than guessing
@@ -336,10 +336,10 @@ These capabilities must follow the same doctrine as every other Bond capability:
   read_only: false
   rootless: false
   side_effects:
-    - modifies installed system packages
-    - may restart services
-    - may require reboot
-    - may change package-manager state
+  - modifies installed system packages
+  - may restart services
+  - may require reboot
+  - may change package-manager state
   requires_confirmation: true
   interactive: true
   needs_gui_session: false
@@ -347,7 +347,7 @@ These capabilities must follow the same doctrine as every other Bond capability:
   needs_elevated_lane: true
   backends:
     linux:
-      - privileged_update_adapter
+    - privileged_update_adapter
   degraded_modes: []
   result_schema: privileged_update_result
   error_schema: standard_error
@@ -378,10 +378,10 @@ These capabilities must follow the same doctrine as every other Bond capability:
   needs_elevated_lane: false
   backends:
     linux:
-      - trash_size_probe
-      - cache_size_probe
-      - large_file_probe
-      - duplicate_candidate_probe
+  - trash_size_probe
+    - cache_size_probe
+    - large_file_probe
+    - duplicate_candidate_probe
   degraded_modes:
     - skip unreadable paths and report them
     - report duplicate candidates by evidence level rather than deleting anything
@@ -410,9 +410,9 @@ These capabilities must follow the same doctrine as every other Bond capability:
   needs_elevated_lane: false
   backends:
     linux:
-      - systemd_failed_units_probe
-      - systemd_analyze_blame_probe
-      - journal_warning_summary_probe
+  - systemd_failed_units_probe
+    - systemd_analyze_blame_probe
+    - journal_warning_summary_probe
   degraded_modes:
     - report missing systemd tools explicitly
     - summarize inaccessible journal data as permission-limited
@@ -436,7 +436,7 @@ These capabilities must follow the same doctrine as every other Bond capability:
   read_only: true
   rootless: true
   side_effects:
-    - writes a local report artifact when enabled
+  - writes a local report artifact when enabled
   requires_confirmation: false
   interactive: false
   needs_gui_session: false
@@ -444,7 +444,7 @@ These capabilities must follow the same doctrine as every other Bond capability:
   needs_elevated_lane: false
   backends:
     linux:
-      - maintenance_report_builder
+    - maintenance_report_builder
   degraded_modes:
     - generate partial report when one probe family fails
     - mark missing probe sections as degraded
@@ -468,8 +468,8 @@ These capabilities must follow the same doctrine as every other Bond capability:
   read_only: true
   rootless: true
   side_effects:
-    - displays local report state
-    - may submit explicit user requests back to core
+  - displays local report state
+  - may submit explicit user requests back to core
   requires_confirmation: false
   interactive: true
   needs_gui_session: true
@@ -477,8 +477,8 @@ These capabilities must follow the same doctrine as every other Bond capability:
   needs_elevated_lane: false
   backends:
     linux:
-      - cinnamon_applet_dashboard
-      - local_gui_dashboard
+    - cinnamon_applet_dashboard
+    - local_gui_dashboard
   degraded_modes:
     - CLI report output when GUI session is unavailable
   result_schema: maintenance_dashboard_result
@@ -558,8 +558,8 @@ These are document-knowledge capabilities. They are not voice or UI multimodal f
   read_only: false
   rootless: true
   side_effects:
-    - writes parsed content and chunk embeddings to local knowledge store
-    - updates metadata index and embedding index
+  - writes parsed content and chunk embeddings to local knowledge store
+  - updates metadata index and embedding index
   requires_confirmation: false
   interactive: false
   needs_gui_session: false
@@ -587,8 +587,8 @@ These are document-knowledge capabilities. They are not voice or UI multimodal f
   read_only: false
   rootless: true
   side_effects:
-    - updates or replaces stale chunk embeddings and metadata records for changed source files
-    - removes orphaned chunks when source files are deleted
+  - updates or replaces stale chunk embeddings and metadata records for changed source files
+  - removes orphaned chunks when source files are deleted
   requires_confirmation: false
   interactive: false
   needs_gui_session: false

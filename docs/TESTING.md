@@ -116,7 +116,7 @@ This baseline is necessary and useful, but it is not proof of final assistant co
 
 Bond testing must be divided into explicit categories.
 
-# Test Architecture
+## Test Architecture
 
 ## Layers
 
