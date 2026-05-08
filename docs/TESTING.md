@@ -33,8 +33,8 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is 200 passed, 0 failed,
-total 200. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is 208 passed, 0 failed,
+total 208. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -94,6 +94,7 @@ Stage 2F-D-B tests also verify `model_truth` boundaries: configured route target
 Stage 2F-D-C tests verify bounded fallback hardening for `model_truth` capability answers: unavailable inventory wording is explicit and does not claim known missing/extra installed-model sets, validation-failure and exception paths use the same unavailable fallback envelope, success path remains bounded, and general capability discovery remains non-probe-expanded.
 Stage 2F-D-D tests verify bounded explicit context-capability handling: context detection, context answer shape, plain general capability answers not context-expanded, CLI English context answer behavior, CLI Greek context answer behavior, and probe-exception fallback behavior without exception leakage.
 Stage 2F-E-A tests verify classifier boundary behavior: classifier module public contract, context precedence, general capability staying general, specific model-inventory classification, normal chat rejection, backward-compatible helper imports, no probe side effects during classification, and unchanged CLI behavior after classifier split.
+Stage 2F-E-B tests verify the transitional linguistic intent contract: linguistic contract module public contract, aliases marked transitional and not final NLP, boundary and scope fields, prohibitions and safety invariants, validation and summary lines, classifier/answer source unchanged checks, existing classifier behavior unchanged, and docs recording the contract without overclaim.
 These C5 checks are strict deterministic guardrails and do not claim that general chat/model timeout behavior is solved.
 
 This baseline is necessary and useful, but it is not proof of final assistant correctness or product maturity.

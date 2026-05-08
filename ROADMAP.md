@@ -147,7 +147,10 @@ Current checkpoint note:
 - Stage 2F-C applies telemetry-driven guardrail hardening for assistant-prefix normalization, high-risk natural command shaping, mixed-intent preemption safety, expanded capability aliases, and deterministic dry-run step metadata.
 - Stage 2F-D-D adds bounded explicit context-capability discovery for explicit context questions using existing read-only probes only.
 - Stage 2F-E-A completes a deterministic classifier boundary between capability-question detection and capability answer generation.
-- capability registry implementation has started with a code-level foundation; transitional linguistic normalization contract work remains next, semantic/model-based language understanding remains future work, and execution authorization/plugin capability loading remain open.
+- Stage 2F-E-B completes the transitional linguistic intent normalization contract.
+- Stage 2F-E-C read-only maintenance/readiness report remains the next ordered step after this language-boundary contract stage.
+- semantic/model-based language understanding remains future work and smart Greek/English linguistic support remains future work.
+- capability registry implementation has started with a code-level foundation; execution authorization/plugin capability loading remain open.
 
 Exit criteria:
 
@@ -194,7 +197,9 @@ Current checkpoint note:
 - Stage 2F-D-A implements the first structured read-only probe foundation with a deterministic probe contract, a bounded probe runner, and a thin `ai_scan_system.py` CLI wrapper that writes the compatibility state snapshot.
 - Stage 2F-D-B wires existing read-only `model_truth` probe output into bounded `query_model` capability answers only, with fact-first protection for precise model fact queries.
 - Stage 2F-D-D adds bounded explicit context-capability answers from existing read-only probes for explicit context question surfaces.
-- Stage 2F-E-A adds classifier-boundary scaffolding ahead of deeper language/intent normalization; read-only maintenance/readiness report work remains after language-boundary hardening.
+- Stage 2F-E-A adds classifier-boundary scaffolding ahead of deeper language/intent normalization.
+- Stage 2F-E-B records the transitional linguistic intent normalization contract behind that classifier boundary.
+- Stage 2F-E-C read-only maintenance/readiness report work remains next after language-boundary hardening.
 - M4 is not complete: broader probe domains, normal assistant answer grounding, telemetry direction, and action-planning integration remain open.
 
 Exit criteria:
@@ -247,7 +252,7 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest latest run summary is 200 passed, 0 failed, total 200.
+- integrated selftest latest run summary is 208 passed, 0 failed, total 208.
 - coverage includes routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, telemetry-derived guardrail regressions, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, and the C5 follow-up strict-timeout cleanup checks.
 - coverage also includes Stage 2F-D probe foundation/cleanup checks, Stage 2F-D-B bounded model-truth checks, Stage 2F-D-C model-truth fallback checks, Stage 2F-D-D bounded context-capability answer checks, Stage 2F-E-A classifier-boundary checks, events bucket, and core memory flows.
 - integrated selftest baseline now includes confirmation-token flow coverage (token creation, invalid/expired/consumed handling, confirmed dry-run, and non-reuse)

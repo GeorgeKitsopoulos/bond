@@ -133,7 +133,11 @@ Greek support is partial. Bond must not claim full Greek support until the accep
 
 Stage 2F-E-A does not implement smart linguistic support. It introduces a deterministic capability-classifier boundary (`src/bond/ai_capability_classifier.py`) before capability answer generation so future Greek/English improvements can be implemented safely behind one seam.
 
+Stage 2F-E-B still does not implement smart Greek linguistic support. It records the transitional linguistic intent normalization contract for moving future Greek/English handling behind the classifier boundary.
+
 Deterministic aliases remain transitional scaffolding. Future stages should improve language handling behind this boundary without spreading phrase lists across answer-generation code.
+
+Deterministic aliases are transitional scaffolding, not the final smart linguistic layer. Future improvements must not spread phrase lists through answer-generation code. Future improvements must preserve safety contracts and avoid unsafe overclassification.
 
 ## Cross references
 

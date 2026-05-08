@@ -19,6 +19,15 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-E-B transitional linguistic intent normalization contract
+
+- Added `src/bond/ai_linguistic_intent_contract.py` as a contract-only module.
+- Documented deterministic aliases as transitional scaffolding behind the classifier boundary.
+- Preserved classifier and answer behavior unchanged.
+- Added tests proving the contract does not claim smart NLP, semantic classification, or model-based classification.
+- No aliases, probes, actions, or execution authority were added.
+- Latest integrated selftest run after Stage 2F-E-B: 208 passed, 0 failed, total 208.
+
 ### Stage 2F-E-A capability classifier boundary
 
 - Moved capability-question detection/classification into `src/bond/ai_capability_classifier.py`.

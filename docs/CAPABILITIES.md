@@ -56,8 +56,11 @@ Each capability entry uses these fields:
 - `src/bond/ai_capability_answer.py` now provides read-only deterministic capability answers from that registry.
 - Stage 2F-E-A routes capability answers through a classifier boundary in `src/bond/ai_capability_classifier.py` before answer generation.
 - The classifier distinguishes answer kinds: `none`, `context`, `general`, `specific`.
+- Stage 2F-E-B records the transitional linguistic intent normalization contract.
+- The classifier still distinguishes only `none`/`context`/`general`/`specific`.
 - This boundary does not change capability availability, risk level, execution authority, or probe scope.
 - Deterministic aliases remain transitional scaffolding and are not the final smart linguistic layer.
+- The Stage 2F-E-B contract does not change capability availability, risk level, execution authority, or probe scope.
 - `docs/CAPABILITIES.md` remains the broader canonical design/reference document.
 - The Python registry is intentionally static in Stage 2F-A/2F-B.
 - This is not dynamic probe-backed discovery.

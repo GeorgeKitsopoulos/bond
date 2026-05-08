@@ -225,6 +225,18 @@ Stage 2F-E-A introduces a deterministic classifier boundary for capability answe
 - this boundary is where smarter language handling can later replace or augment phrase-based detection
 - this boundary must preserve safety contracts and must not directly execute actions or run probes
 
+### Transitional linguistic intent normalization contract
+
+Stage 2F-E-B adds `src/bond/ai_linguistic_intent_contract.py`.
+
+- the module is contract-only and does not classify text at runtime
+- the current mechanism remains deterministic alias scaffolding behind `ai_capability_classifier.py`
+- `ai_capability_answer.py` remains answer construction only
+- deterministic aliases are transitional scaffolding, not the final smart linguistic layer
+- future smarter Greek/English handling must plug in behind the classifier boundary
+- this stage does not implement smart linguistic support, semantic classification, model-based classification, fuzzy matching, translation, embeddings, or model calls
+- classification must not execute actions, run probes, or authorize execution
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

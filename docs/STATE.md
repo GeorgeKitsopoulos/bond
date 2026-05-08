@@ -109,11 +109,18 @@ P0F preparation update (current-doc reference cleanup):
 - Stage 2F-D-D adds no new probes, no new actions, no privileged lane, no maintenance advisor, no voice/applet/service layer, and no document RAG ingestion/execution path.
 - Stage 2F-E-A is integrated/current as a structural boundary step: capability-question classification is now separated from capability answer generation through `src/bond/ai_capability_classifier.py`.
 - Stage 2F-E-A preserves current behavior for context/general/specific capability questions while adding no new aliases, probes, or actions.
-- Stage 2F-E-A prepares the next linguistic normalization contract stage and does not add semantic/model-based classification.
+- Stage 2F-E-B is integrated/current: transitional linguistic intent normalization contract is now recorded in code and docs.
+- Stage 2F-E-B preserves classifier and answer behavior unchanged.
+- Stage 2F-E-B records that deterministic aliases are transitional scaffolding, not the final smart linguistic layer.
+- Stage 2F-E-B does not implement smart linguistic support.
+- Stage 2F-E-B does not implement semantic classification.
+- Stage 2F-E-B does not implement model-based classification.
+- Stage 2F-E-B adds no new aliases, probes, actions, or execution authority.
+- the next ordered stage is Stage 2F-E-C read-only maintenance/readiness report.
 - Normal assistant answers are not yet dynamically probe-backed; general capability discovery is still not dynamically probe-backed.
 - Temporary dev/test telemetry exists behind `BOND_DEV_TELEMETRY=1`. It emits one JSON line to stderr with elapsed_ms and safe routing/decision metadata for testing. Normal Bond answers remain telemetry-free by default, and final product behavior must not include telemetry in assistant answers.
 - capability-registry honesty tests now verify planned/unsupported capabilities are not reported as available
-- current integrated selftest summary from latest run: 200 passed, 0 failed, total 200
+- current integrated selftest summary from latest run: 208 passed, 0 failed, total 208
 ## Partial, open, or not implemented yet
 
 - no privileged execution lane implementation

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import ai_capability_answer
 import ai_capability_classifier
+import ai_linguistic_intent_contract
 from ai_action_contract import (
     ACTION_CHAT,
     ACTION_CONFIRM_REQUIRED,
@@ -67,6 +68,14 @@ from ai_capability_classifier import (
     ANSWER_KIND_NONE,
     ANSWER_KIND_SPECIFIC,
     classify_capability_question,
+)
+from ai_linguistic_intent_contract import (
+    CURRENT_MECHANISM,
+    LinguisticIntentNormalizationContract,
+    contract_summary_lines,
+    get_linguistic_intent_normalization_contract,
+    is_transitional_linguistic_scaffolding,
+    validate_linguistic_intent_contract,
 )
 from ai_dev_telemetry import (
     build_dev_telemetry_record,
@@ -3323,6 +3332,242 @@ def run_stage2f_e_a_capability_classifier_boundary_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_e_b_linguistic_intent_contract_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(
+        name: str,
+        errors: list[str],
+        *,
+        stdout: str = "",
+        stderr: str = "",
+        returncode: int = 0,
+        cmd: list[str] | None = None,
+    ) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": returncode,
+                "stdout": stdout,
+                "stderr": stderr,
+                "errors": errors,
+                "cmd": cmd or ["stage2f_e_b", name],
+            }
+        )
+
+    errors: list[str] = []
+    for attr in [
+        "CONTRACT_STAGE",
+        "CONTRACT_NAME",
+        "CURRENT_MECHANISM",
+        "LinguisticIntentNormalizationContract",
+        "get_linguistic_intent_normalization_contract",
+        "is_transitional_linguistic_scaffolding",
+        "contract_summary_lines",
+        "validate_linguistic_intent_contract",
+    ]:
+        if not hasattr(ai_linguistic_intent_contract, attr):
+            errors.append(f"missing expected attribute on ai_linguistic_intent_contract: {attr}")
+
+    contract = get_linguistic_intent_normalization_contract()
+    if not isinstance(contract, LinguisticIntentNormalizationContract):
+        errors.append("expected contract instance of LinguisticIntentNormalizationContract")
+    _append(
+        "stage2f_e_b_contract_module_public_contract",
+        errors,
+        stdout=str(contract),
+    )
+
+    errors = []
+    contract = get_linguistic_intent_normalization_contract()
+    if contract.stage != "Stage 2F-E-B":
+        errors.append(f"expected stage='Stage 2F-E-B', got {contract.stage!r}")
+    if contract.name != "transitional_linguistic_intent_normalization":
+        errors.append(
+            "expected name='transitional_linguistic_intent_normalization', "
+            f"got {contract.name!r}"
+        )
+    if contract.current_mechanism != CURRENT_MECHANISM:
+        errors.append("expected current_mechanism to equal CURRENT_MECHANISM")
+    if contract.current_mechanism != "deterministic_alias_scaffolding":
+        errors.append("expected deterministic_alias_scaffolding current mechanism")
+    if contract.final_nlp_layer is not False:
+        errors.append("expected final_nlp_layer=False")
+    if contract.smart_linguistic_support_available is not False:
+        errors.append("expected smart_linguistic_support_available=False")
+    if contract.semantic_classification_available is not False:
+        errors.append("expected semantic_classification_available=False")
+    if contract.model_based_classification_available is not False:
+        errors.append("expected model_based_classification_available=False")
+    if is_transitional_linguistic_scaffolding() is not True:
+        errors.append("expected is_transitional_linguistic_scaffolding()=True")
+    _append("stage2f_e_b_contract_marks_aliases_transitional_not_final_nlp", errors)
+
+    errors = []
+    contract = get_linguistic_intent_normalization_contract()
+    if contract.scope != "capability_intent_only":
+        errors.append(f"expected scope='capability_intent_only', got {contract.scope!r}")
+    if contract.classifier_boundary_module != "ai_capability_classifier":
+        errors.append("expected classifier boundary module ai_capability_classifier")
+    if contract.answer_boundary_module != "ai_capability_answer":
+        errors.append("expected answer boundary module ai_capability_answer")
+    if "english" not in contract.language_scope:
+        errors.append("expected english in language_scope")
+    if "greek" not in contract.language_scope:
+        errors.append("expected greek in language_scope")
+    if "deterministic_phrase_aliases" not in contract.allowed_transitional_scaffolding:
+        errors.append("expected deterministic_phrase_aliases in allowed_transitional_scaffolding")
+    if "explicit_capability_question_routing" not in contract.allowed_transitional_scaffolding:
+        errors.append("expected explicit_capability_question_routing in allowed_transitional_scaffolding")
+    if "bounded_context_general_specific_answer_kinds" not in contract.allowed_transitional_scaffolding:
+        errors.append(
+            "expected bounded_context_general_specific_answer_kinds in allowed_transitional_scaffolding"
+        )
+    _append("stage2f_e_b_contract_boundaries_and_scope", errors)
+
+    errors = []
+    contract = get_linguistic_intent_normalization_contract()
+    if "smart_linguistic_support_implemented" not in contract.prohibited_current_claims:
+        errors.append("expected smart_linguistic_support_implemented in prohibited_current_claims")
+    if "semantic_classification_implemented" not in contract.prohibited_current_claims:
+        errors.append("expected semantic_classification_implemented in prohibited_current_claims")
+    if "model_based_classification_implemented" not in contract.prohibited_current_claims:
+        errors.append("expected model_based_classification_implemented in prohibited_current_claims")
+    if "broad_normal_answers_probe_backed" not in contract.prohibited_current_claims:
+        errors.append("expected broad_normal_answers_probe_backed in prohibited_current_claims")
+    if "classification must not execute actions" not in contract.safety_invariants:
+        errors.append("expected execute-actions safety invariant")
+    if "classification must not run probes" not in contract.safety_invariants:
+        errors.append("expected run-probes safety invariant")
+    if "classification must not authorize execution" not in contract.safety_invariants:
+        errors.append("expected authorize-execution safety invariant")
+    if "classification must not make normal assistant answers broadly probe-backed" not in contract.safety_invariants:
+        errors.append("expected broad-probe-backed safety invariant")
+    _append("stage2f_e_b_contract_prohibitions_and_safety_invariants", errors)
+
+    errors = []
+    ok, validation_errors = validate_linguistic_intent_contract()
+    if ok is not True:
+        errors.append("expected validate_linguistic_intent_contract ok=True")
+    if validation_errors != ():
+        errors.append(f"expected validation errors=(), got {validation_errors!r}")
+    summary = contract_summary_lines()
+    if not isinstance(summary, tuple):
+        errors.append("expected contract_summary_lines() to return tuple")
+    if not any("deterministic aliases are transitional scaffolding" in line for line in summary):
+        errors.append("missing transitional scaffolding summary line")
+    if not any("smart linguistic support is not implemented" in line for line in summary):
+        errors.append("missing smart linguistic support summary line")
+    if not any("semantic classification is not implemented" in line for line in summary):
+        errors.append("missing semantic classification summary line")
+    if not any("model-based classification is not implemented" in line for line in summary):
+        errors.append("missing model-based classification summary line")
+    if not any("classification must not execute actions or run probes" in line for line in summary):
+        errors.append("missing execute-actions/run-probes summary line")
+    _append(
+        "stage2f_e_b_contract_validation_and_summary",
+        errors,
+        stdout="\n".join(summary),
+    )
+
+    errors = []
+    before_classifier = Path("/tmp/bond-stage2feb-before-ai_capability_classifier.py")
+    before_answer = Path("/tmp/bond-stage2feb-before-ai_capability_answer.py")
+    current_classifier = SRC_BOND / "ai_capability_classifier.py"
+    current_answer = SRC_BOND / "ai_capability_answer.py"
+
+    if not before_classifier.exists():
+        errors.append("missing /tmp/bond-stage2feb-before-ai_capability_classifier.py")
+    if not before_answer.exists():
+        errors.append("missing /tmp/bond-stage2feb-before-ai_capability_answer.py")
+    if before_classifier.exists() and before_classifier.read_bytes() != current_classifier.read_bytes():
+        errors.append("src/bond/ai_capability_classifier.py changed during Stage 2F-E-B")
+    if before_answer.exists() and before_answer.read_bytes() != current_answer.read_bytes():
+        errors.append("src/bond/ai_capability_answer.py changed during Stage 2F-E-B")
+    _append("stage2f_e_b_classifier_and_answer_sources_unchanged", errors)
+
+    errors = []
+    checks = [
+        ("what can you do here?", ANSWER_KIND_CONTEXT),
+        ("what can you do?", ANSWER_KIND_GENERAL),
+        ("installed models", ANSWER_KIND_SPECIFIC),
+        ("Μποντ τι μπορείς να κάνεις εδώ;", ANSWER_KIND_CONTEXT),
+        ("how are you?", ANSWER_KIND_NONE),
+    ]
+    outcomes: list[dict[str, object]] = []
+    for text, expected in checks:
+        classification = classify_capability_question(text)
+        outcomes.append(
+            {
+                "text": text,
+                "is_capability_question": classification.is_capability_question,
+                "answer_kind": classification.answer_kind,
+            }
+        )
+        if classification.answer_kind != expected:
+            errors.append(
+                f"{text!r}: expected answer_kind={expected!r}, got {classification.answer_kind!r}"
+            )
+
+    if classify_capability_question("how are you?").is_capability_question is not False:
+        errors.append("expected how are you? to remain non-capability question")
+    if classify_capability_question("what can you do?").answer_kind == ANSWER_KIND_CONTEXT:
+        errors.append("expected what can you do? to remain non-context")
+    _append(
+        "stage2f_e_b_existing_classifier_behavior_unchanged",
+        errors,
+        stdout=json.dumps(outcomes, ensure_ascii=False),
+    )
+
+    errors = []
+    docs_paths = [
+        BOND_ROOT / "README.md",
+        BOND_ROOT / "CHANGELOG.md",
+        BOND_ROOT / "ROADMAP.md",
+        BOND_ROOT / "docs" / "ARCHITECTURE.md",
+        BOND_ROOT / "docs" / "CAPABILITIES.md",
+        BOND_ROOT / "docs" / "STATE.md",
+        BOND_ROOT / "docs" / "TESTING.md",
+        BOND_ROOT / "docs" / "GREEK_LANGUAGE_SUPPORT.md",
+    ]
+    combined = "\n".join(path.read_text(encoding="utf-8", errors="ignore") for path in docs_paths)
+
+    required = [
+        "Stage 2F-E-B",
+        "transitional linguistic intent normalization contract",
+        "deterministic aliases are transitional scaffolding",
+        "not the final smart linguistic layer",
+        "does not implement smart linguistic support",
+        "does not implement semantic classification",
+        "does not implement model-based classification",
+        "Stage 2F-E-C",
+        "read-only maintenance/readiness report",
+    ]
+    for needle in required:
+        if needle not in combined:
+            errors.append(f"missing docs phrase: {needle}")
+
+    def _s(*parts: str) -> str:
+        return "".join(parts)
+
+    forbidden = [
+        _s("smart linguistic support", " is implemented"),
+        _s("semantic classification", " is implemented"),
+        _s("model-based classification", " is implemented"),
+        _s("normal assistant answers are ", "dynamically probe-backed"),
+        _s("all capabilities are ", "probe-backed"),
+        _s("arbitrary shell execution ", "is available"),
+        _s("privileged updates ", "are available"),
+    ]
+    for needle in forbidden:
+        if needle in combined:
+            errors.append(f"forbidden docs phrase present: {needle}")
+    _append("stage2f_e_b_docs_record_contract_without_overclaim", errors)
+
+    return results
+
+
 def run_parse_contract_tests() -> list[dict]:
     results: list[dict] = []
 
@@ -4480,6 +4725,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_e_a_capability_classifier_boundary_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_e_b_linguistic_intent_contract_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")
