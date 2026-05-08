@@ -19,6 +19,15 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-D-D bounded context capability answers
+
+- Moved `describe_context_capabilities` from planned to partial.
+- Added bounded explicit context-capability answers for explicit context question surfaces using existing read-only probes only (`host_baseline`, `session_baseline`, `tool_inventory`, `model_truth`).
+- Kept general capability answers non-probe-expanded (`what can you do?` remains registry summary only).
+- Kept normal assistant answers not broadly dynamically probe-backed.
+- No new probes, no new actions, and no execution authority were added.
+- Latest integrated selftest run after Stage 2F-D-D: 192 passed, 0 failed, total 192.
+
 ### Stage 2F-D-C bounded model-truth fallback hardening
 
 - Hardened bounded `model_truth` capability-answer fallback wording for unavailable inventory paths so installed inventory is explicitly unavailable-in-run and missing/extra installed-model sets are explicit unknowns for that run.

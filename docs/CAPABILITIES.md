@@ -149,11 +149,16 @@ Initial capabilities:
 
 - name: describe_context_capabilities
   class: inspector
-  status: planned
+  status: partial
   execution_mode: deterministic_probe
   risk_level: low
   read_only: true
-  notes: answers what Bond can do in the current environment/session using registry plus probes.
+  required_tools: [host_baseline, session_baseline, tool_inventory, model_truth]
+  notes: |
+    Bounded explicit context-capability answer using existing read-only probes only.
+    This is not an execution authorization path.
+    This is not broad dynamic assistant capability discovery.
+    Planned/blocked/unsupported capabilities remain unavailable.
 
 - name: preview_action
   class: inspector

@@ -114,10 +114,24 @@ _CAPABILITY_ALIASES: dict[str, tuple[str, ...]] = {
         "τι ξερεις να κανεις",
     ),
     "describe_context_capabilities": (
-        "current environment",
-        "current session capabilities",
         "what can you do here",
+        "what can you do on this system",
+        "what can you do in this environment",
+        "what can you do in this session",
+        "current environment capabilities",
+        "current session capabilities",
+        "system capabilities",
         "context capabilities",
+        "local environment capabilities",
+        "probe backed capabilities",
+        "τι μπορεις να κανεις εδω",
+        "τι μπορείς να κάνεις εδώ",
+        "τι μπορεις να κανεις σε αυτο το συστημα",
+        "τι μπορείς να κάνεις σε αυτό το σύστημα",
+        "δυνατοτητες σε αυτο το συστημα",
+        "δυνατότητες σε αυτό το σύστημα",
+        "δυνατοτητες εδω",
+        "δυνατότητες εδώ",
     ),
     "preview_action": (
         "preview action",
@@ -464,6 +478,16 @@ def is_general_capability_question(text: str) -> bool:
     return any(_contains_phrase(normalized, phrase) for phrase in _GENERAL_QUESTION_PHRASES)
 
 
+def is_context_capability_question(text: str) -> bool:
+    stripped = strip_assistant_invocation_prefix(text)
+    normalized = normalize_text(stripped)
+    if not normalized:
+        return False
+
+    aliases = _NORMALIZED_ALIASES.get("describe_context_capabilities", ())
+    return any(_contains_phrase(normalized, alias) for alias in aliases)
+
+
 def _is_bare_capability_reference(text: str) -> bool:
     stripped = strip_assistant_invocation_prefix(text)
     normalized = normalize_text(stripped)
@@ -504,7 +528,11 @@ def is_specific_capability_question(text: str) -> bool:
 
 
 def is_capability_question(text: str) -> bool:
-    return is_general_capability_question(text) or is_specific_capability_question(text)
+    return (
+        is_context_capability_question(text)
+        or is_general_capability_question(text)
+        or is_specific_capability_question(text)
+    )
 
 
 def _specific_status_note(name: str, status: str) -> str:
@@ -645,6 +673,155 @@ def _build_model_truth_detail() -> str:
         return "\n".join(fallback_lines)
 
 
+def _build_context_capability_answer() -> str:
+    def _validated_probe_data(probe_name: str) -> dict[str, Any] | None:
+        try:
+            result = run_named_probe(probe_name)
+            validation_errors = validate_probe_result(result)
+            if validation_errors:
+                return None
+            if getattr(result, "ok", False) is not True:
+                return None
+            if not isinstance(result.data, dict):
+                return None
+            return result.data
+        except Exception:
+            return None
+
+    def _value(data: dict[str, Any] | None, key: str, fallback: str = "unknown") -> str:
+        if not isinstance(data, dict):
+            return fallback
+        raw = data.get(key)
+        if isinstance(raw, str):
+            cleaned = raw.strip()
+            return cleaned if cleaned else fallback
+        if raw is None:
+            return fallback
+        return str(raw)
+
+    def _bool_value(data: dict[str, Any] | None, key: str) -> str:
+        if not isinstance(data, dict):
+            return "unknown"
+        raw = data.get(key)
+        if isinstance(raw, bool):
+            return "yes" if raw else "no"
+        return "unknown"
+
+    host_data = _validated_probe_data("host_baseline")
+    session_data = _validated_probe_data("session_baseline")
+    tools_data = _validated_probe_data("tool_inventory")
+    model_data = _validated_probe_data("model_truth")
+
+    probe_basis = {
+        "host_baseline": "available" if host_data is not None else "unavailable",
+        "session_baseline": "available" if session_data is not None else "unavailable",
+        "tool_inventory": "available" if tools_data is not None else "unavailable",
+        "model_truth": "available" if model_data is not None else "unavailable",
+    }
+
+    tools_node = tools_data.get("tools") if isinstance(tools_data, dict) else None
+    tool_names = (
+        "xdg-open",
+        "gio",
+        "xdg-mime",
+        "xdg-settings",
+        "notify-send",
+        "systemctl",
+        "journalctl",
+        "flatpak",
+        "snap",
+        "apt",
+        "ollama",
+    )
+    tool_status: dict[str, str] = {}
+    for tool_name in tool_names:
+        state = "unknown"
+        if isinstance(tools_node, dict):
+            entry = tools_node.get(tool_name)
+            if isinstance(entry, dict):
+                available = entry.get("available")
+                if isinstance(available, bool):
+                    state = "available" if available else "unavailable"
+                else:
+                    state = "unknown"
+            elif entry is None:
+                state = "unknown"
+        tool_status[tool_name] = state
+
+    model_truth_status = _value(model_data, "truth_status")
+    model_inventory = _value(
+        model_data,
+        "inventory_available",
+        fallback="unknown",
+    )
+    if model_inventory not in {"True", "False", "unknown"}:
+        model_inventory = "unknown"
+    elif model_inventory == "True":
+        model_inventory = "available"
+    elif model_inventory == "False":
+        model_inventory = "unavailable"
+
+    lines = [
+        "Context capability summary:",
+        "Bounded explicit context-capability answer using existing read-only probes only; this does not authorize execution, and normal assistant answers are not broadly probe-backed.",
+        "",
+        "Probe basis:",
+        f"- host_baseline: {probe_basis['host_baseline']}",
+        f"- session_baseline: {probe_basis['session_baseline']}",
+        f"- tool_inventory: {probe_basis['tool_inventory']}",
+        f"- model_truth: {probe_basis['model_truth']}",
+        "",
+        "Environment:",
+        f"- platform_system: {_value(host_data, 'platform_system')}",
+        f"- platform_release: {_value(host_data, 'platform_release')}",
+        f"- platform_machine: {_value(host_data, 'platform_machine')}",
+        f"- python_version: {_value(host_data, 'python_version')}",
+        "",
+        "Session:",
+        f"- xdg_current_desktop: {_value(session_data, 'xdg_current_desktop')}",
+        f"- desktop_session: {_value(session_data, 'desktop_session')}",
+        f"- xdg_session_type: {_value(session_data, 'xdg_session_type')}",
+        f"- has_display: {_bool_value(session_data, 'has_display')}",
+        f"- has_wayland_display: {_bool_value(session_data, 'has_wayland_display')}",
+        f"- has_dbus_session_bus: {_bool_value(session_data, 'has_dbus_session_bus')}",
+        "",
+        "Capability-relevant tools:",
+    ]
+
+    for tool_name in tool_names:
+        lines.append(f"- {tool_name}: {tool_status[tool_name]}")
+
+    lines.extend(
+        [
+            "",
+            "Model/runtime boundary:",
+            "- configured route targets and installed local model inventory are separate facts",
+            f"- installed local model inventory status for this run: {model_inventory} (truth_status={model_truth_status})",
+            "- installed inventory may be unavailable",
+            "- this does not prove which model is currently answering, runtime health, model quality, or privileged/system capability",
+            "",
+            "Current bounded usable areas:",
+            "- guarded known-target/path open behavior remains policy-gated and parser-bounded",
+            "- registry-backed capability answers exist",
+            "- explicit model/context capability questions can use bounded read-only probe detail",
+            "- planned/blocked/unsupported capabilities remain unavailable",
+            "",
+            "Safety boundary:",
+            "- no arbitrary shell execution",
+            "- no privileged updates or package installation",
+            "- no file creation/writing/deletion",
+            "- no voice interface",
+            "- no applet/service layer",
+            "- no document RAG/ingestion execution",
+            "- no broad autonomous desktop automation",
+            "- this does not authorize execution",
+            "- normal assistant answers are not broadly probe-backed",
+        ]
+    )
+
+    return "\n".join(lines)
+
+
 def _build_specific_answer(text: str) -> str:
     names = mentioned_capabilities(text)
     lines = ["Capability check:"]
@@ -674,6 +851,9 @@ def _build_specific_answer(text: str) -> str:
 def answer_capability_question(text: str) -> str | None:
     if not is_capability_question(text):
         return None
+
+    if is_context_capability_question(text):
+        return _build_context_capability_answer()
 
     if is_general_capability_question(text):
         return _build_general_answer()

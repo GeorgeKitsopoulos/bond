@@ -57,6 +57,7 @@ from ai_capability_answer import (
     _build_model_truth_detail,
     answer_capability_question,
     is_capability_question,
+    is_context_capability_question,
     mentioned_capabilities,
 )
 from ai_dev_telemetry import (
@@ -1001,6 +1002,7 @@ def run_capability_registry_tests() -> list[dict]:
         "open_explicit_path",
         "query_model",
         "describe_capabilities",
+        "describe_context_capabilities",
         "timer",
         "clipboard",
         "apply_privileged_system_updates",
@@ -1041,6 +1043,11 @@ def run_capability_registry_tests() -> list[dict]:
             True,
             STATUS_PARTIAL,
         ),
+        (
+            "describe_context_capabilities",
+            True,
+            STATUS_PARTIAL,
+        ),
     ]
     errors = []
     for name, expected_available, expected_status in checks:
@@ -1067,6 +1074,10 @@ def run_capability_registry_tests() -> list[dict]:
             "describe_capabilities": {
                 "available": is_capability_available("describe_capabilities"),
                 "status": capability_status("describe_capabilities"),
+            },
+            "describe_context_capabilities": {
+                "available": is_capability_available("describe_context_capabilities"),
+                "status": capability_status("describe_context_capabilities"),
             },
         },
     )
@@ -2824,6 +2835,181 @@ def run_stage2f_d_c_model_truth_fallback_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_d_d_context_capability_answer_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(
+        name: str,
+        errors: list[str],
+        *,
+        stdout: str = "",
+        stderr: str = "",
+        returncode: int = 0,
+        cmd: list[str] | None = None,
+    ) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": returncode,
+                "stdout": stdout,
+                "stderr": stderr,
+                "errors": errors,
+                "cmd": cmd or ["stage2f_d_d", name],
+            }
+        )
+
+    errors: list[str] = []
+    checks = [
+        ("what can you do here?", True),
+        ("what can you do on this system?", True),
+        ("Μποντ τι μπορείς να κάνεις εδώ;", True),
+        ("what can you do?", False),
+        ("how are you?", False),
+    ]
+    for text, expected in checks:
+        actual = is_context_capability_question(text)
+        if actual is not expected:
+            errors.append(f"{text!r}: expected {expected!r}, got {actual!r}")
+    _append("stage2f_d_d_unit_context_detection", errors)
+
+    answer = answer_capability_question("what can you do here?")
+    errors = []
+    if not answer:
+        errors.append("expected non-empty context capability answer")
+    else:
+        required_parts = [
+            "Context capability summary:",
+            "Probe basis:",
+            "Environment:",
+            "Session:",
+            "Capability-relevant tools:",
+            "Model/runtime boundary:",
+            "Current bounded usable areas:",
+            "Safety boundary:",
+            "existing read-only probes only",
+            "does not authorize execution",
+            "normal assistant answers are not broadly probe-backed",
+        ]
+        for part in required_parts:
+            if part not in answer:
+                errors.append(f"missing expected text: {part}")
+
+        forbidden_parts = [
+            "all capabilities are probe-backed",
+            "normal assistant answers are dynamically probe-backed",
+            "privileged updates are available",
+            "arbitrary shell execution is available",
+        ]
+        for part in forbidden_parts:
+            if part in answer:
+                errors.append(f"unexpected text present: {part}")
+    _append("stage2f_d_d_unit_context_answer_shape", errors, stdout=answer or "")
+
+    answer = answer_capability_question("what can you do?")
+    errors = []
+    if not answer:
+        errors.append("expected non-empty general capability answer")
+    else:
+        if "Capability summary:" not in answer:
+            errors.append("missing Capability summary in general answer")
+        if "Context capability summary:" in answer:
+            errors.append("general answer must not include context summary")
+        if "Capability-relevant tools:" in answer:
+            errors.append("general answer must not include context tool details")
+        if "Model/runtime boundary:" in answer:
+            errors.append("general answer must not include context model/runtime section")
+        if "normal assistant answers are not broadly probe-backed" in answer:
+            errors.append("general answer must not include context boundary phrase")
+    _append("stage2f_d_d_general_capability_not_context_expanded", errors, stdout=answer or "")
+
+    cmd = [str(AI_WRAPPER), "what can you do here?"]
+    proc = run_cmd(cmd, {"BOND_DEV_TELEMETRY": "1", "BOND_ACTION_DRY_RUN": None})
+    out = (proc.stdout or "").strip()
+    err = (proc.stderr or "").strip()
+    telemetry, telemetry_errors = _parse_telemetry_record(err)
+    errors = []
+    errors.extend(telemetry_errors)
+    if proc.returncode != 0:
+        errors.append(f"expected exit 0, got {proc.returncode}")
+    for part in [
+        "Context capability summary:",
+        "existing read-only probes only",
+        "does not authorize execution",
+        "normal assistant answers are not broadly probe-backed",
+    ]:
+        if part not in out:
+            errors.append(f"missing stdout text: {part}")
+    if isinstance(telemetry, dict):
+        if telemetry.get("deterministic") is not True:
+            errors.append("expected deterministic=true in telemetry")
+        if telemetry.get("answer_path") != "capability_answer":
+            errors.append(f"expected answer_path=capability_answer, got {telemetry.get('answer_path')!r}")
+    else:
+        errors.append("missing telemetry payload")
+    if "model_answer" in out or "model_answer" in err:
+        errors.append("stdout/stderr should not include model_answer")
+    _append("stage2f_d_d_cli_context_answer", errors, stdout=out, stderr=err, returncode=proc.returncode, cmd=cmd)
+
+    cmd = [str(AI_WRAPPER), "Μποντ τι μπορείς να κάνεις εδώ;"]
+    proc = run_cmd(cmd, {"BOND_DEV_TELEMETRY": "1", "BOND_ACTION_DRY_RUN": None})
+    out = (proc.stdout or "").strip()
+    err = (proc.stderr or "").strip()
+    telemetry, telemetry_errors = _parse_telemetry_record(err)
+    errors = []
+    errors.extend(telemetry_errors)
+    if proc.returncode != 0:
+        errors.append(f"expected exit 0, got {proc.returncode}")
+    for part in [
+        "Context capability summary:",
+        "Capability-relevant tools:",
+        "Safety boundary:",
+    ]:
+        if part not in out:
+            errors.append(f"missing stdout text: {part}")
+    if isinstance(telemetry, dict):
+        if telemetry.get("deterministic") is not True:
+            errors.append("expected deterministic=true in telemetry")
+        if telemetry.get("answer_path") != "capability_answer":
+            errors.append(f"expected answer_path=capability_answer, got {telemetry.get('answer_path')!r}")
+    else:
+        errors.append("missing telemetry payload")
+    if "model_answer" in out or "model_answer" in err:
+        errors.append("stdout/stderr should not include model_answer")
+    _append("stage2f_d_d_cli_greek_context_answer", errors, stdout=out, stderr=err, returncode=proc.returncode, cmd=cmd)
+
+    original_run_named_probe = ai_capability_answer.run_named_probe
+    errors = []
+    answer = ""
+    try:
+        def _fake_probe_exception(name: str):
+            raise RuntimeError("context probe boom")
+
+        ai_capability_answer.run_named_probe = _fake_probe_exception
+        answer = answer_capability_question("what can you do here?") or ""
+        if not answer:
+            errors.append("expected non-empty context answer")
+        required_parts = [
+            "Context capability summary:",
+            "Safety boundary:",
+            "does not authorize execution",
+        ]
+        for part in required_parts:
+            if part not in answer:
+                errors.append(f"missing expected text: {part}")
+        if "unavailable" not in answer and "unknown" not in answer:
+            errors.append("expected unavailable or unknown fallback wording")
+        if "context probe boom" in answer:
+            errors.append("must not leak probe exception details")
+    except Exception as exc:
+        errors.append(f"answer_capability_question should not raise, got: {exc}")
+    finally:
+        ai_capability_answer.run_named_probe = original_run_named_probe
+    _append("stage2f_d_d_context_probe_exception_fallback", errors, stdout=answer)
+
+    return results
+
+
 def run_parse_contract_tests() -> list[dict]:
     results: list[dict] = []
 
@@ -3957,6 +4143,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_d_c_model_truth_fallback_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_d_d_context_capability_answer_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

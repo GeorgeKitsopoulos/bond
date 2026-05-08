@@ -145,7 +145,8 @@ Current checkpoint note:
 - Stage 2F-A adds the code-level capability registry foundation in `src/bond/ai_capabilities.py`.
 - Stage 2F-B wires read-only capability questions into deterministic registry-backed answers.
 - Stage 2F-C applies telemetry-driven guardrail hardening for assistant-prefix normalization, high-risk natural command shaping, mixed-intent preemption safety, expanded capability aliases, and deterministic dry-run step metadata.
-- capability registry implementation has started with a code-level foundation; dynamic probe-backed capability discovery, execution-authorization integration, and plugin capability loading remain open, so this milestone is not complete.
+- Stage 2F-D-D adds bounded explicit context-capability discovery for explicit context questions using existing read-only probes only.
+- capability registry implementation has started with a code-level foundation; execution authorization and plugin capability loading remain open, and Stage 2F-D-D does not authorize execution, so this milestone is not complete.
 
 Exit criteria:
 
@@ -191,7 +192,8 @@ Current checkpoint note:
 
 - Stage 2F-D-A implements the first structured read-only probe foundation with a deterministic probe contract, a bounded probe runner, and a thin `ai_scan_system.py` CLI wrapper that writes the compatibility state snapshot.
 - Stage 2F-D-B wires existing read-only `model_truth` probe output into bounded `query_model` capability answers only, with fact-first protection for precise model fact queries.
-- M4 is not complete: normal assistant answers are not yet probe-backed, and broader probe domains, telemetry direction, and action-planning integration remain open.
+- Stage 2F-D-D adds bounded explicit context-capability answers from existing read-only probes for explicit context question surfaces.
+- M4 is not complete: broader probe domains, normal assistant answer grounding, telemetry direction, and action-planning integration remain open.
 
 Exit criteria:
 
@@ -243,7 +245,9 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest latest run summary is 157 passed, 0 failed, total 157 with coverage for routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, telemetry-derived guardrail regressions, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, the C5 follow-up strict-timeout cleanup checks, events bucket, and core memory flows
+- integrated selftest latest run summary is 192 passed, 0 failed, total 192.
+- coverage includes routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, telemetry-derived guardrail regressions, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, and the C5 follow-up strict-timeout cleanup checks.
+- coverage also includes Stage 2F-D probe foundation/cleanup checks, Stage 2F-D-B bounded model-truth checks, Stage 2F-D-C model-truth fallback checks, Stage 2F-D-D bounded context-capability answer checks, events bucket, and core memory flows.
 - integrated selftest baseline now includes confirmation-token flow coverage (token creation, invalid/expired/consumed handling, confirmed dry-run, and non-reuse)
 - Stage 2E improves parser honesty and preflight failure behavior; Stage 2F-A/2F-B/2F-C add static registry truth, read-only capability answers, and telemetry-driven deterministic guardrail hardening, but do not expand executor authorization
 - this does not imply full behavioral coverage or assistant maturity

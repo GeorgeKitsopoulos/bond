@@ -104,16 +104,19 @@ P0F preparation update (current-doc reference cleanup):
 - Stage 2F-D-C is integrated/current as a narrow hardening step: bounded `model_truth` capability-answer fallbacks now use explicit unavailable/unknown wording for unavailable inventory, validation failure, and probe exception paths.
 - Stage 2F-D-C preserves bounded scope: no new probes, no broadened probe-backed answers, and no changes to the model roster.
 - Stage 2F-D-C clarifies that when installed inventory is unavailable in a run, missing/extra installed-model sets are unknown for that run.
+- Stage 2F-D-D is integrated/current as a bounded explicit context-capability step: explicit context-capability questions can now return bounded probe-informed answers from existing read-only probes (`host_baseline`, `session_baseline`, `tool_inventory`, `model_truth`).
+- Stage 2F-D-D preserves boundaries: general capability discovery remains not dynamically probe-backed, and normal assistant answers remain not broadly probe-backed.
+- Stage 2F-D-D adds no new probes, no new actions, no privileged lane, no maintenance advisor, no voice/applet/service layer, and no document RAG ingestion/execution path.
 - Normal assistant answers are not yet dynamically probe-backed; general capability discovery is still not dynamically probe-backed.
 - Temporary dev/test telemetry exists behind `BOND_DEV_TELEMETRY=1`. It emits one JSON line to stderr with elapsed_ms and safe routing/decision metadata for testing. Normal Bond answers remain telemetry-free by default, and final product behavior must not include telemetry in assistant answers.
 - capability-registry honesty tests now verify planned/unsupported capabilities are not reported as available
-- current integrated selftest summary from latest run: 186 passed, 0 failed, total 186
+- current integrated selftest summary from latest run: 192 passed, 0 failed, total 192
 ## Partial, open, or not implemented yet
 
 - no privileged execution lane implementation
 - action parser remains heuristic and partial
 - action catalog and executor remain narrow/rootless
-- no dynamic probe-backed capability discovery yet in normal assistant answers; current capability-answer integration is read-only and does not authorize execution
+- no dynamic probe-backed capability discovery yet in normal assistant answers; current capability-answer integration is read-only and does not authorize execution, with bounded probe detail limited to explicit model/context capability questions
 - probes now have a first structured read-only foundation, but the broader planned probe surface remains partial
 - memory retrieval remains shallow/lexical relative to the documented target architecture
 - no document ingestion/drop-folder knowledge pipeline yet

@@ -55,6 +55,20 @@ Boundaries for this step:
 - validation-failure and probe-exception paths use the same bounded unavailable fallback envelope
 - this hardening does not prove currently answering model identity, runtime health, model quality, or privileged/system capability
 
+## Stage 2F-D-D bounded context capability answers
+
+Stage 2F-D-D adds bounded explicit context-capability answers for explicit context question surfaces.
+
+Boundaries for this step:
+
+- existing probes are used only for explicit context-capability questions
+- no new probes were added
+- raw probe dumps are not exposed to users
+- tool paths and local paths are not exposed in context answers
+- this does not authorize execution
+- general `what can you do?` remains registry summary only
+- normal assistant answers remain not broadly dynamically probe-backed
+
 ## Core principles
 
 - deterministic probes, not LLM guessing

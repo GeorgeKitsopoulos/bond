@@ -6,7 +6,7 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 
 - Bond is under active development.
 - The current validated baseline is Stage 2E plus P0 cleanup work.
-- Current documented validation baseline: compile passes and integrated selftest currently reports 186/186 after Stage 2F-D-C bounded model-truth fallback hardening validation (see docs/TESTING.md for exact summary).
+- Current documented validation baseline: compile passes and integrated selftest currently reports 192/192 after Stage 2F-D-D bounded context-capability answer validation (see docs/TESTING.md for exact summary).
 - Stage 2F-C hardens deterministic guardrails from telemetry findings (assistant-prefix normalization, mixed-intent handling, high-risk command shaping, and capability alias coverage) while keeping telemetry opt-in and answers telemetry-free by default. 
 - Stage 2F-C2 follows with a small regression cleanup for model/language capability prompts, restart-laptop confirmation shaping, and deterministic social check-in handling.
 - Stage 2F-C3 addresses remaining telemetry edge cases: bare capability noun phrases ("installed models", "local models") now deterministically answer as capability questions, and time/project-state queries return bounded deterministic answers instead of timing out.
@@ -23,6 +23,8 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 - Stage 2F-D-B preserves the distinction between configured route targets and installed local model inventory; inventory can be unavailable when Ollama is missing, down, or times out.
 - Stage 2F-D-B bounded model truth does not prove which model is currently answering, runtime health, model quality, or privileged/system capability.
 - Stage 2F-D-C narrowly hardens bounded `model_truth` answer fallback wording and tests for unavailable-inventory, validation-failure, and exception paths without broadening probe-backed answer scope or adding new probes.
+- Stage 2F-D-D adds bounded explicit context-capability answers for "what can you do here/on this system" surfaces using existing read-only probes only.
+- Stage 2F-D-D keeps plain general capability discovery (`what can you do?`) and normal assistant answers not broadly dynamically probe-backed.
 - Stage 2F-D-C keeps unavailable inventory explicit: missing/extra installed-model sets are unknown for that run, not zero.
 - Probe-backed capability discovery in normal assistant answers is still not implemented.
 - Bond is not yet a general-purpose desktop assistant.
@@ -44,7 +46,7 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 
 ## What does not work yet
 
-- no dynamic probe-backed capability discovery yet in normal assistant answers; the registry-backed capability answer path remains read-only and does not authorize execution, and Stage 2F-D-B/2F-D-C keep bounded `model_truth` detail only for `query_model` capability answers
+- no dynamic probe-backed capability discovery yet in normal assistant answers; the registry-backed capability answer path remains read-only and does not authorize execution, Stage 2F-D-B/2F-D-C keep bounded `model_truth` detail only for `query_model` capability answers, and Stage 2F-D-D adds bounded explicit context-capability detail only for explicit context questions
 - no privileged execution lane
 - no service/app/applet layer
 - no system maintenance advisor, monthly health report, or GUI maintenance dashboard yet
