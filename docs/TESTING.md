@@ -98,6 +98,7 @@ Stage 2F-E-B tests verify the transitional linguistic intent contract: linguisti
 Stage 2F-E-C tests verify bounded read-only maintenance/readiness behavior: registry capability shape and planned maintenance capabilities remaining unavailable, classifier detection as specific-only, maintenance answer shape, capability status boundary wording, probe exception fallback without exception leakage, CLI maintenance/readiness report behavior, existing capability paths unchanged, and docs recording the read-only maintenance boundary without overclaim.
 Stage 2F-E-C cleanup tests verify classifier-owned explicit capability alias helper behavior, maintenance-readiness explicit alias helper behavior, answer-module removal of maintenance-readiness alias tables, and behavior preservation for maintenance/readiness answers, model inventory answers, context/general capability answers, and normal-chat rejection.
 Subprocess timeout behavior is covered by selftests for model invocation, safe-action execution, and selftest subprocess guards.
+Archive-pruning path containment is covered by hermetic selftests.
 These C5 checks are strict deterministic guardrails and do not claim that general chat/model timeout behavior is solved.
 
 This baseline is necessary and useful, but it is not proof of final assistant correctness or product maturity.

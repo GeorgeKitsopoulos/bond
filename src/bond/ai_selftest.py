@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import ai_confirmation
 import ai_exec
+import ai_memory_rotate
 import ai_run
 import ai_capability_answer
 import ai_capability_classifier
@@ -5127,6 +5128,95 @@ def run_memory_tests() -> list[dict]:
         ]:
             if p.exists():
                 p.unlink()
+
+    containment_root = TEST_ARCHIVE_ROOT / "archive-prune-containment"
+    archive_root = containment_root / "archive-root"
+    outside_root = containment_root / "outside-root"
+    shutil.rmtree(containment_root, ignore_errors=True)
+    try:
+        archive_root.mkdir(parents=True, exist_ok=True)
+        outside_root.mkdir(parents=True, exist_ok=True)
+
+        inside_keep = archive_root / "actions_2099-01-01T00-00-00+00-00.jsonl"
+        inside_keep.write_text("keep", encoding="utf-8")
+        outside_file = outside_root / "outside.jsonl"
+        outside_file.write_text("outside", encoding="utf-8")
+
+        archive_map = {
+            "actions": [
+                str(outside_file),
+                str(inside_keep),
+            ]
+        }
+        pruned = ai_memory_rotate.prune_archive_list(
+            "actions",
+            archive_map,
+            keep_count=1,
+            archive_root=archive_root,
+        )
+        errors = []
+        if pruned != 0:
+            errors.append(f"expected pruned=0 for unsafe outside-root entry, got {pruned}")
+        if not outside_file.exists():
+            errors.append("outside archive-metadata target must not be deleted")
+        retained = archive_map.get("actions", [])
+        if str(outside_file) in retained:
+            errors.append("unsafe outside-root archive entry should be removed from archive_map")
+        if str(inside_keep) not in retained:
+            errors.append("safe inside-root entry should remain retained")
+
+        results.append(
+            {
+                "name": "memory_rotate_archive_prune_rejects_outside_root",
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": json.dumps({"archive_map": archive_map, "pruned": pruned}, ensure_ascii=False),
+                "stderr": "",
+                "errors": errors,
+                "cmd": ["archive_prune_rejects_outside_root"],
+            }
+        )
+
+        old_inside = archive_root / "actions_2000-01-01T00-00-00+00-00.jsonl"
+        new_inside = archive_root / "actions_2099-01-01T00-00-00+00-00.jsonl"
+        old_inside.write_text("old", encoding="utf-8")
+        new_inside.write_text("new", encoding="utf-8")
+        archive_map = {
+            "actions": [
+                str(old_inside),
+                str(new_inside),
+            ]
+        }
+        pruned = ai_memory_rotate.prune_archive_list(
+            "actions",
+            archive_map,
+            keep_count=1,
+            archive_root=archive_root,
+        )
+        errors = []
+        if pruned != 1:
+            errors.append(f"expected pruned=1 for inside-root archive entry, got {pruned}")
+        if old_inside.exists():
+            errors.append("old inside-root archive file should be deleted")
+        if not new_inside.exists():
+            errors.append("new inside-root archive file should be retained")
+        retained = archive_map.get("actions", [])
+        if retained != [str(new_inside)]:
+            errors.append(f"expected only newest inside-root entry retained, got {retained!r}")
+
+        results.append(
+            {
+                "name": "memory_rotate_archive_prune_deletes_inside_root",
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": json.dumps({"archive_map": archive_map, "pruned": pruned}, ensure_ascii=False),
+                "stderr": "",
+                "errors": errors,
+                "cmd": ["archive_prune_deletes_inside_root"],
+            }
+        )
+    finally:
+        shutil.rmtree(containment_root, ignore_errors=True)
 
 
     fact_existed3, fact_before3 = backup_file(TEST_FACT_BUCKET)

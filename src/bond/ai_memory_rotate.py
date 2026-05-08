@@ -20,6 +20,15 @@ DEFAULT_KEEP_LOG_ARCHIVES = 10
 DEFAULT_KEEP_FACT_SNAPSHOTS = 20
 
 
+def _is_relative_to(path: Path, root: Path) -> bool:
+    try:
+        resolved_path = path.resolve(strict=False)
+        resolved_root = root.resolve(strict=False)
+        return resolved_path == resolved_root or resolved_root in resolved_path.parents
+    except (ValueError, OSError):
+        return False
+
+
 def log_action(message: str, meta=None) -> None:
     append_jsonl(
         FILES["actions"],
@@ -148,8 +157,26 @@ def prune_archive_list(
     key: str,
     archive_map: dict,
     keep_count: int,
+    archive_root: Path,
 ) -> int:
     entries = normalize_archive_entries(archive_map.get(key, []))
+    safe_entries = []
+
+    for item in entries:
+        path = Path(item)
+        if not _is_relative_to(path, archive_root):
+            log_failure(
+                f"skipped unsafe archived item outside root for {key}",
+                {
+                    "archive_file": str(path),
+                    "archive_key": key,
+                    "archive_root": str(archive_root),
+                },
+            )
+            continue
+        safe_entries.append(item)
+
+    entries = safe_entries
     if len(entries) <= keep_count:
         archive_map[key] = entries
         return 0
@@ -201,11 +228,14 @@ def prune_archive_list(
 
 def prune_archives(archive_map: dict, keep_log_archives: int, keep_fact_snapshots: int) -> int:
     total_pruned = 0
+    archive_root = get_archive_root()
+    if archive_root is None:
+        return total_pruned
 
     for key in ("actions", "failures", "chats", "reflections"):
-        total_pruned += prune_archive_list(key, archive_map, keep_log_archives)
+        total_pruned += prune_archive_list(key, archive_map, keep_log_archives, archive_root)
 
-    total_pruned += prune_archive_list("facts_snapshots", archive_map, keep_fact_snapshots)
+    total_pruned += prune_archive_list("facts_snapshots", archive_map, keep_fact_snapshots, archive_root)
 
     return total_pruned
 

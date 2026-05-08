@@ -44,3 +44,9 @@ Pending high-risk confirmation tokens are local state.
 On POSIX systems, Bond hardens the confirmation directory to `0700` and the pending token file to `0600`.
 
 Tokens are treated as short-lived local control data. They must not be synced, published, or treated as portable project documentation.
+
+## Archive metadata local-state trust boundary
+
+Archive metadata is treated as untrusted local state.
+
+Archive pruning refuses to delete paths outside Bond's archive root.

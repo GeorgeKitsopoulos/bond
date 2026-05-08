@@ -19,6 +19,11 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-E-D archive-pruning hardening
+
+- Hardened archive pruning so corrupted archive metadata cannot delete files outside the archive root.
+- Added hermetic selftests for archive path containment.
+
 ### Stage 2F-E-D confirmation-token hardening
 
 - Hardened pending confirmation token storage permissions on POSIX systems.
