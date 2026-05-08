@@ -80,6 +80,7 @@ from ai_probes import (
     probe_router_config_models,
     probe_session_baseline,
     probe_tool_inventory,
+    run_named_probe,
 )
 
 SRC_BOND = BOND_ROOT / "src" / "bond"
@@ -2290,6 +2291,190 @@ def run_stage2f_d_probe_foundation_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_d_a2_cleanup_hardening_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(name: str, errors: list[str], payload: dict | None = None) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": json.dumps(payload or {}, ensure_ascii=False),
+                "stderr": "",
+                "errors": errors,
+                "cmd": ["stage2f_d_a2", name],
+            }
+        )
+
+    workflow_path = BOND_ROOT / ".github" / "workflows" / "ci.yml"
+
+    workflow_text = read_text(workflow_path)
+    errors: list[str] = []
+    if "uses: actions/checkout@v5" not in workflow_text:
+        errors.append("missing actions/checkout@v5")
+    if "uses: actions/setup-python@v6" not in workflow_text:
+        errors.append("missing actions/setup-python@v6")
+    if "actions/checkout@v4" in workflow_text:
+        errors.append("found deprecated actions/checkout@v4")
+    if "actions/setup-python@v5" in workflow_text:
+        errors.append("found deprecated actions/setup-python@v5")
+
+    node24_markers = [
+        'FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"',
+        "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'",
+        "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true",
+    ]
+    if not any(marker in workflow_text for marker in node24_markers):
+        errors.append("missing FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 transition opt-in")
+
+    _append(
+        "stage2f_d_a2_ci_node24_action_majors",
+        errors,
+        {
+            "workflow": str(workflow_path),
+            "has_checkout_v5": "uses: actions/checkout@v5" in workflow_text,
+            "has_setup_python_v6": "uses: actions/setup-python@v6" in workflow_text,
+            "has_transition_env": any(marker in workflow_text for marker in node24_markers),
+        },
+    )
+
+    workflow_lines = workflow_text.splitlines()
+    errors = []
+    if len(workflow_lines) < 20:
+        errors.append(f"workflow appears collapsed: only {len(workflow_lines)} lines")
+    max_len = max((len(line) for line in workflow_lines), default=0)
+    if max_len >= 220:
+        errors.append(f"workflow has unexpectedly long line ({max_len})")
+    if not any(line.startswith("jobs:") for line in workflow_lines):
+        errors.append("workflow missing jobs: section")
+    if not any("steps:" in line for line in workflow_lines):
+        errors.append("workflow missing steps: section")
+    if not any("run: |" in line for line in workflow_lines):
+        errors.append("workflow missing run: | multiline shell block")
+    _append(
+        "stage2f_d_a2_ci_yaml_not_collapsed",
+        errors,
+        {
+            "line_count": len(workflow_lines),
+            "max_line_length": max_len,
+        },
+    )
+
+    doc_paths = [
+        BOND_ROOT / "README.md",
+        BOND_ROOT / "CHANGELOG.md",
+        BOND_ROOT / "docs" / "STATE.md",
+        BOND_ROOT / "docs" / "TESTING.md",
+        BOND_ROOT / "docs" / "PROBES.md",
+        BOND_ROOT / "docs" / "CAPABILITIES.md",
+        BOND_ROOT / "ROADMAP.md",
+    ]
+    errors = []
+    stats: dict[str, dict[str, int]] = {}
+    for path in doc_paths:
+        if not path.exists():
+            errors.append(f"missing required file: {path}")
+            continue
+        lines = read_text(path).splitlines()
+        line_count = len(lines)
+        longest = max((len(line) for line in lines), default=0)
+        stats[str(path.relative_to(BOND_ROOT))] = {
+            "line_count": line_count,
+            "max_line_length": longest,
+        }
+        if line_count < 20:
+            errors.append(f"{path}: too few lines ({line_count})")
+        if longest >= 1000:
+            errors.append(f"{path}: line too long ({longest} >= 1000)")
+    _append("stage2f_d_a2_current_docs_not_collapsed", errors, stats)
+
+    truth_result = run_named_probe("model_truth")
+    truth_errors = []
+    if truth_result.ok is not True:
+        truth_errors.append("model_truth probe should return ok=True")
+    if truth_result.layer != 2:
+        truth_errors.append(f"expected model_truth layer=2, got {truth_result.layer}")
+    if truth_result.supports_live_truth is not True:
+        truth_errors.append("expected supports_live_truth=True")
+
+    required_keys = {
+        "configured_models",
+        "installed_models",
+        "inventory_available",
+        "missing_configured_models",
+        "extra_installed_models",
+        "truth_status",
+    }
+    missing_keys = sorted(required_keys - set(truth_result.data.keys()))
+    if missing_keys:
+        truth_errors.append(f"model_truth missing keys: {missing_keys}")
+
+    if not isinstance(truth_result.data.get("configured_models"), list):
+        truth_errors.append("configured_models must be list")
+    if not isinstance(truth_result.data.get("installed_models"), list):
+        truth_errors.append("installed_models must be list")
+    if not isinstance(truth_result.data.get("missing_configured_models"), list):
+        truth_errors.append("missing_configured_models must be list")
+    if not isinstance(truth_result.data.get("extra_installed_models"), list):
+        truth_errors.append("extra_installed_models must be list")
+    if not isinstance(truth_result.data.get("inventory_available"), bool):
+        truth_errors.append("inventory_available must be bool")
+
+    truth_status = truth_result.data.get("truth_status")
+    if truth_status not in {
+        "configured_only",
+        "configured_and_inventory_checked",
+        "router_config_unavailable",
+    }:
+        truth_errors.append(f"unexpected truth_status: {truth_status!r}")
+
+    _append(
+        "stage2f_d_a2_model_truth_future_answer_shape",
+        truth_errors,
+        {
+            "probe_name": truth_result.probe_name,
+            "ok": truth_result.ok,
+            "layer": truth_result.layer,
+            "supports_live_truth": truth_result.supports_live_truth,
+            "data": truth_result.data,
+        },
+    )
+
+    overclaim_paths = [
+        BOND_ROOT / "README.md",
+        BOND_ROOT / "docs" / "STATE.md",
+        BOND_ROOT / "docs" / "TESTING.md",
+        BOND_ROOT / "docs" / "PROBES.md",
+        BOND_ROOT / "docs" / "CAPABILITIES.md",
+        BOND_ROOT / "ROADMAP.md",
+    ]
+    banned_phrases = [
+        "normal assistant answers are dynamically probe-backed",
+        "probe-backed capability discovery is implemented in normal assistant answers",
+        "maintenance advisor is implemented",
+        "package update planning is implemented",
+        "M4 is complete",
+    ]
+    overclaim_errors: list[str] = []
+    for path in overclaim_paths:
+        text = read_text(path)
+        for phrase in banned_phrases:
+            if phrase in text:
+                overclaim_errors.append(f"{path}: contains banned phrase {phrase!r}")
+
+    _append(
+        "stage2f_d_a2_no_probe_answer_overclaim",
+        overclaim_errors,
+        {
+            "files_checked": [str(path.relative_to(BOND_ROOT)) for path in overclaim_paths],
+            "banned_phrase_count": len(banned_phrases),
+        },
+    )
+
+    return results
+
+
 def run_parse_contract_tests() -> list[dict]:
     results: list[dict] = []
 
@@ -3387,6 +3572,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_d_probe_foundation_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_d_a2_cleanup_hardening_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

@@ -96,10 +96,11 @@ P0F preparation update (current-doc reference cleanup):
 - `απάντα ελληνικά` remains a registry-backed language-policy capability answer (`apply_response_language_policy`) and is not evidence of complete Greek language-state architecture.
 - Greek support remains transitional and centralized in normalization/alias/intent handling; final language-state architecture is not complete.
 - Stage 2F-D-A probe foundation is now integrated/current: the legacy broad system scanner has been replaced by a structured probe CLI wrapper, and current probes are `host_baseline`, `session_baseline`, `tool_inventory`, `router_config_models`, `ollama_model_inventory`, and `model_truth`.
+- Stage 2F-D-A2 cleanup/hardening is integrated/current: CI now uses Node 24-compatible official GitHub Actions majors (`actions/checkout@v5`, `actions/setup-python@v6`) with the transition opt-in `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`, and integrated selftests now include workflow/docs formatting hygiene checks plus a bounded `model_truth` future-answer-shape readiness check.
 - Normal assistant answers are not yet dynamically probe-backed; probe results are currently exposed only through the explicit scan/probe CLI and state snapshot output.
 - Temporary dev/test telemetry exists behind `BOND_DEV_TELEMETRY=1`. It emits one JSON line to stderr with elapsed_ms and safe routing/decision metadata for testing. Normal Bond answers remain telemetry-free by default, and final product behavior must not include telemetry in assistant answers.
 - capability-registry honesty tests now verify planned/unsupported capabilities are not reported as available
-- current integrated selftest summary from latest run: 169 passed, 0 failed, total 169
+- current integrated selftest summary from latest run: 174 passed, 0 failed, total 174
 ## Partial, open, or not implemented yet
 
 - no privileged execution lane implementation

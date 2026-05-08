@@ -17,6 +17,7 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 - Stage 2F-C5 keeps `απάντα ελληνικά` as a registry-backed language-policy capability answer (`apply_response_language_policy`), not proof of complete Greek language-state architecture.
 - Greek support remains transitional and centered on normalization/alias/intent handling; final language-state architecture is not complete.
 - Stage 2F-D-A introduces the first read-only structured probe foundation through the explicit scan/probe CLI.
+- Stage 2F-D-A2 cleanup/hardening updates CI to Node 24-compatible official GitHub Actions majors (`actions/checkout@v5`, `actions/setup-python@v6`) and adds hygiene/readiness selftests without changing assistant-answer behavior.
 - Probe-backed capability discovery in normal assistant answers is still not implemented.
 - Bond is not yet a general-purpose desktop assistant.
 - Bond should not be used for unattended automation, privileged/system changes, or safety-critical workflows.

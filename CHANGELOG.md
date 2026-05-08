@@ -19,6 +19,13 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-D-A2 cleanup and CI hardening
+
+- updates CI to Node 24-compatible GitHub Actions majors
+- adds hygiene tests for key Markdown/YAML formatting
+- adds a model_truth future-answer-shape check
+- preserves the boundary that normal assistant answers are not yet dynamically probe-backed
+
 ### Stage 2F-D-A dynamic probe foundation
 
 - Added `src/bond/ai_probe_contract.py` with the deterministic structured probe-result contract for Layer 0/1/2 probe snapshots.
