@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import re
 import subprocess
 import sys
@@ -82,6 +83,10 @@ MAX_CHAIN_STEPS = 3
 MEMORY_QUERY_MAX_ITEMS = 6
 ACTIVE_CONTEXT_FALLBACK_LINES = 18
 RECENT_CHANGE_DIRECT_LIMIT = 12
+OLLAMA_TIMEOUT_ENV = "BOND_OLLAMA_TIMEOUT_SECONDS"
+DEFAULT_OLLAMA_TIMEOUT_SECONDS = 45
+SAFE_ACTION_TIMEOUT_ENV = "BOND_SAFE_ACTION_TIMEOUT_SECONDS"
+DEFAULT_SAFE_ACTION_TIMEOUT_SECONDS = 15
 
 PROJECT_PRIORITY_HINTS = """
 CURRENT PROJECT PRIORITIES
@@ -169,14 +174,45 @@ def load_router_profiles():
     return load_json(ROUTER_CONFIG, {})
 
 
+def safe_timeout_seconds(
+    env_name: str,
+    default_value: int,
+    *,
+    upper_bound: int = 300,
+) -> int:
+    raw_value = os.environ.get(env_name)
+    if raw_value is None:
+        return int(default_value)
+
+    try:
+        parsed = int(raw_value)
+    except (TypeError, ValueError):
+        return int(default_value)
+
+    if parsed <= 0:
+        return int(default_value)
+
+    return min(parsed, int(upper_bound))
+
+
 def ask_ollama(model: str, prompt: str) -> str:
-    proc = subprocess.run(
-        ["ollama", "run", model],
-        input=prompt,
-        text=True,
-        capture_output=True,
-        check=False,
+    timeout_seconds = safe_timeout_seconds(
+        OLLAMA_TIMEOUT_ENV,
+        DEFAULT_OLLAMA_TIMEOUT_SECONDS,
     )
+    try:
+        proc = subprocess.run(
+            ["ollama", "run", model],
+            input=prompt,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=timeout_seconds,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(
+            f"ollama run timed out after {timeout_seconds} seconds"
+        ) from exc
     if proc.returncode != 0:
         err = (proc.stderr or "").strip()
         raise RuntimeError(err or f"ollama run failed with code {proc.returncode}")
@@ -346,13 +382,21 @@ def maybe_build_bounded_safety_answer(text: str) -> str | None:
 
 def run_safe_action(text: str) -> tuple[bool, str]:
     normalized = normalize_action_text(text)
-
-    proc = subprocess.run(
-        [sys.executable, str(AI_EXEC_PATH), normalized],
-        text=True,
-        capture_output=True,
-        check=False,
+    timeout_seconds = safe_timeout_seconds(
+        SAFE_ACTION_TIMEOUT_ENV,
+        DEFAULT_SAFE_ACTION_TIMEOUT_SECONDS,
     )
+
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(AI_EXEC_PATH), normalized],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=timeout_seconds,
+        )
+    except subprocess.TimeoutExpired:
+        return False, f"action execution timed out after {timeout_seconds} seconds"
 
     stdout = (proc.stdout or "").strip()
     stderr = (proc.stderr or "").strip()

@@ -5,6 +5,8 @@ import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+import ai_exec
+import ai_run
 import ai_capability_answer
 import ai_capability_classifier
 import ai_linguistic_intent_contract
@@ -137,6 +139,8 @@ STATE_CONFIG_PATH = STATE_ROOT / "assistant_config.json"
 EXPECTED_CONFIG_FILE = str(CONFIG_FILE)
 TEST_ARCHIVE_ROOT = Path(os.environ.get("BOND_ARCHIVE_ROOT", "/tmp/bond-test-archive")).expanduser().resolve(strict=False)
 TEST_ARCHIVE_ROOT.mkdir(parents=True, exist_ok=True)
+SELFTEST_SUBPROCESS_TIMEOUT_ENV = "BOND_SELFTEST_SUBPROCESS_TIMEOUT_SECONDS"
+DEFAULT_SELFTEST_SUBPROCESS_TIMEOUT_SECONDS = 40
 
 # Automated selftests run action requests in dry-run mode to avoid opening GUI windows.
 # Real GUI action execution should be checked manually with BOND_ACTION_DRY_RUN unset.
@@ -193,7 +197,33 @@ def selftest_env() -> dict[str, str]:
     return env
 
 
-def run_cmd(args: list[str], extra_env: dict[str, str | None] | None = None) -> subprocess.CompletedProcess:
+def safe_timeout_seconds(
+    env_name: str,
+    default_value: int,
+    *,
+    upper_bound: int = 300,
+) -> int:
+    raw_value = os.environ.get(env_name)
+    if raw_value is None:
+        return int(default_value)
+
+    try:
+        parsed = int(raw_value)
+    except (TypeError, ValueError):
+        return int(default_value)
+
+    if parsed <= 0:
+        return int(default_value)
+
+    return min(parsed, int(upper_bound))
+
+
+def run_cmd(
+    args: list[str],
+    extra_env: dict[str, str | None] | None = None,
+    *,
+    timeout: int | None = None,
+) -> subprocess.CompletedProcess:
     env = selftest_env()
     if extra_env:
         for key, value in extra_env.items():
@@ -201,7 +231,20 @@ def run_cmd(args: list[str], extra_env: dict[str, str | None] | None = None) -> 
                 env.pop(key, None)
             else:
                 env[key] = value
-    return subprocess.run(args, text=True, capture_output=True, check=False, env=env)
+    timeout_seconds = timeout
+    if timeout_seconds is None:
+        timeout_seconds = safe_timeout_seconds(
+            SELFTEST_SUBPROCESS_TIMEOUT_ENV,
+            DEFAULT_SELFTEST_SUBPROCESS_TIMEOUT_SECONDS,
+        )
+    return subprocess.run(
+        args,
+        text=True,
+        capture_output=True,
+        check=False,
+        env=env,
+        timeout=timeout_seconds,
+    )
 
 
 def print_block(title: str, text: str) -> None:
@@ -4184,6 +4227,152 @@ def run_stage2f_e_c_cleanup_classifier_boundary_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_e_d_timeout_hardening_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(
+        name: str,
+        errors: list[str],
+        *,
+        stdout: str = "",
+        stderr: str = "",
+        returncode: int = 0,
+        cmd: list[str] | None = None,
+    ) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": returncode,
+                "stdout": stdout,
+                "stderr": stderr,
+                "errors": errors,
+                "cmd": cmd or ["stage2f_e_d", name],
+            }
+        )
+
+    timeout_modules = {
+        "ai_run": ai_run.safe_timeout_seconds,
+        "ai_exec": ai_exec.safe_timeout_seconds,
+    }
+
+    original_values = {
+        ai_run.OLLAMA_TIMEOUT_ENV: os.environ.get(ai_run.OLLAMA_TIMEOUT_ENV),
+        ai_exec.EXEC_CMD_TIMEOUT_ENV: os.environ.get(ai_exec.EXEC_CMD_TIMEOUT_ENV),
+    }
+
+    try:
+        errors: list[str] = []
+        os.environ.pop(ai_run.OLLAMA_TIMEOUT_ENV, None)
+        os.environ.pop(ai_exec.EXEC_CMD_TIMEOUT_ENV, None)
+        outputs = {}
+        for label, helper in timeout_modules.items():
+            outputs[label] = {
+                "missing": helper("IGNORED_TIMEOUT_ENV", 17),
+            }
+            if outputs[label]["missing"] != 17:
+                errors.append(f"{label}: missing env should return default 17")
+        _append(
+            "stage2f_e_d_safe_timeout_missing_env_returns_default",
+            errors,
+            stdout=json.dumps(outputs, ensure_ascii=False),
+        )
+
+        errors = []
+        os.environ[ai_run.OLLAMA_TIMEOUT_ENV] = "not-an-int"
+        os.environ[ai_exec.EXEC_CMD_TIMEOUT_ENV] = "nan"
+        outputs = {
+            "ai_run": ai_run.safe_timeout_seconds(ai_run.OLLAMA_TIMEOUT_ENV, 23),
+            "ai_exec": ai_exec.safe_timeout_seconds(ai_exec.EXEC_CMD_TIMEOUT_ENV, 23),
+        }
+        for label, value in outputs.items():
+            if value != 23:
+                errors.append(f"{label}: invalid env should return default 23, got {value}")
+        _append(
+            "stage2f_e_d_safe_timeout_invalid_env_returns_default",
+            errors,
+            stdout=json.dumps(outputs, ensure_ascii=False),
+        )
+
+        errors = []
+        outputs = {}
+        for raw_value in ("0", "-5"):
+            os.environ[ai_run.OLLAMA_TIMEOUT_ENV] = raw_value
+            os.environ[ai_exec.EXEC_CMD_TIMEOUT_ENV] = raw_value
+            outputs[raw_value] = {
+                "ai_run": ai_run.safe_timeout_seconds(ai_run.OLLAMA_TIMEOUT_ENV, 31),
+                "ai_exec": ai_exec.safe_timeout_seconds(ai_exec.EXEC_CMD_TIMEOUT_ENV, 31),
+            }
+            if outputs[raw_value]["ai_run"] != 31:
+                errors.append(f"ai_run: raw value {raw_value!r} should return default 31")
+            if outputs[raw_value]["ai_exec"] != 31:
+                errors.append(f"ai_exec: raw value {raw_value!r} should return default 31")
+        _append(
+            "stage2f_e_d_safe_timeout_nonpositive_returns_default",
+            errors,
+            stdout=json.dumps(outputs, ensure_ascii=False),
+        )
+
+        errors = []
+        os.environ[ai_run.OLLAMA_TIMEOUT_ENV] = "999"
+        os.environ[ai_exec.EXEC_CMD_TIMEOUT_ENV] = "999"
+        outputs = {
+            "ai_run": ai_run.safe_timeout_seconds(ai_run.OLLAMA_TIMEOUT_ENV, 12, upper_bound=44),
+            "ai_exec": ai_exec.safe_timeout_seconds(ai_exec.EXEC_CMD_TIMEOUT_ENV, 12, upper_bound=44),
+        }
+        for label, value in outputs.items():
+            if value != 44:
+                errors.append(f"{label}: expected clamp to 44, got {value}")
+        _append(
+            "stage2f_e_d_safe_timeout_clamps_upper_bound",
+            errors,
+            stdout=json.dumps(outputs, ensure_ascii=False),
+        )
+
+        errors = []
+        fake_bin_dir = TEST_ARCHIVE_ROOT / "fake_ollama_timeout_bin"
+        fake_bin_dir.mkdir(parents=True, exist_ok=True)
+        fake_ollama = fake_bin_dir / "ollama"
+        fake_ollama.write_text(
+            "#!/usr/bin/env python3\n"
+            "import time\n"
+            "time.sleep(5)\n",
+            encoding="utf-8",
+        )
+        fake_ollama.chmod(0o755)
+
+        env = {
+            "PATH": f"{fake_bin_dir}{os.pathsep}{os.environ.get('PATH', '')}",
+            ai_run.OLLAMA_TIMEOUT_ENV: "1",
+            "BOND_ACTION_DRY_RUN": None,
+        }
+        cmd = [str(AI_WRAPPER), "write a short sentence about timeout hardening"]
+        proc = run_cmd(cmd, env, timeout=10)
+        out = (proc.stdout or "").strip()
+        err = (proc.stderr or "").strip()
+        expected_text = "ollama run timed out after 1 seconds"
+        if proc.returncode == 0 and "model error:" not in out and "model error:" not in err:
+            errors.append("expected nonzero exit or existing model-error handling on ollama timeout")
+        if expected_text not in out and expected_text not in err:
+            errors.append(f"missing timeout text: {expected_text}")
+        _append(
+            "stage2f_e_d_ollama_timeout_is_bounded",
+            errors,
+            stdout=out,
+            stderr=err,
+            returncode=proc.returncode,
+            cmd=cmd,
+        )
+    finally:
+        for key, value in original_values.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+    return results
+
+
 def run_parse_contract_tests() -> list[dict]:
     results: list[dict] = []
 
@@ -5377,6 +5566,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_e_c_cleanup_classifier_boundary_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_e_d_timeout_hardening_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

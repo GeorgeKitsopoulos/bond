@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import shlex
 import subprocess
 import sys
@@ -18,10 +19,51 @@ from ai_core import (
 
 HOME = Path.home()
 SYSTEM_PROFILE = get_state_root() / "system_profile.json"
+EXEC_CMD_TIMEOUT_ENV = "BOND_EXEC_CMD_TIMEOUT_SECONDS"
+DEFAULT_EXEC_CMD_TIMEOUT_SECONDS = 8
+
+
+def safe_timeout_seconds(
+    env_name: str,
+    default_value: int,
+    *,
+    upper_bound: int = 300,
+) -> int:
+    raw_value = os.environ.get(env_name)
+    if raw_value is None:
+        return int(default_value)
+
+    try:
+        parsed = int(raw_value)
+    except (TypeError, ValueError):
+        return int(default_value)
+
+    if parsed <= 0:
+        return int(default_value)
+
+    return min(parsed, int(upper_bound))
 
 
 def run_cmd(args: list[str]) -> subprocess.CompletedProcess:
-    return subprocess.run(args, check=False, capture_output=True, text=True)
+    timeout_seconds = safe_timeout_seconds(
+        EXEC_CMD_TIMEOUT_ENV,
+        DEFAULT_EXEC_CMD_TIMEOUT_SECONDS,
+    )
+    try:
+        return subprocess.run(
+            args,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout_seconds,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(
+            args=args,
+            returncode=124,
+            stdout="",
+            stderr=f"command timed out after {timeout_seconds} seconds",
+        )
 
 
 def load_system_profile() -> dict:

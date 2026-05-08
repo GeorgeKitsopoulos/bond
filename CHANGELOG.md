@@ -19,6 +19,11 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-E-D timeout hardening
+
+- Added bounded subprocess timeout handling for model invocation and safe-action execution.
+- Added selftest timeout guards so hung subprocesses fail deterministically instead of stalling the suite.
+
 ### Stage 2F-E-C classifier-boundary cleanup
 
 - Centralized explicit maintenance-readiness alias detection behind `ai_capability_classifier.py`.
