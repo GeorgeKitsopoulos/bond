@@ -20,6 +20,11 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### CI Node 24 workflow guard
+
+- Added a hermetic CI Node 24 workflow guard.
+- The guard checks the local workflow file directly to avoid relying on GitHub UI/rendered-page artifacts.
+
 ### Developer helper cleanup
 
 - Updated `bond-dev-help` to reference current repository documents.

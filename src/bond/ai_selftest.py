@@ -2561,6 +2561,62 @@ def run_stage2f_d_a2_cleanup_hardening_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_ci_node24_workflow_guard_tests() -> list[dict]:
+    workflow_path = BOND_ROOT / ".github" / "workflows" / "ci.yml"
+    workflow_text = read_text(workflow_path)
+
+    errors: list[str] = []
+    required_markers = [
+        "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24",
+        "actions/checkout@v5",
+        "actions/setup-python@v6",
+    ]
+    for marker in required_markers:
+        if marker not in workflow_text:
+            errors.append(
+                f"CI workflow Node 24 compatibility guard: missing required marker in {workflow_path}: {marker}"
+            )
+
+    forbidden_markers = [
+        "FORCE_JAVASCRIPT_ACTIONS_TO_NODE20",
+        "node20",
+        "Node 20",
+        "actions/checkout@v1",
+        "actions/checkout@v2",
+        "actions/checkout@v3",
+        "actions/checkout@v4",
+        "actions/setup-python@v1",
+        "actions/setup-python@v2",
+        "actions/setup-python@v3",
+        "actions/setup-python@v4",
+        "actions/setup-python@v5",
+    ]
+    for marker in forbidden_markers:
+        if marker in workflow_text:
+            errors.append(
+                f"CI workflow Node 24 compatibility guard: found deprecated marker in {workflow_path}: {marker}"
+            )
+
+    return [
+        {
+            "name": "stage2f_ci_node24_workflow_guard",
+            "ok": not errors,
+            "returncode": 0,
+            "stdout": json.dumps(
+                {
+                    "workflow": str(workflow_path),
+                    "required_checked": required_markers,
+                    "forbidden_checked": forbidden_markers,
+                },
+                ensure_ascii=False,
+            ),
+            "stderr": "",
+            "errors": errors,
+            "cmd": ["stage2f_ci_node24_workflow_guard", str(workflow_path)],
+        }
+    ]
+
+
 def run_stage2f_d_b_model_truth_answer_tests() -> list[dict]:
     results: list[dict] = []
 
@@ -5684,6 +5740,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_d_a2_cleanup_hardening_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_ci_node24_workflow_guard_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")
