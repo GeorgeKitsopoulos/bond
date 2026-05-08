@@ -590,9 +590,9 @@ def _build_model_truth_detail() -> str:
         "installed local model inventory: unavailable",
         "inventory_available=false",
         "truth_status=unavailable",
-        "missing configured models: none",
-        "extra installed models: none",
-        "Boundary: configured route targets and installed model inventory must not be treated as the same thing. This does not prove which model is currently answering, runtime health, model quality, or privileged/system capability.",
+        "missing configured models: unknown",
+        "extra installed models: unknown",
+        "Boundary: configured route targets and installed local model inventory are separate facts and must not be treated as the same thing. This does not prove currently answering model identity, runtime health, model quality, or privileged/system capability.",
     ]
 
     try:
@@ -629,8 +629,8 @@ def _build_model_truth_detail() -> str:
             lines.extend(
                 [
                     "installed local model inventory: unavailable in this run",
-                    f"missing configured models: {configured_models}",
-                    "extra installed models: none",
+                    "missing configured models: unknown because installed inventory is unavailable",
+                    "extra installed models: unknown because installed inventory is unavailable",
                 ]
             )
 

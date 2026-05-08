@@ -101,10 +101,13 @@ P0F preparation update (current-doc reference cleanup):
 - Stage 2F-D-B preserves fact-first handling for precise model fact queries (for example, `what model does stuart use?`) while keeping model capability/inventory question surfaces on `answer_path=capability_answer`.
 - Stage 2F-D-B keeps configured route targets distinct from installed local model inventory; inventory may be unavailable when Ollama is missing, down, or times out.
 - Stage 2F-D-B does not prove currently answering model identity, runtime health, model quality, or privileged/system capability.
+- Stage 2F-D-C is integrated/current as a narrow hardening step: bounded `model_truth` capability-answer fallbacks now use explicit unavailable/unknown wording for unavailable inventory, validation failure, and probe exception paths.
+- Stage 2F-D-C preserves bounded scope: no new probes, no broadened probe-backed answers, and no changes to the model roster.
+- Stage 2F-D-C clarifies that when installed inventory is unavailable in a run, missing/extra installed-model sets are unknown for that run.
 - Normal assistant answers are not yet dynamically probe-backed; general capability discovery is still not dynamically probe-backed.
 - Temporary dev/test telemetry exists behind `BOND_DEV_TELEMETRY=1`. It emits one JSON line to stderr with elapsed_ms and safe routing/decision metadata for testing. Normal Bond answers remain telemetry-free by default, and final product behavior must not include telemetry in assistant answers.
 - capability-registry honesty tests now verify planned/unsupported capabilities are not reported as available
-- current integrated selftest summary from latest run: 181 passed, 0 failed, total 181
+- current integrated selftest summary from latest run: 186 passed, 0 failed, total 186
 ## Partial, open, or not implemented yet
 
 - no privileged execution lane implementation

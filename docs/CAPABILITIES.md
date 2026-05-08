@@ -110,10 +110,14 @@ Initial capabilities:
     Stage 2F-D-A provides the read-only probe foundation.
     Stage 2F-D-B wires bounded `model_truth` detail into `query_model`
     capability-answer surfaces only (model-inventory/model-identity questions).
+    Stage 2F-D-C hardens bounded fallback wording for unavailable-inventory,
+    validation-failure, and probe-exception paths without broadening scope.
     General capability discovery and normal assistant answers remain not
     dynamically probe-backed.
     Installed inventory can be unavailable when Ollama is missing, down, or
     times out.
+    When installed inventory is unavailable, missing/extra installed-model
+    sets are unknown for that run (not zero).
     This bounded detail does not prove which model is currently answering,
     runtime health, model quality, or privileged/system capability.
     Current documented baseline roster is qwen2.5:3b-instruct, gemma2:2b,

@@ -19,6 +19,15 @@ Until formal release tagging is established, this changelog should follow these 
 - treat git history as the lower-level ground truth and this file as the maintainers’ curated summary
 
 ## Unreleased
+### Stage 2F-D-C bounded model-truth fallback hardening
+
+- Hardened bounded `model_truth` capability-answer fallback wording for unavailable inventory paths so installed inventory is explicitly unavailable-in-run and missing/extra installed-model sets are explicit unknowns for that run.
+- Hardened validation-failure and probe-exception fallback wording to the same bounded unavailable envelope (`truth_status=unavailable`) without leaking probe exception details.
+- Added Stage 2F-D-C integrated selftests for unavailable-inventory fallback behavior, validation-failure fallback behavior, exception fallback behavior, success-path continuity, and non-probe-expanded general capability answers.
+- Kept scope narrow: no new probes, no broadened probe-backed answers, no model-roster changes.
+- Latest integrated selftest run after Stage 2F-D-C hardening: 186 passed, 0 failed, total 186.
+- This stage does not complete Stage 2F-D, does not implement maintenance advisor/package update planning, and does not complete M4.
+
 ### Stage 2F-D-B bounded model-truth capability answers
 
 - Wired existing read-only `model_truth` probe output into bounded `query_model` capability answers for model-inventory/model-identity question surfaces only.

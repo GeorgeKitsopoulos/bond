@@ -5,6 +5,7 @@ import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+import ai_capability_answer
 from ai_action_contract import (
     ACTION_CHAT,
     ACTION_CONFIRM_REQUIRED,
@@ -67,8 +68,11 @@ from ai_dev_telemetry import (
 )
 from ai_probe_contract import (
     CERTAINTY_AUTHORITATIVE,
+    CERTAINTY_DERIVED,
     REFRESH_LOW_CHURN,
+    REFRESH_HIGH_CHURN,
     SOURCE_OS_API,
+    SOURCE_RUNTIME_PROBE,
     probe_error,
     probe_ok,
     standard_error,
@@ -2645,6 +2649,181 @@ def run_stage2f_d_b_model_truth_answer_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_d_c_model_truth_fallback_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(
+        name: str,
+        errors: list[str],
+        *,
+        stdout: str = "",
+        stderr: str = "",
+        returncode: int = 0,
+        cmd: list[str] | None = None,
+    ) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": returncode,
+                "stdout": stdout,
+                "stderr": stderr,
+                "errors": errors,
+                "cmd": cmd or ["stage2f_d_c", name],
+            }
+        )
+
+    original_run_named_probe = ai_capability_answer.run_named_probe
+
+    errors: list[str] = []
+    answer = ""
+    try:
+        def _fake_probe_unavailable_inventory(name: str):
+            if name != "model_truth":
+                raise RuntimeError("unexpected probe")
+            return probe_ok(
+                probe_name="model_truth",
+                layer=2,
+                source_type=SOURCE_RUNTIME_PROBE,
+                certainty_class=CERTAINTY_DERIVED,
+                refresh_class=REFRESH_HIGH_CHURN,
+                supports_live_truth=True,
+                warnings=("ollama inventory unavailable",),
+                data={
+                    "configured_models": ["qwen2.5:3b-instruct"],
+                    "installed_models": [],
+                    "inventory_available": False,
+                    "missing_configured_models": [],
+                    "extra_installed_models": [],
+                    "truth_status": "configured_only_inventory_unavailable",
+                },
+            )
+
+        ai_capability_answer.run_named_probe = _fake_probe_unavailable_inventory
+        answer = answer_capability_question("installed models") or ""
+        required_parts = [
+            "Model truth probe:",
+            "configured route targets: qwen2.5:3b-instruct",
+            "inventory_available=false",
+            "truth_status=configured_only_inventory_unavailable",
+            "installed local model inventory: unavailable in this run",
+            "missing configured models: unknown because installed inventory is unavailable",
+            "extra installed models: unknown because installed inventory is unavailable",
+            "warnings: ollama inventory unavailable",
+            "Boundary:",
+        ]
+        for part in required_parts:
+            if part not in answer:
+                errors.append(f"missing expected text: {part}")
+        forbidden_parts = [
+            "missing configured models: qwen2.5:3b-instruct",
+            "installed local model inventory: qwen2.5:3b-instruct",
+        ]
+        for part in forbidden_parts:
+            if part in answer:
+                errors.append(f"unexpected text present: {part}")
+    except Exception as exc:
+        errors.append(f"unexpected exception: {exc}")
+    finally:
+        ai_capability_answer.run_named_probe = original_run_named_probe
+    _append("stage2f_d_c_unavailable_inventory_fallback", errors, stdout=answer)
+
+    errors = []
+    answer = ""
+    try:
+        def _fake_probe_validation_failure(name: str):
+            if name != "model_truth":
+                raise RuntimeError("unexpected probe")
+            return probe_ok(
+                probe_name="model_truth",
+                layer=99,
+                source_type=SOURCE_RUNTIME_PROBE,
+                certainty_class=CERTAINTY_DERIVED,
+                refresh_class=REFRESH_HIGH_CHURN,
+                supports_live_truth=True,
+                data={
+                    "configured_models": ["qwen2.5:3b-instruct"],
+                    "installed_models": ["qwen2.5:3b-instruct"],
+                    "inventory_available": True,
+                    "missing_configured_models": [],
+                    "extra_installed_models": [],
+                    "truth_status": "configured_and_inventory_checked",
+                },
+            )
+
+        ai_capability_answer.run_named_probe = _fake_probe_validation_failure
+        answer = answer_capability_question("installed models") or ""
+        required_parts = [
+            "Model truth probe: unavailable in this run.",
+            "configured route targets: unavailable",
+            "installed local model inventory: unavailable",
+            "inventory_available=false",
+            "truth_status=unavailable",
+            "missing configured models: unknown",
+            "extra installed models: unknown",
+            "Boundary:",
+        ]
+        for part in required_parts:
+            if part not in answer:
+                errors.append(f"missing expected text: {part}")
+    except Exception as exc:
+        errors.append(f"unexpected exception: {exc}")
+    finally:
+        ai_capability_answer.run_named_probe = original_run_named_probe
+    _append("stage2f_d_c_probe_validation_failure_fallback", errors, stdout=answer)
+
+    errors = []
+    answer = ""
+    try:
+        def _fake_probe_exception(name: str):
+            if name != "model_truth":
+                raise RuntimeError("unexpected probe")
+            raise RuntimeError("boom")
+
+        ai_capability_answer.run_named_probe = _fake_probe_exception
+        answer = answer_capability_question("installed models") or ""
+        required_parts = [
+            "Model truth probe: unavailable in this run.",
+            "configured route targets: unavailable",
+            "installed local model inventory: unavailable",
+            "inventory_available=false",
+            "truth_status=unavailable",
+            "missing configured models: unknown",
+            "extra installed models: unknown",
+            "Boundary:",
+        ]
+        for part in required_parts:
+            if part not in answer:
+                errors.append(f"missing expected text: {part}")
+        if "boom" in answer:
+            errors.append("fallback answer must not leak probe exception detail")
+    except Exception as exc:
+        errors.append(f"unexpected exception: {exc}")
+    finally:
+        ai_capability_answer.run_named_probe = original_run_named_probe
+    _append("stage2f_d_c_probe_exception_fallback", errors, stdout=answer)
+
+    errors = []
+    answer = answer_capability_question("installed models")
+    if answer is None:
+        errors.append("expected non-empty capability answer for installed models")
+    else:
+        for part in ["Capability check:", "query_model", "Model truth probe:", "configured route targets:", "Boundary:"]:
+            if part not in answer:
+                errors.append(f"missing expected text: {part}")
+    _append("stage2f_d_c_success_path_still_works", errors, stdout=answer or "")
+
+    errors = []
+    answer = answer_capability_question("what can you do?")
+    if answer is None:
+        errors.append("expected non-empty general capability answer")
+    elif "Model truth probe:" in answer:
+        errors.append("general capability answer must not include model truth probe details")
+    _append("stage2f_d_c_general_capability_not_probe_expanded", errors, stdout=answer or "")
+
+    return results
+
+
 def run_parse_contract_tests() -> list[dict]:
     results: list[dict] = []
 
@@ -3766,6 +3945,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_d_b_model_truth_answer_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_d_c_model_truth_fallback_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

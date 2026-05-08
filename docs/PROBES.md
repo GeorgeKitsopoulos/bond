@@ -41,6 +41,20 @@ Boundaries for this step:
 - installed local model inventory may be unavailable in a run when Ollama is missing, down, or times out
 - this bounded answer detail does not prove which model is currently answering, runtime health, model quality, or privileged/system capability
 
+## Stage 2F-D-C bounded fallback hardening
+
+Stage 2F-D-C narrows and hardens fallback wording in bounded `model_truth` capability answers only.
+
+Boundaries for this step:
+
+- no new probes are added
+- no probe categories are broadened
+- general `what can you do` capability discovery remains not dynamically probe-backed
+- normal assistant answers remain not broadly dynamically probe-backed
+- unavailable installed inventory means missing/extra installed-model sets are unknown for that run, not zero
+- validation-failure and probe-exception paths use the same bounded unavailable fallback envelope
+- this hardening does not prove currently answering model identity, runtime health, model quality, or privileged/system capability
+
 ## Core principles
 
 - deterministic probes, not LLM guessing
