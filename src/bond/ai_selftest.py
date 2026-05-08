@@ -2,6 +2,7 @@
 import io
 import json
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -5442,6 +5443,56 @@ def run_active_path_sanitation_tests() -> list[dict]:
     ]
 
 
+def run_dev_help_tests() -> list[dict]:
+    results: list[dict] = []
+    proc = run_cmd([str(BOND_ROOT / "scripts" / "bond-dev-help")])
+    stdout = (proc.stdout or "").strip()
+    stderr = (proc.stderr or "").strip()
+    errors: list[str] = []
+
+    if proc.returncode != 0:
+        errors.append(f"expected exit 0, got {proc.returncode}")
+
+    doc_refs = re.findall(r"docs/[A-Za-z0-9_./-]+\.md", stdout)
+
+    required_paths = {
+        "docs/DEVELOPMENT.md",
+        "docs/LLM_OPERATING_GUIDE.md",
+        "docs/REVIEW_CHECKLIST.md",
+        "docs/CHANGE_REVIEW_TEMPLATE.md",
+        "docs/COMMIT_MESSAGE_GUIDE.md",
+    }
+    missing_required = sorted(path for path in required_paths if path not in doc_refs)
+    for missing in missing_required:
+        errors.append(f"missing required doc path in output: {missing}")
+
+    for doc_path in doc_refs:
+        if not (BOND_ROOT / doc_path).exists():
+            errors.append(f"output references missing doc path: {doc_path}")
+
+    stale_paths = [
+        "docs/COPILOT_CHANGE_PROMPT_TEMPLATE.md",
+        "docs/COPILOT_PROMPT_EXAMPLES.md",
+        "docs/COPILOT_SESSION_STARTER.md",
+    ]
+    for stale in stale_paths:
+        if stale in stdout:
+            errors.append(f"unexpected stale doc path in output: {stale}")
+
+    results.append(
+        {
+            "name": "dev_help_references_existing_docs",
+            "ok": not errors,
+            "returncode": proc.returncode,
+            "stdout": stdout,
+            "stderr": stderr,
+            "errors": errors,
+            "cmd": [str(BOND_ROOT / "scripts" / "bond-dev-help")],
+        }
+    )
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -5789,6 +5840,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_active_path_sanitation_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_dev_help_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

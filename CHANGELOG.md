@@ -20,6 +20,11 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Developer helper cleanup
+
+- Updated `bond-dev-help` to reference current repository documents.
+- Added selftest coverage so helper output does not point to missing documentation.
+
 ### Stage 2F-E-D archive-pruning hardening
 
 - Hardened archive pruning so corrupted archive metadata cannot delete files outside the archive root.
