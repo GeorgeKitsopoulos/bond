@@ -20,6 +20,17 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2F-F-B maintenance readiness report probe integration
+
+- Integrated Stage 2F-F-A read-only maintenance probe facts into the explicit maintenance/readiness report.
+- The report now summarizes package update status, bounded storage hygiene, and boot/service health signals.
+- Package update status remains local apt cache inspection only and does not run apt update or upgrades.
+- Storage hygiene remains bounded to disk-usage records and does not delete files, clean caches, scan duplicates, or traverse large trees.
+- Boot/service health remains bounded to failed-unit and recent boot-warning signals and does not mutate services.
+- General capability answers are not broadly probe-backed by these maintenance facts.
+- No aliases, probes, actions, privileged execution, maintenance planning, package installs, package upgrades, cleanup execution, service mutation, or maintenance automation were added.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 242, "failed": 0, "total": 242}.
+
 ### Stage 2F-F-A read-only maintenance probe foundation
 
 - Added read-only/rootless maintenance probes for `package_update_status`, `storage_hygiene`, and `boot_service_health`.

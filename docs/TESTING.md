@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 235, "failed": 0, "total": 235}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 242, "failed": 0, "total": 242}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -46,7 +46,7 @@ truth capability-answer integration checks, Stage 2F-D-C bounded model-truth
 fallback hardening checks, and Stage 2F-D-D bounded context-capability answer
 checks, plus Stage 2F-E-A capability-classifier-boundary checks.
 
-Coverage now also includes Stage 2F-E-E selftest accounting integrity checks and Stage 2F-F-A maintenance probe foundation checks.
+Coverage now also includes Stage 2F-E-E selftest accounting integrity checks, Stage 2F-F-A maintenance probe foundation checks, and Stage 2F-F-B maintenance/readiness report probe-integration checks.
 
 Stage 2F-F-A maintenance probe coverage includes:
 
@@ -56,6 +56,14 @@ Stage 2F-F-A maintenance probe coverage includes:
 - `boot_service_health` shape
 - run_all_probes inclusion
 - read-only subprocess command guard
+
+Stage 2F-F-B report-integration coverage includes:
+
+- explicit maintenance/readiness report includes the three maintenance probe sections
+- stale "no real package/log/storage usage" wording is prevented
+- package/storage/boot-service boundaries are asserted
+- general capability answer remains free of maintenance probe sections
+- source-level execution expansion guard covers ai_capability_answer.py
 
 The current integrated suite covers:
 

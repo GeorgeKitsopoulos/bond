@@ -3908,9 +3908,7 @@ def run_stage2f_e_c_maintenance_readiness_report_tests() -> list[dict]:
             "does not delete files",
             "does not restart services",
             "does not authorize execution",
-            "does not inspect real package freshness",
-            "does not inspect real logs",
-            "does not inspect real storage usage",
+            "It uses bounded read-only maintenance signals only; package metadata freshness is not proven, storage hygiene is bounded to disk-usage records, and boot/service health is limited to failed-unit and recent boot-warning signals.",
         ]
         for needle in required:
             if needle not in answer:
@@ -5899,6 +5897,222 @@ def run_stage2f_f_a_maintenance_probe_foundation_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_f_b_maintenance_report_probe_integration_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(
+        name: str,
+        errors: list[str],
+        *,
+        stdout: str = "",
+        stderr: str = "",
+        returncode: int = 0,
+        cmd: list[str] | None = None,
+    ) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": returncode,
+                "stdout": stdout,
+                "stderr": stderr,
+                "errors": errors,
+                "cmd": cmd or ["stage2f_f_b", name],
+            }
+        )
+
+    report_cmd = [str(AI_WRAPPER), "maintenance readiness report"]
+    general_cmd = [str(AI_WRAPPER), "what can you do?"]
+
+    def _run(cmd: list[str]) -> tuple[int, str, str]:
+        proc = run_cmd(cmd, {"BOND_DEV_TELEMETRY": "1", "BOND_ACTION_DRY_RUN": None})
+        return proc.returncode, (proc.stdout or ""), (proc.stderr or "")
+
+    errors_a: list[str] = []
+    rc, out, err = _run(report_cmd)
+    if rc != 0:
+        errors_a.append(f"expected exit 0, got {rc}")
+    for needle in [
+        "Maintenance/readiness summary:",
+        "Package update status:",
+        "Storage hygiene:",
+        "Boot/service health:",
+        "package_update_status:",
+        "storage_hygiene:",
+        "boot_service_health:",
+        "does not authorize execution",
+    ]:
+        if needle not in out:
+            errors_a.append(f"missing stdout phrase: {needle}")
+    _append(
+        "stage2f_f_b_report_includes_maintenance_probe_sections",
+        errors_a,
+        stdout=out,
+        stderr=err,
+        returncode=rc,
+        cmd=report_cmd,
+    )
+
+    errors_b: list[str] = []
+    rc, out, err = _run(report_cmd)
+    stale = (
+        "It does not inspect real package freshness, does not inspect real logs, "
+        "and does not inspect real storage usage."
+    )
+    replacement = (
+        "It uses bounded read-only maintenance signals only; package metadata freshness "
+        "is not proven, storage hygiene is bounded to disk-usage records, and "
+        "boot/service health is limited to failed-unit and recent boot-warning signals."
+    )
+    if stale in out:
+        errors_b.append("stale sentence must be removed from maintenance report")
+    if replacement not in out:
+        errors_b.append("replacement boundary sentence missing from maintenance report")
+    _append(
+        "stage2f_f_b_report_replaces_stale_probe_absence_claim",
+        errors_b,
+        stdout=out,
+        stderr=err,
+        returncode=rc,
+        cmd=report_cmd,
+    )
+
+    errors_c: list[str] = []
+    rc, out, err = _run(report_cmd)
+    for needle in [
+        "boundary: local apt cache inspection only; this report does not run apt update or upgrades.",
+        "apt cache freshness known:",
+        "upgradable packages from local cache:",
+    ]:
+        if needle not in out:
+            errors_c.append(f"missing stdout phrase: {needle}")
+    for line in out.splitlines():
+        lowered = line.strip().lower()
+        if lowered.startswith("- run apt"):
+            errors_c.append(f"forbidden apt command line: {line}")
+        if "you should run apt" in lowered:
+            errors_c.append(f"forbidden apt recommendation wording: {line}")
+        if "recommended command: apt" in lowered:
+            errors_c.append(f"forbidden apt recommendation wording: {line}")
+    _append(
+        "stage2f_f_b_report_package_boundary",
+        errors_c,
+        stdout=out,
+        stderr=err,
+        returncode=rc,
+        cmd=report_cmd,
+    )
+
+    errors_d: list[str] = []
+    rc, out, err = _run(report_cmd)
+    for needle in [
+        "boundary: bounded disk-usage records only; this report does not scan duplicates, delete files, or clean caches.",
+        "root:",
+        "home:",
+    ]:
+        if needle not in out:
+            errors_d.append(f"missing stdout phrase: {needle}")
+    for needle in [
+        "duplicate files found",
+        "delete candidates",
+        "cleanup executed",
+        "cache cleaned",
+    ]:
+        if needle in out:
+            errors_d.append(f"forbidden stdout phrase present: {needle}")
+    _append(
+        "stage2f_f_b_report_storage_boundary",
+        errors_d,
+        stdout=out,
+        stderr=err,
+        returncode=rc,
+        cmd=report_cmd,
+    )
+
+    errors_e: list[str] = []
+    rc, out, err = _run(report_cmd)
+    for needle in [
+        "boundary: failed-unit and recent boot-warning signals only; this report does not restart, stop, start, enable, disable, mask, or repair services.",
+        "failed units observed:",
+        "recent boot warning sample count:",
+    ]:
+        if needle not in out:
+            errors_e.append(f"missing stdout phrase: {needle}")
+    for needle in [
+        "restart executed",
+        "service repaired",
+        "systemctl restart",
+        "systemctl start",
+        "systemctl stop",
+    ]:
+        if needle in out:
+            errors_e.append(f"forbidden stdout phrase present: {needle}")
+    _append(
+        "stage2f_f_b_report_boot_boundary",
+        errors_e,
+        stdout=out,
+        stderr=err,
+        returncode=rc,
+        cmd=report_cmd,
+    )
+
+    errors_f: list[str] = []
+    rc, out, err = _run(general_cmd)
+    if "Capability summary:" not in out:
+        errors_f.append("missing Capability summary in general answer")
+    for needle in [
+        "Package update status:",
+        "Storage hygiene:",
+        "Boot/service health:",
+    ]:
+        if needle in out:
+            errors_f.append(f"forbidden maintenance section in general answer: {needle}")
+    _append(
+        "stage2f_f_b_report_no_new_general_probe_backing",
+        errors_f,
+        stdout=out,
+        stderr=err,
+        returncode=rc,
+        cmd=general_cmd,
+    )
+
+    errors_g: list[str] = []
+    source = (SRC_BOND / "ai_capability_answer.py").read_text(encoding="utf-8", errors="ignore")
+    for needle in [
+        "subprocess",
+        "shell=True",
+        "apt update",
+        "apt upgrade",
+        "apt install",
+        "apt remove",
+        "apt autoremove",
+        "systemctl restart",
+        "systemctl start",
+        "systemctl stop",
+        "systemctl enable",
+        "systemctl disable",
+        "systemctl mask",
+        "journalctl --vacuum",
+    ]:
+        if needle in source:
+            errors_g.append(f"forbidden source phrase present: {needle}")
+
+    for needle in [
+        'run_named_probe("package_update_status")',
+        'run_named_probe("storage_hygiene")',
+        'run_named_probe("boot_service_health")',
+    ]:
+        if needle not in source:
+            errors_g.append(f"missing required source phrase: {needle}")
+
+    _append(
+        "stage2f_f_b_report_no_source_level_execution_expansion",
+        errors_g,
+    )
+
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -6210,6 +6424,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_f_a_maintenance_probe_foundation_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_f_b_maintenance_report_probe_integration_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

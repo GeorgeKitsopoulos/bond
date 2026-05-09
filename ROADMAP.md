@@ -151,6 +151,7 @@ Current checkpoint note:
 - Stage 2F-E-C read-only maintenance/readiness report is complete/current.
 - Stage 2F-E-E selftest accounting and baseline reconciliation is complete/current.
 - Stage 2F-F-A adds first bounded read-only maintenance probes (`package_update_status`, `storage_hygiene`, `boot_service_health`).
+- Stage 2F-F-B integrates the first bounded read-only maintenance probe facts into the explicit maintenance/readiness report.
 - Stage 2F-E-C is a boundary/report step, not real maintenance automation.
 - A first bounded read-only foundation exists; answer integration, planning, dashboard/reporting, and action execution remain future work.
 - Any future fix/update/cleanup action remains separate, policy-gated, and confirmation-gated.
@@ -259,11 +260,12 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest latest run summary is {"ok": true, "passed": 235, "failed": 0, "total": 235}.
+- integrated selftest latest run summary is {"ok": true, "passed": 242, "failed": 0, "total": 242}.
 - coverage includes routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, telemetry-derived guardrail regressions, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, and the C5 follow-up strict-timeout cleanup checks.
 - coverage also includes Stage 2F-D probe foundation/cleanup checks, Stage 2F-D-B bounded model-truth checks, Stage 2F-D-C model-truth fallback checks, Stage 2F-D-D bounded context-capability answer checks, Stage 2F-E-A classifier-boundary checks, events bucket, and core memory flows.
 - coverage now also includes Stage 2F-E-E selftest accounting integrity checks.
 - coverage now also includes Stage 2F-F-A maintenance probe registration, shape, inclusion, and read-only command-guard checks.
+- coverage now also includes Stage 2F-F-B explicit maintenance/readiness report probe integration checks.
 - integrated selftest baseline now includes confirmation-token flow coverage (token creation, invalid/expired/consumed handling, confirmed dry-run, and non-reuse)
 - Stage 2E improves parser honesty and preflight failure behavior; Stage 2F-A/2F-B/2F-C add static registry truth, read-only capability answers, and telemetry-driven deterministic guardrail hardening, but do not expand executor authorization
 - this does not imply full behavioral coverage or assistant maturity

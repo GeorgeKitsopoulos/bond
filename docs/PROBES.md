@@ -35,6 +35,15 @@ Current implemented probe names:
 - These probe facts are not yet wired into normal assistant answers.
 - These probe facts do not authorize actions.
 
+## Stage 2F-F-B report integration
+
+- The explicit maintenance/readiness report consumes `package_update_status`, `storage_hygiene`, and `boot_service_health`.
+- This is report integration only.
+- The probes remain read-only/rootless.
+- The report does not authorize action.
+- General capability answers are not broadly backed by these maintenance probes.
+- Planning, privileged execution, repair/update/cleanup actions, service mutation, dashboards, and automation remain future work.
+
 Current implementation boundaries:
 
 - probes are read-only and rootless
