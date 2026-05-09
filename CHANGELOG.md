@@ -20,6 +20,14 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2F-E-E selftest accounting and baseline reconciliation
+
+- Fixed selftest pass accounting so memory tests are not double-counted.
+- Added a hermetic selftest accounting integrity guard.
+- Reconciled current baseline documentation after the accounting fix.
+- No runtime assistant behavior, aliases, probes, actions, capabilities, or execution authority were added.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 229, "failed": 0, "total": 229}.
+
 ### CI Node 24 workflow guard
 
 - Added a hermetic CI Node 24 workflow guard.

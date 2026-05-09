@@ -5,8 +5,8 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 ## Current status
 
 - Bond is under active development.
-- The current validated baseline is Stage 2F-E-C cleanup work.
-- Current documented validation baseline: compile passes and integrated selftest currently reports 218/218 after Stage 2F-E-C read-only maintenance/readiness report validation (see docs/TESTING.md for exact summary).
+- The current validated baseline is Stage 2F-E-E selftest accounting and baseline reconciliation work.
+- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 229, "failed": 0, "total": 229} after Stage 2F-E-E validation/accounting cleanup (see docs/TESTING.md for exact summary).
 - Stage 2F-C hardens deterministic guardrails from telemetry findings (assistant-prefix normalization, mixed-intent handling, high-risk command shaping, and capability alias coverage) while keeping telemetry opt-in and answers telemetry-free by default.
 - Stage 2F-C2 follows with a small regression cleanup for model/language capability prompts, restart-laptop confirmation shaping, and deterministic social check-in handling.
 - Stage 2F-C3 addresses remaining telemetry edge cases: bare capability noun phrases ("installed models", "local models") now deterministically answer as capability questions, and time/project-state queries return bounded deterministic answers instead of timing out.
@@ -34,6 +34,7 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 - Stage 2F-E-C uses existing read-only probes only.
 - Stage 2F-E-C does not fix anything, does not install packages, does not write files, does not delete files, does not restart services, and does not authorize execution.
 - Stage 2F-E-C does not inspect real package freshness, real logs, or real storage usage yet.
+- Stage 2F-E-E is a validation/accounting cleanup and does not add maintenance automation.
 - Real maintenance probes and any future fix/update/cleanup actions remain future work.
 - Stage 2F-D-C keeps unavailable inventory explicit: missing/extra installed-model sets are unknown for that run, not zero.
 - Probe-backed capability discovery in normal assistant answers is still not implemented.

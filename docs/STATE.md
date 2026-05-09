@@ -16,12 +16,12 @@ This file exists to prevent drift between:
 
 ## Current Checkpoint
 
-Date: 8 May 2026 (Stage 2F-E-C cleanup current; earlier April 2026 Stage 2E / 61/61 checkpoint preserved below)
+Date: 9 May 2026 (Stage 2F-E-E current; earlier April 2026 Stage 2E / 61/61 checkpoint preserved below)
 
 Current baseline note:
 
-- Stage 2F-E-C cleanup is the current repository checkpoint.
-- Compile and integrated selftest baseline remains passing at 218/218.
+- Stage 2F-E-E selftest accounting and baseline reconciliation is the current repository checkpoint.
+- Compile and integrated selftest baseline is {"ok": true, "passed": 229, "failed": 0, "total": 229}.
 - The older April 2026 Stage 2E / 61/61 checkpoint is preserved below as historical context.
 
 P0B update (source/config/deploy sanitation):
@@ -120,11 +120,12 @@ P0F preparation update (current-doc reference cleanup):
 - Stage 2F-E-C uses existing read-only probes only.
 - Stage 2F-E-C added no new probes, actions, writes, deletes, fixes, package installs, service restarts, privileged operations, or autonomous repair.
 - Stage 2F-E-C does not inspect real package freshness, logs, or storage usage.
+- Stage 2F-E-E is integrated/current as a validation-trust cleanup: selftest pass accounting no longer double-counts memory tests, and selftest accounting integrity is guarded.
 - real read-only maintenance probes remain future work.
 - Normal assistant answers are not yet dynamically probe-backed; general capability discovery is still not dynamically probe-backed.
 - Temporary dev/test telemetry exists behind `BOND_DEV_TELEMETRY=1`. It emits one JSON line to stderr with elapsed_ms and safe routing/decision metadata for testing. Normal Bond answers remain telemetry-free by default, and final product behavior must not include telemetry in assistant answers.
 - capability-registry honesty tests now verify planned/unsupported capabilities are not reported as available
-- current integrated selftest summary from latest run: 218 passed, 0 failed, total 218
+- current integrated selftest summary from latest run: {"ok": true, "passed": 229, "failed": 0, "total": 229}
 
 ## Partial, open, or not implemented yet
 

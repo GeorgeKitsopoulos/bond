@@ -149,6 +149,7 @@ Current checkpoint note:
 - Stage 2F-E-A completes a deterministic classifier boundary between capability-question detection and capability answer generation.
 - Stage 2F-E-B completes the transitional linguistic intent normalization contract.
 - Stage 2F-E-C read-only maintenance/readiness report is complete/current.
+- Stage 2F-E-E selftest accounting and baseline reconciliation is complete/current.
 - Stage 2F-E-C is a boundary/report step, not real maintenance automation.
 - Real read-only package/storage/log/service probes remain future work.
 - Any future fix/update/cleanup action remains separate, policy-gated, and confirmation-gated.
@@ -203,6 +204,7 @@ Current checkpoint note:
 - Stage 2F-E-A adds classifier-boundary scaffolding ahead of deeper language/intent normalization.
 - Stage 2F-E-B records the transitional linguistic intent normalization contract behind that classifier boundary.
 - Stage 2F-E-C read-only maintenance/readiness report is complete/current.
+- Stage 2F-E-E adds selftest accounting integrity coverage.
 - M4 is not complete: broader probe domains, normal assistant answer grounding, telemetry direction, and action-planning integration remain open.
 
 Exit criteria:
@@ -255,9 +257,10 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest latest run summary is 216 passed, 0 failed, total 216.
+- integrated selftest latest run summary is {"ok": true, "passed": 229, "failed": 0, "total": 229}.
 - coverage includes routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, telemetry-derived guardrail regressions, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, and the C5 follow-up strict-timeout cleanup checks.
 - coverage also includes Stage 2F-D probe foundation/cleanup checks, Stage 2F-D-B bounded model-truth checks, Stage 2F-D-C model-truth fallback checks, Stage 2F-D-D bounded context-capability answer checks, Stage 2F-E-A classifier-boundary checks, events bucket, and core memory flows.
+- coverage now also includes Stage 2F-E-E selftest accounting integrity checks.
 - integrated selftest baseline now includes confirmation-token flow coverage (token creation, invalid/expired/consumed handling, confirmed dry-run, and non-reuse)
 - Stage 2E improves parser honesty and preflight failure behavior; Stage 2F-A/2F-B/2F-C add static registry truth, read-only capability answers, and telemetry-driven deterministic guardrail hardening, but do not expand executor authorization
 - this does not imply full behavioral coverage or assistant maturity

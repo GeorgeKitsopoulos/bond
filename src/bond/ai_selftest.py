@@ -5549,6 +5549,85 @@ def run_dev_help_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_e_e_selftest_accounting_integrity_tests() -> list[dict]:
+    """Hermetic selftest guard: verify accounting integrity in selftest source."""
+    results: list[dict] = []
+    errors: list[str] = []
+
+    try:
+        # Read the selftest source file itself
+        selftest_source = (SRC_BOND / "ai_selftest.py").read_text(
+            encoding="utf-8", errors="ignore"
+        )
+
+        # Find main() by looking for it at start of line (no indentation)
+        main_match = re.search(r"^def main\(\) -> None:", selftest_source, re.MULTILINE)
+        if not main_match:
+            errors.append("could not find main() function")
+        else:
+            main_start = main_match.start()
+            main_body = selftest_source[main_start:]
+
+            # Check for adjacent duplicate pass increments only in main body
+            # Split to avoid containing the exact substring
+            compact = re.sub(r"\s+", " ", main_body)
+            dup_pattern = "passed += 1"
+            doubled_pattern = f"{dup_pattern} {dup_pattern}"
+            if doubled_pattern in compact:
+                errors.append("found adjacent duplicate passed increments in main()")
+
+            # Extract and validate the run_memory_tests block
+            memory_block_match = re.search(
+                r"for result in run_memory_tests\(\):",
+                main_body
+            )
+            if not memory_block_match:
+                errors.append("could not find run_memory_tests block in main()")
+            else:
+                memory_block_start = main_start + memory_block_match.start()
+                active_path_marker = "for result in " + "run_active_path_sanitation_tests():"
+                memory_block_end = selftest_source.find(
+                    active_path_marker,
+                    memory_block_start
+                )
+                if memory_block_end == -1:
+                    errors.append("could not find end marker for run_memory_tests block")
+                else:
+                    memory_block = selftest_source[memory_block_start:memory_block_end]
+                    pass_count = memory_block.count("passed += 1")
+                    if pass_count != 1:
+                        errors.append(
+                            f"run_memory_tests block must contain exactly one passed "
+                            f"increment, found {pass_count}"
+                        )
+
+                    # Verify the increment is in the if branch, not after
+                    if_branch_start = memory_block.find('if result["ok"]:')
+                    if_branch_else = memory_block.find("else:", if_branch_start)
+                    if if_branch_start != -1 and if_branch_else != -1:
+                        if_block = memory_block[if_branch_start:if_branch_else]
+                        if "passed += 1" not in if_block:
+                            errors.append(
+                                "passed += 1 not found in if result[\"ok\"]: branch"
+                            )
+
+    except Exception as e:
+        errors.append(f"exception during validation: {e}")
+
+    results.append(
+        {
+            "name": "stage2f_e_e_selftest_accounting_integrity",
+            "ok": not errors,
+            "returncode": 0,
+            "stdout": "",
+            "stderr": "",
+            "errors": errors,
+            "cmd": ["stage2f_e_e", "selftest_accounting_integrity"],
+        }
+    )
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -5884,6 +5963,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_confirmation_token_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_e_e_selftest_accounting_integrity_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")
