@@ -33,6 +33,9 @@ AVAILABLE_PROBES = (
     "router_config_models",
     "ollama_model_inventory",
     "model_truth",
+    "package_update_status",
+    "storage_hygiene",
+    "boot_service_health",
 )
 
 
@@ -318,6 +321,307 @@ def probe_model_truth() -> ProbeResult:
     )
 
 
+def _run_read_only_command(
+    argv: list[str], timeout_seconds: int = 5
+) -> tuple[int | None, str, str, str | None]:
+    try:
+        if not isinstance(argv, list) or any(not isinstance(part, str) for part in argv):
+            raise TypeError("argv must be a list of strings")
+
+        normalized = tuple(argv)
+        if normalized == ("apt", "list", "--upgradable"):
+            proc = subprocess.run(
+                ["apt", "list", "--upgradable"],
+                text=True,
+                capture_output=True,
+                timeout=timeout_seconds,
+                check=False,
+            )
+        elif normalized == ("systemctl", "--failed", "--no-legend", "--plain", "--no-pager"):
+            proc = subprocess.run(
+                ["systemctl", "--failed", "--no-legend", "--plain", "--no-pager"],
+                text=True,
+                capture_output=True,
+                timeout=timeout_seconds,
+                check=False,
+            )
+        elif normalized == (
+            "journalctl",
+            "-p",
+            "warning..alert",
+            "-b",
+            "-n",
+            "20",
+            "--no-pager",
+            "--output=short",
+        ):
+            proc = subprocess.run(
+                ["journalctl", "-p", "warning..alert", "-b", "-n", "20", "--no-pager", "--output=short"],
+                text=True,
+                capture_output=True,
+                timeout=timeout_seconds,
+                check=False,
+            )
+        else:
+            raise ValueError("unsupported read-only command shape")
+
+        return proc.returncode, proc.stdout or "", proc.stderr or "", None
+    except subprocess.TimeoutExpired:
+        return None, "", "", "timeout"
+    except Exception as exc:
+        return None, "", str(exc)[:400], "command_failed"
+
+
+def _preview_lines(text: str, limit: int = 20) -> list[str]:
+    lines = [(line or "").strip() for line in (text or "").splitlines()]
+    lines = [line for line in lines if line]
+    return lines[:limit]
+
+
+def _disk_usage_record(label: str, path: Path) -> dict[str, object]:
+    resolved_path = path.expanduser().resolve(strict=False)
+    if not resolved_path.exists():
+        return {
+            "label": label,
+            "path": str(resolved_path),
+            "exists": False,
+            "total_bytes": None,
+            "used_bytes": None,
+            "free_bytes": None,
+            "free_percent": None,
+        }
+
+    usage = shutil.disk_usage(resolved_path)
+    return {
+        "label": label,
+        "path": str(resolved_path),
+        "exists": True,
+        "total_bytes": usage.total,
+        "used_bytes": usage.used,
+        "free_bytes": usage.free,
+        "free_percent": round((usage.free / usage.total) * 100, 2) if usage.total else None,
+    }
+
+
+def probe_package_update_status() -> ProbeResult:
+    apt_path = shutil.which("apt")
+    base_data = {
+        "package_manager": "apt",
+        "apt_path": apt_path,
+        "cache_freshness_known": False,
+        "upgradable_count": None,
+        "upgradable_packages_sample": [],
+        "sample_limit": 50,
+        "raw_line_count": 0,
+    }
+
+    if not apt_path:
+        return probe_error(
+            probe_name="package_update_status",
+            layer=1,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_UNKNOWN,
+            refresh_class=REFRESH_HIGH_CHURN,
+            supports_live_truth=True,
+            data=base_data,
+            error=standard_error("tool_missing", "apt is not installed on this system"),
+        )
+
+    returncode, stdout, stderr, error_kind = _run_read_only_command(
+        ["apt", "list", "--upgradable"],
+        timeout_seconds=5,
+    )
+
+    if error_kind == "timeout":
+        return probe_error(
+            probe_name="package_update_status",
+            layer=1,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_UNKNOWN,
+            refresh_class=REFRESH_HIGH_CHURN,
+            supports_live_truth=True,
+            data=base_data,
+            error=standard_error(
+                "timeout",
+                "apt list --upgradable timed out",
+                {"timeout_seconds": 5},
+            ),
+        )
+
+    raw_non_empty_lines = [line for line in (stdout or "").splitlines() if line.strip()]
+    if error_kind == "command_failed" or returncode != 0:
+        return probe_error(
+            probe_name="package_update_status",
+            layer=1,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_UNKNOWN,
+            refresh_class=REFRESH_HIGH_CHURN,
+            supports_live_truth=True,
+            data={
+                **base_data,
+                "raw_line_count": len(raw_non_empty_lines),
+            },
+            error=standard_error(
+                "command_failed",
+                "apt list --upgradable returned a non-zero exit code",
+                {
+                    "returncode": returncode,
+                    "stderr_preview": (stderr or "")[:400],
+                },
+            ),
+        )
+
+    parsed_packages: list[dict[str, str]] = []
+    for raw_line in raw_non_empty_lines:
+        stripped = raw_line.strip()
+        if stripped.startswith("Listing"):
+            continue
+        package_name = stripped.split("/", 1)[0].strip()
+        parsed_packages.append(
+            {
+                "name": package_name,
+                "raw": stripped,
+            }
+        )
+
+    return probe_ok(
+        probe_name="package_update_status",
+        layer=1,
+        source_type=SOURCE_RUNTIME_PROBE,
+        certainty_class=CERTAINTY_DERIVED,
+        refresh_class=REFRESH_HIGH_CHURN,
+        supports_live_truth=True,
+        data={
+            **base_data,
+            "upgradable_count": len(parsed_packages),
+            "upgradable_packages_sample": parsed_packages[:50],
+            "raw_line_count": len(raw_non_empty_lines),
+        },
+        notes="Read-only apt cache inspection only; cache freshness is unknown because this probe does not run apt update.",
+    )
+
+
+def probe_storage_hygiene() -> ProbeResult:
+    return probe_ok(
+        probe_name="storage_hygiene",
+        layer=1,
+        source_type=SOURCE_OS_API,
+        certainty_class=CERTAINTY_AUTHORITATIVE,
+        refresh_class=REFRESH_HIGH_CHURN,
+        supports_live_truth=True,
+        data={
+            "paths": [
+                _disk_usage_record("root", Path("/")),
+                _disk_usage_record("home", Path.home()),
+                _disk_usage_record("bond_root", BOND_ROOT),
+                _disk_usage_record("state_root", get_state_root()),
+                _disk_usage_record("memory_root", get_memory_root()),
+            ],
+            "scope": "bounded_disk_usage_only",
+        },
+        notes="Storage hygiene probe is read-only and bounded to disk-usage signals; it does not scan duplicates, delete files, or clean caches.",
+    )
+
+
+def probe_boot_service_health() -> ProbeResult:
+    systemctl_path = shutil.which("systemctl")
+    journalctl_path = shutil.which("journalctl")
+
+    data: dict[str, Any] = {
+        "systemctl_path": systemctl_path,
+        "journalctl_path": journalctl_path,
+        "failed_units_count": None,
+        "failed_units_sample": [],
+        "journal_warning_sample": [],
+        "journal_warning_sample_count": None,
+        "systemctl_available": bool(systemctl_path),
+        "journalctl_available": bool(journalctl_path),
+        "systemctl_error_kind": None,
+        "journalctl_error_kind": None,
+    }
+
+    systemctl_ok = False
+    journalctl_ok = False
+
+    if systemctl_path:
+        returncode, stdout, _stderr, error_kind = _run_read_only_command(
+            ["systemctl", "--failed", "--no-legend", "--plain", "--no-pager"],
+            timeout_seconds=5,
+        )
+        if error_kind is None and returncode == 0:
+            failed_units: list[dict[str, str]] = []
+            for line in _preview_lines(stdout, limit=1000):
+                parts = line.split(None, 4)
+                failed_units.append(
+                    {
+                        "unit": parts[0] if len(parts) > 0 else "",
+                        "load": parts[1] if len(parts) > 1 else "",
+                        "active": parts[2] if len(parts) > 2 else "",
+                        "sub": parts[3] if len(parts) > 3 else "",
+                        "description": parts[4] if len(parts) > 4 else "",
+                    }
+                )
+            data["failed_units_count"] = len(failed_units)
+            data["failed_units_sample"] = failed_units[:25]
+            systemctl_ok = True
+        else:
+            data["systemctl_error_kind"] = error_kind if error_kind else "command_failed"
+    else:
+        data["systemctl_error_kind"] = "tool_missing"
+
+    if journalctl_path:
+        returncode, stdout, _stderr, error_kind = _run_read_only_command(
+            ["journalctl", "-p", "warning..alert", "-b", "-n", "20", "--no-pager", "--output=short"],
+            timeout_seconds=5,
+        )
+        if error_kind is None and returncode == 0:
+            journal_lines = _preview_lines(stdout, limit=20)
+            data["journal_warning_sample"] = journal_lines
+            data["journal_warning_sample_count"] = len(journal_lines)
+            journalctl_ok = True
+        else:
+            data["journalctl_error_kind"] = error_kind if error_kind else "command_failed"
+    else:
+        data["journalctl_error_kind"] = "tool_missing"
+
+    if not systemctl_ok and not journalctl_ok:
+        return probe_error(
+            probe_name="boot_service_health",
+            layer=1,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_UNKNOWN,
+            refresh_class=REFRESH_HIGH_CHURN,
+            supports_live_truth=True,
+            data=data,
+            error=standard_error(
+                "maintenance_probe_unavailable",
+                "boot/service health signals are unavailable in this run",
+            ),
+        )
+
+    warnings: list[str] = []
+    if not systemctl_ok:
+        warnings.append(
+            f"systemctl failed-unit signal unavailable: {data['systemctl_error_kind']}"
+        )
+    if not journalctl_ok:
+        warnings.append(
+            f"journalctl boot-warning signal unavailable: {data['journalctl_error_kind']}"
+        )
+
+    return probe_ok(
+        probe_name="boot_service_health",
+        layer=1,
+        source_type=SOURCE_RUNTIME_PROBE,
+        certainty_class=CERTAINTY_DERIVED,
+        refresh_class=REFRESH_HIGH_CHURN,
+        supports_live_truth=True,
+        data=data,
+        warnings=tuple(warnings),
+        notes="Boot/service health probe is read-only and bounded; it reports failed-unit and recent boot-warning signals only.",
+    )
+
+
 def run_named_probe(name: str) -> ProbeResult:
     if name == "all":
         return probe_error(
@@ -338,6 +642,9 @@ def run_named_probe(name: str) -> ProbeResult:
         "router_config_models": probe_router_config_models,
         "ollama_model_inventory": probe_ollama_model_inventory,
         "model_truth": probe_model_truth,
+        "package_update_status": probe_package_update_status,
+        "storage_hygiene": probe_storage_hygiene,
+        "boot_service_health": probe_boot_service_health,
     }
     func = dispatch.get(name)
     if func is None:

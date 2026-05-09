@@ -16,12 +16,15 @@ This file exists to prevent drift between:
 
 ## Current Checkpoint
 
-Date: 9 May 2026 (Stage 2F-E-E current; earlier April 2026 Stage 2E / 61/61 checkpoint preserved below)
+Date: 9 May 2026 (Stage 2F-F-A current; earlier April 2026 Stage 2E / 61/61 checkpoint preserved below)
 
 Current baseline note:
 
-- Stage 2F-E-E selftest accounting and baseline reconciliation is the current repository checkpoint.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 229, "failed": 0, "total": 229}.
+- Stage 2F-F-A read-only maintenance probe foundation is the current repository checkpoint.
+- Compile and integrated selftest baseline is {"ok": true, "passed": 235, "failed": 0, "total": 235}.
+- Stage 2F-F-A adds the first real read-only maintenance probes: package_update_status, storage_hygiene, and boot_service_health.
+- Stage 2F-F-A does not add normal assistant answer integration, aliases, actions, privileged execution, package updates, cleanup execution, service mutation, or maintenance automation.
+- Real read-only package/storage/boot-service probes have a first bounded foundation; assistant-answer integration, maintenance planning, privileged execution, and repair/update/cleanup actions remain future work.
 - The older April 2026 Stage 2E / 61/61 checkpoint is preserved below as historical context.
 
 P0B update (source/config/deploy sanitation):
@@ -121,11 +124,12 @@ P0F preparation update (current-doc reference cleanup):
 - Stage 2F-E-C added no new probes, actions, writes, deletes, fixes, package installs, service restarts, privileged operations, or autonomous repair.
 - Stage 2F-E-C does not inspect real package freshness, logs, or storage usage.
 - Stage 2F-E-E is integrated/current as a validation-trust cleanup: selftest pass accounting no longer double-counts memory tests, and selftest accounting integrity is guarded.
-- real read-only maintenance probes remain future work.
+- Stage 2F-F-A is integrated/current as the first bounded read-only maintenance probe foundation (`package_update_status`, `storage_hygiene`, `boot_service_health`).
+- Real read-only package/storage/boot-service probes have a first bounded foundation; assistant-answer integration, maintenance planning, privileged execution, and repair/update/cleanup actions remain future work.
 - Normal assistant answers are not yet dynamically probe-backed; general capability discovery is still not dynamically probe-backed.
 - Temporary dev/test telemetry exists behind `BOND_DEV_TELEMETRY=1`. It emits one JSON line to stderr with elapsed_ms and safe routing/decision metadata for testing. Normal Bond answers remain telemetry-free by default, and final product behavior must not include telemetry in assistant answers.
 - capability-registry honesty tests now verify planned/unsupported capabilities are not reported as available
-- current integrated selftest summary from latest run: {"ok": true, "passed": 229, "failed": 0, "total": 229}
+- current integrated selftest summary from latest run: {"ok": true, "passed": 235, "failed": 0, "total": 235}
 
 ## Partial, open, or not implemented yet
 

@@ -19,6 +19,21 @@ Current implemented probe names:
 - `router_config_models`
 - `ollama_model_inventory`
 - `model_truth`
+- `package_update_status`
+- `storage_hygiene`
+- `boot_service_health`
+
+## Stage 2F-F-A read-only maintenance probe foundation
+
+- `package_update_status` inspects local apt upgradable-package cache only.
+- `package_update_status` does not refresh package metadata and cannot prove cache freshness.
+- `storage_hygiene` reports bounded disk-usage records only.
+- `storage_hygiene` does not delete, clean caches, scan duplicates, or traverse large trees.
+- `boot_service_health` reports bounded failed-unit and recent boot-warning signals only.
+- `boot_service_health` does not restart, start, stop, enable, disable, mask, or repair services.
+- The probes are rootless and read-only.
+- These probe facts are not yet wired into normal assistant answers.
+- These probe facts do not authorize actions.
 
 Current implementation boundaries:
 

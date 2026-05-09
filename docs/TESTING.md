@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 229, "failed": 0, "total": 229}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 235, "failed": 0, "total": 235}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -46,7 +46,16 @@ truth capability-answer integration checks, Stage 2F-D-C bounded model-truth
 fallback hardening checks, and Stage 2F-D-D bounded context-capability answer
 checks, plus Stage 2F-E-A capability-classifier-boundary checks.
 
-Coverage now also includes Stage 2F-E-E selftest accounting integrity checks.
+Coverage now also includes Stage 2F-E-E selftest accounting integrity checks and Stage 2F-F-A maintenance probe foundation checks.
+
+Stage 2F-F-A maintenance probe coverage includes:
+
+- maintenance probe registration
+- `package_update_status` shape
+- `storage_hygiene` shape
+- `boot_service_health` shape
+- run_all_probes inclusion
+- read-only subprocess command guard
 
 The current integrated suite covers:
 

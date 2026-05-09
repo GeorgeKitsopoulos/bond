@@ -20,6 +20,16 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2F-F-A read-only maintenance probe foundation
+
+- Added read-only/rootless maintenance probes for `package_update_status`, `storage_hygiene`, and `boot_service_health`.
+- Probes are available through the structured probe layer and scan wrapper only.
+- Package update status uses local apt cache inspection only and does not run apt update or upgrades.
+- Storage hygiene is bounded to disk-usage signals and does not delete files, clean caches, or scan duplicates.
+- Boot/service health reports failed-unit and recent boot-warning signals only and does not restart or modify services.
+- No normal assistant-answer behavior, aliases, actions, privileged execution, package installs, package upgrades, cleanup execution, service mutation, or maintenance automation were added.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 235, "failed": 0, "total": 235}.
+
 ### Stage 2F-E-E selftest accounting and baseline reconciliation
 
 - Fixed selftest pass accounting so memory tests are not double-counted.
@@ -59,7 +69,7 @@ Until formal release tagging is established, this changelog should follow these 
 - Removed duplicated maintenance-readiness alias ownership from `ai_capability_answer.py`.
 - Preserved maintenance/readiness, context, general capability, and model inventory answer behavior.
 - No aliases, probes, actions, capabilities, or execution authority were added.
-- Latest integrated selftest run after cleanup: 218 passed, 0 failed, total 218.
+- Latest integrated selftest run after cleanup: all 218 checks passed.
 
 ### Stage 2F-E-C read-only maintenance/readiness report
 
@@ -69,7 +79,7 @@ Until formal release tagging is established, this changelog should follow these 
 - It does not fix anything, install packages, write files, delete files, restart services, or authorize execution.
 - It does not inspect real package freshness, logs, or storage usage.
 - Existing `inspect_package_update_status`, `inspect_storage_hygiene`, `inspect_boot_and_service_health`, `generate_periodic_health_report`, `present_maintenance_dashboard`, and `apply_privileged_system_updates` capabilities remain planned/unavailable.
-- Latest integrated selftest run after Stage 2F-E-C: 216 passed, 0 failed, total 216.
+- Latest integrated selftest run after Stage 2F-E-C: all 216 checks passed.
 
 ### Stage 2F-E-B CI recovery
 

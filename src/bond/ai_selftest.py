@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import ast
 import io
 import json
 import os
@@ -109,12 +110,17 @@ from ai_probe_contract import (
     validate_probe_result,
 )
 from ai_probes import (
+    list_probe_names,
+    probe_boot_service_health,
     probe_host_baseline,
     probe_model_truth,
     probe_ollama_model_inventory,
+    probe_package_update_status,
     probe_router_config_models,
     probe_session_baseline,
+    probe_storage_hygiene,
     probe_tool_inventory,
+    run_all_probes,
     run_named_probe,
 )
 
@@ -5628,6 +5634,271 @@ def run_stage2f_e_e_selftest_accounting_integrity_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_f_a_maintenance_probe_foundation_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def append_result(name: str, errors: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": "",
+                "stderr": "",
+                "errors": errors,
+                "cmd": ["stage2f_f_a", name],
+            }
+        )
+
+    errors_a: list[str] = []
+    probe_names = set(list_probe_names())
+    for required_name in {
+        "package_update_status",
+        "storage_hygiene",
+        "boot_service_health",
+    }:
+        if required_name not in probe_names:
+            errors_a.append(f"missing probe name registration: {required_name}")
+
+    for probe_name in [
+        "package_update_status",
+        "storage_hygiene",
+        "boot_service_health",
+    ]:
+        result = run_named_probe(probe_name)
+        if result.probe_name != probe_name:
+            errors_a.append(
+                f"run_named_probe({probe_name!r}) returned probe_name={result.probe_name!r}"
+            )
+
+    append_result("stage2f_f_a_maintenance_probe_names_registered", errors_a)
+
+    errors_b: list[str] = []
+    package_probe = probe_package_update_status()
+    errors_b.extend(validate_probe_result(package_probe))
+    if package_probe.probe_name != "package_update_status":
+        errors_b.append("probe_name must be package_update_status")
+    if package_probe.layer != 1:
+        errors_b.append("layer must be 1")
+    if package_probe.supports_live_truth is not True:
+        errors_b.append("supports_live_truth must be true")
+
+    for required_key in [
+        "package_manager",
+        "apt_path",
+        "cache_freshness_known",
+        "upgradable_count",
+        "upgradable_packages_sample",
+        "sample_limit",
+        "raw_line_count",
+    ]:
+        if required_key not in package_probe.data:
+            errors_b.append(f"missing data key: {required_key}")
+
+    if package_probe.data.get("cache_freshness_known") is not False:
+        errors_b.append("cache_freshness_known must be false")
+    if not isinstance(package_probe.data.get("upgradable_packages_sample"), list):
+        errors_b.append("upgradable_packages_sample must be a list")
+    for idx, pkg_entry in enumerate(package_probe.data.get("upgradable_packages_sample", [])):
+        if not isinstance(pkg_entry, dict):
+            errors_b.append(f"package sample entry {idx} must be a dict")
+            continue
+        extra_keys = set(pkg_entry.keys()) - {"name", "raw"}
+        if extra_keys:
+            errors_b.append(
+                f"package sample entry {idx} has unexpected keys: {sorted(extra_keys)}"
+            )
+
+    append_result("stage2f_f_a_package_update_status_shape", errors_b)
+
+    errors_c: list[str] = []
+    storage_probe = probe_storage_hygiene()
+    errors_c.extend(validate_probe_result(storage_probe))
+    if storage_probe.ok is not True:
+        errors_c.append("storage_hygiene must be ok=true")
+    if storage_probe.probe_name != "storage_hygiene":
+        errors_c.append("probe_name must be storage_hygiene")
+    if storage_probe.layer != 1:
+        errors_c.append("layer must be 1")
+    if storage_probe.supports_live_truth is not True:
+        errors_c.append("supports_live_truth must be true")
+    if storage_probe.data.get("scope") != "bounded_disk_usage_only":
+        errors_c.append("scope must be bounded_disk_usage_only")
+
+    paths = storage_probe.data.get("paths")
+    if not isinstance(paths, list) or not paths:
+        errors_c.append("paths must be a non-empty list")
+    else:
+        labels = {
+            record.get("label")
+            for record in paths
+            if isinstance(record, dict)
+        }
+        for required_label in {"root", "home", "bond_root", "state_root", "memory_root"}:
+            if required_label not in labels:
+                errors_c.append(f"missing path label: {required_label}")
+
+        required_record_keys = {
+            "label",
+            "path",
+            "exists",
+            "total_bytes",
+            "used_bytes",
+            "free_bytes",
+            "free_percent",
+        }
+        for idx, record in enumerate(paths):
+            if not isinstance(record, dict):
+                errors_c.append(f"paths[{idx}] must be a dict")
+                continue
+            missing_keys = sorted(required_record_keys - set(record.keys()))
+            if missing_keys:
+                errors_c.append(f"paths[{idx}] missing keys: {missing_keys}")
+            if not isinstance(record.get("exists"), bool):
+                errors_c.append(f"paths[{idx}].exists must be bool")
+
+    append_result("stage2f_f_a_storage_hygiene_shape", errors_c)
+
+    errors_d: list[str] = []
+    boot_probe = probe_boot_service_health()
+    errors_d.extend(validate_probe_result(boot_probe))
+    if boot_probe.probe_name != "boot_service_health":
+        errors_d.append("probe_name must be boot_service_health")
+    if boot_probe.layer != 1:
+        errors_d.append("layer must be 1")
+    if boot_probe.supports_live_truth is not True:
+        errors_d.append("supports_live_truth must be true")
+
+    for required_key in [
+        "systemctl_path",
+        "journalctl_path",
+        "failed_units_count",
+        "failed_units_sample",
+        "journal_warning_sample",
+        "journal_warning_sample_count",
+        "systemctl_available",
+        "journalctl_available",
+        "systemctl_error_kind",
+        "journalctl_error_kind",
+    ]:
+        if required_key not in boot_probe.data:
+            errors_d.append(f"missing data key: {required_key}")
+
+    failed_units_sample = boot_probe.data.get("failed_units_sample")
+    if not isinstance(failed_units_sample, list):
+        errors_d.append("failed_units_sample must be a list")
+    else:
+        for idx, item in enumerate(failed_units_sample):
+            if not isinstance(item, dict):
+                errors_d.append(f"failed_units_sample[{idx}] must be a dict")
+                continue
+            missing = {
+                "unit",
+                "load",
+                "active",
+                "sub",
+                "description",
+            } - set(item.keys())
+            if missing:
+                errors_d.append(
+                    f"failed_units_sample[{idx}] missing keys: {sorted(missing)}"
+                )
+
+    if not isinstance(boot_probe.data.get("journal_warning_sample"), list):
+        errors_d.append("journal_warning_sample must be a list")
+
+    append_result("stage2f_f_a_boot_service_health_shape", errors_d)
+
+    errors_e: list[str] = []
+    all_probe_names = [result.probe_name for result in run_all_probes()]
+    for required_name in [
+        "package_update_status",
+        "storage_hygiene",
+        "boot_service_health",
+    ]:
+        if required_name not in all_probe_names:
+            errors_e.append(f"run_all_probes missing {required_name}")
+    append_result("stage2f_f_a_run_all_includes_maintenance_probes", errors_e)
+
+    errors_f: list[str] = []
+    source = AI_PROBES.read_text(encoding="utf-8")
+    tree = ast.parse(source)
+
+    def literal_argv(node: ast.AST):
+        if not isinstance(node, (ast.List, ast.Tuple)):
+            return None
+        out: list[str] = []
+        for item in node.elts:
+            if not isinstance(item, ast.Constant) or not isinstance(item.value, str):
+                return None
+            out.append(item.value)
+        return out
+
+    def is_subprocess_run(call: ast.Call) -> bool:
+        func = call.func
+        return (
+            isinstance(func, ast.Attribute)
+            and func.attr == "run"
+            and isinstance(func.value, ast.Name)
+            and func.value.id == "subprocess"
+        )
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or not is_subprocess_run(node):
+            continue
+
+        for kw in node.keywords:
+            if (
+                kw.arg == "shell"
+                and isinstance(kw.value, ast.Constant)
+                and kw.value.value is True
+            ):
+                errors_f.append("shell=True found in subprocess.run call")
+
+        if not node.args:
+            errors_f.append("subprocess.run call has no argv argument")
+            continue
+
+        argv = literal_argv(node.args[0])
+        if argv is None:
+            errors_f.append("subprocess.run argv must be a literal list/tuple of strings")
+            continue
+        if not argv:
+            errors_f.append("subprocess.run argv must not be empty")
+            continue
+
+        forbidden_first = {"sudo", "pkexec", "su", "doas", "rm", "unlink", "rmdir"}
+        if argv[0] in forbidden_first:
+            errors_f.append(f"forbidden command in probe layer: {argv}")
+
+        forbidden_pairs = {
+            ("apt", "update"),
+            ("apt", "upgrade"),
+            ("apt", "full-upgrade"),
+            ("apt", "dist-upgrade"),
+            ("apt", "install"),
+            ("apt", "remove"),
+            ("apt", "purge"),
+            ("apt", "autoremove"),
+            ("systemctl", "start"),
+            ("systemctl", "stop"),
+            ("systemctl", "restart"),
+            ("systemctl", "reload"),
+            ("systemctl", "enable"),
+            ("systemctl", "disable"),
+            ("systemctl", "mask"),
+            ("systemctl", "unmask"),
+        }
+        if len(argv) >= 2 and (argv[0], argv[1]) in forbidden_pairs:
+            errors_f.append(f"forbidden mutating command shape in probe layer: {argv}")
+
+        if argv[0] == "journalctl" and any(part.startswith("--vacuum") for part in argv):
+            errors_f.append(f"forbidden journalctl vacuum command in probe layer: {argv}")
+
+    append_result("stage2f_f_a_probe_source_read_only_command_guard", errors_f)
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -5927,6 +6198,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_e_d_timeout_hardening_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_f_a_maintenance_probe_foundation_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")
