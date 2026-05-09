@@ -26,6 +26,7 @@ from ai_capability_classifier import (
     normalize_text,
 )
 from ai_probe_contract import validate_probe_result
+from ai_maintenance_plan import build_maintenance_plan
 from ai_probes import run_named_probe
 
 
@@ -584,6 +585,48 @@ def _build_maintenance_readiness_report() -> str:
         lines.append(
             f"- signal limitations: systemctl={systemctl_error_kind}, journalctl={journalctl_error_kind}"
         )
+
+    maintenance_plan = build_maintenance_plan(
+        {
+            "package_update_status": package_result,
+            "storage_hygiene": storage_result,
+            "boot_service_health": boot_result,
+        }
+    )
+    plan_items = maintenance_plan.get("items", [])
+    if not isinstance(plan_items, list):
+        plan_items = []
+
+    lines.extend(
+        [
+            "",
+            "Non-executing maintenance plan:",
+            f"- plan kind: {maintenance_plan.get('plan_kind', 'unknown')}",
+            f"- action authorized: {'yes' if maintenance_plan.get('action_authorized') is True else 'no'}",
+            f"- execution supported: {'yes' if maintenance_plan.get('execution_supported') is True else 'no'}",
+        ]
+    )
+
+    for item in plan_items[:6]:
+        if not isinstance(item, dict):
+            continue
+        lines.append(
+            "- {area}: severity={severity}; status={status}; signal={signal}; next check={next_check}; future privileged lane required={requires_future_privileged_lane}".format(
+                area=item.get("area", "unknown"),
+                severity=item.get("severity", "unknown"),
+                status=item.get("status", "unknown"),
+                signal=item.get("signal", "unknown"),
+                next_check=item.get("next_check", "unknown"),
+                requires_future_privileged_lane="yes"
+                if item.get("requires_future_privileged_lane") is True
+                else "no",
+            )
+        )
+
+    lines.append(
+        "- boundary: classification only; this plan does not recommend commands, does not ex"
+        "ecute fixes, and does not authorize execution."
+    )
 
     lines.extend(
         [

@@ -15,6 +15,7 @@ import ai_memory_rotate
 import ai_run
 import ai_capability_answer
 import ai_capability_classifier
+from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
 import ai_linguistic_intent_contract
 from ai_action_contract import (
     ACTION_CHAT,
@@ -6113,6 +6114,239 @@ def run_stage2f_f_b_maintenance_report_probe_integration_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_f_c_maintenance_planning_contract_tests() -> list[dict]:
+    results: list[dict] = []
+
+    class _FakeResult:
+        def __init__(self, ok: bool, data: dict[str, object]):
+            self.ok = ok
+            self.data = data
+
+    def _append(
+        name: str,
+        errors: list[str],
+        *,
+        stdout: str = "",
+        stderr: str = "",
+        returncode: int = 0,
+        cmd: list[str] | None = None,
+    ) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": returncode,
+                "stdout": stdout,
+                "stderr": stderr,
+                "errors": errors,
+                "cmd": cmd or ["stage2f_f_c", name],
+            }
+        )
+
+    errors: list[str] = []
+    plan = build_maintenance_plan(
+        {
+            "package_update_status": _FakeResult(True, {"upgradable_count": 2, "cache_freshness_known": False}),
+            "storage_hygiene": _FakeResult(True, {"paths": [{"label": "root", "exists": True, "free_percent": 50.0}]}),
+            "boot_service_health": _FakeResult(True, {"failed_units_count": 0, "journal_warning_sample_count": 0}),
+        }
+    )
+    if plan.get("plan_kind") != PLAN_KIND:
+        errors.append(f"expected plan_kind={PLAN_KIND!r}, got {plan.get('plan_kind')!r}")
+    if plan.get("action_authorized") is not False:
+        errors.append("expected action_authorized=False")
+    if plan.get("execution_supported") is not False:
+        errors.append("expected execution_supported=False")
+    items = plan.get("items")
+    if not isinstance(items, list) or not items:
+        errors.append("expected non-empty items list")
+    else:
+        for item in items:
+            if not isinstance(item, dict):
+                errors.append(f"expected dict item, got {type(item)!r}")
+                continue
+            for key in [
+                "area",
+                "signal",
+                "severity",
+                "status",
+                "user_impact",
+                "next_check",
+                "requires_future_privileged_lane",
+                "action_authorized",
+            ]:
+                if key not in item:
+                    errors.append(f"missing item key: {key}")
+            if item.get("action_authorized") is not False:
+                errors.append("expected every item action_authorized=False")
+    _append(
+        "stage2f_f_c_planner_contract_shape",
+        errors,
+        stdout=json.dumps(plan, ensure_ascii=False),
+    )
+
+    errors = []
+    plan = build_maintenance_plan(
+        {
+            "package_update_status": _FakeResult(True, {"upgradable_count": 6, "cache_freshness_known": False}),
+            "storage_hygiene": _FakeResult(True, {"paths": [{"label": "root", "exists": True, "free_percent": 50.0}]}),
+            "boot_service_health": _FakeResult(True, {"failed_units_count": 0, "journal_warning_sample_count": 0}),
+        }
+    )
+    package_item = next((item for item in plan.get("items", []) if isinstance(item, dict) and item.get("area") == "package_update_status"), None)
+    if not isinstance(package_item, dict):
+        errors.append("missing package_update_status plan item")
+    else:
+        if package_item.get("status") != "future_privileged_lane_required":
+            errors.append(f"expected future privileged lane status, got {package_item.get('status')!r}")
+        if package_item.get("requires_future_privileged_lane") is not True:
+            errors.append("expected requires_future_privileged_lane=True")
+        if package_item.get("action_authorized") is not False:
+            errors.append("expected action_authorized=False")
+        if "Cache freshness is unknown" not in str(package_item.get("user_impact", "")):
+            errors.append("missing cache freshness wording in user_impact")
+    text = json.dumps(plan, ensure_ascii=False)
+    for needle in ["apt update", "apt upgrade", "apt install"]:
+        if needle in text:
+            errors.append(f"forbidden text present: {needle}")
+    _append("stage2f_f_c_package_update_signal_requires_future_privileged_lane", errors, stdout=text)
+
+    errors = []
+    plan = build_maintenance_plan(
+        {
+            "package_update_status": _FakeResult(True, {"upgradable_count": 0, "cache_freshness_known": True}),
+            "storage_hygiene": _FakeResult(True, {"paths": [{"label": "root", "exists": True, "free_percent": 9.5}]}),
+            "boot_service_health": _FakeResult(True, {"failed_units_count": 0, "journal_warning_sample_count": 0}),
+        }
+    )
+    storage_items = [item for item in plan.get("items", []) if isinstance(item, dict) and item.get("area") == "storage_hygiene"]
+    if not storage_items:
+        errors.append("missing storage_hygiene plan item")
+    else:
+        storage_item = storage_items[0]
+        if storage_item.get("severity") != "medium":
+            errors.append(f"expected severity='medium', got {storage_item.get('severity')!r}")
+        if storage_item.get("status") != "manual_review":
+            errors.append(f"expected status='manual_review', got {storage_item.get('status')!r}")
+        if storage_item.get("action_authorized") is not False:
+            errors.append("expected action_authorized=False")
+        if "does not delete files or clean caches" not in str(storage_item.get("next_check", "")):
+            errors.append("missing cleanup boundary wording in next_check")
+    text = json.dumps(plan, ensure_ascii=False)
+    for needle in ["rm", "delete now", "clean now", "cleanup executed"]:
+        if needle in text:
+            errors.append(f"forbidden text present: {needle}")
+    _append("stage2f_f_c_storage_pressure_manual_review_no_cleanup", errors, stdout=text)
+
+    errors = []
+    plan = build_maintenance_plan(
+        {
+            "package_update_status": _FakeResult(True, {"upgradable_count": 0, "cache_freshness_known": True}),
+            "storage_hygiene": _FakeResult(True, {"paths": [{"label": "root", "exists": True, "free_percent": 50.0}]}),
+            "boot_service_health": _FakeResult(True, {"failed_units_count": 1, "journal_warning_sample_count": 20}),
+        }
+    )
+    boot_item = next((item for item in plan.get("items", []) if isinstance(item, dict) and item.get("area") == "boot_service_health"), None)
+    if not isinstance(boot_item, dict):
+        errors.append("missing boot_service_health plan item")
+    else:
+        if boot_item.get("severity") != "medium":
+            errors.append(f"expected severity='medium', got {boot_item.get('severity')!r}")
+        if boot_item.get("status") != "manual_review":
+            errors.append(f"expected status='manual_review', got {boot_item.get('status')!r}")
+        if boot_item.get("action_authorized") is not False:
+            errors.append("expected action_authorized=False")
+        if "does not restart or repair services" not in str(boot_item.get("next_check", "")):
+            errors.append("missing service mutation boundary wording in next_check")
+    text = json.dumps(plan, ensure_ascii=False)
+    for needle in ["systemctl restart", "systemctl start", "systemctl stop", "service repaired"]:
+        if needle in text:
+            errors.append(f"forbidden text present: {needle}")
+    _append("stage2f_f_c_boot_failed_unit_manual_review_no_service_mutation", errors, stdout=text)
+
+    errors = []
+    proc = run_cmd([str(AI_WRAPPER), "maintenance readiness report"])
+    out = (proc.stdout or "").strip()
+    if proc.returncode != 0:
+        errors.append(f"expected exit 0, got {proc.returncode}")
+    for needle in [
+        "Non-executing maintenance plan:",
+        "plan kind: non_executing_maintenance_plan",
+        "action authorized: no",
+        "execution supported: no",
+        "boundary: classification only; this plan does not recommend commands, does not execute fixes, and does not authorize execution.",
+    ]:
+        if needle not in out:
+            errors.append(f"missing stdout phrase: {needle}")
+    for needle in ["Package update status:", "Storage hygiene:", "Boot/service health:", "does not authorize execution"]:
+        if needle not in out:
+            errors.append(f"missing existing maintenance phrase: {needle}")
+    _append("stage2f_f_c_report_includes_non_executing_plan", errors, stdout=out, returncode=proc.returncode)
+
+    errors = []
+    proc = run_cmd([str(AI_WRAPPER), "what can you do?"])
+    out = (proc.stdout or "").strip()
+    if proc.returncode != 0:
+        errors.append(f"expected exit 0, got {proc.returncode}")
+    if "Capability summary:" not in out:
+        errors.append("missing Capability summary")
+    if "Non-executing maintenance plan:" in out:
+        errors.append("general answer unexpectedly includes maintenance planning section")
+    if "plan kind: non_executing_maintenance_plan" in out:
+        errors.append("general answer unexpectedly includes plan kind")
+    _append("stage2f_f_c_report_plan_not_in_general_answer", errors, stdout=out, returncode=proc.returncode)
+
+    errors = []
+    source = (SRC_BOND / "ai_maintenance_plan.py").read_text(encoding="utf-8", errors="ignore")
+    for needle in [
+        "PLAN_KIND = \"non_executing_maintenance_plan\"",
+        "does not authorize execution",
+    ]:
+        if needle not in source:
+            errors.append(f"missing required planner source marker: {needle}")
+    for needle in [
+        "subprocess",
+        "run_named_probe",
+        "ai_probes",
+        "ai_exec",
+        "ai_policy",
+        "ai_action_policy",
+        "shell=True",
+        "sudo",
+        "pkexec",
+        "systemctl",
+        "journalctl",
+        "apt update",
+        "apt upgrade",
+        "apt install",
+        "apt remove",
+        "apt autoremove",
+        "rm -rf",
+    ]:
+        if needle in source:
+            errors.append(f"forbidden planner source marker present: {needle}")
+    _append("stage2f_f_c_planner_source_is_pure_no_execution", errors, stdout=source)
+
+    errors = []
+    answer_source = (SRC_BOND / "ai_capability_answer.py").read_text(encoding="utf-8", errors="ignore")
+    for needle in ["build_maintenance_plan", "Non-executing maintenance plan:"]:
+        if needle not in answer_source:
+            errors.append(f"missing required answer integration marker: {needle}")
+    for needle in [
+        "subprocess",
+        "shell=True",
+        "recommended command:",
+        "execute fixes",
+        "cleanup executed",
+        "service repaired",
+    ]:
+        if needle in answer_source:
+            errors.append(f"forbidden answer source marker present: {needle}")
+    _append("stage2f_f_c_report_source_no_execution_expansion", errors, stdout=answer_source)
+
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -6436,6 +6670,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_f_b_maintenance_report_probe_integration_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_f_c_maintenance_planning_contract_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

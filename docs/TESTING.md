@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 242, "failed": 0, "total": 242}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 250, "failed": 0, "total": 250}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -46,7 +46,7 @@ truth capability-answer integration checks, Stage 2F-D-C bounded model-truth
 fallback hardening checks, and Stage 2F-D-D bounded context-capability answer
 checks, plus Stage 2F-E-A capability-classifier-boundary checks.
 
-Coverage now also includes Stage 2F-E-E selftest accounting integrity checks, Stage 2F-F-A maintenance probe foundation checks, and Stage 2F-F-B maintenance/readiness report probe-integration checks.
+Coverage now also includes Stage 2F-E-E selftest accounting integrity checks, Stage 2F-F-A maintenance probe foundation checks, Stage 2F-F-B maintenance/readiness report probe-integration checks, and Stage 2F-F-C non-executing maintenance planning contract checks.
 
 Stage 2F-F-A maintenance probe coverage includes:
 
@@ -64,6 +64,17 @@ Stage 2F-F-B report-integration coverage includes:
 - package/storage/boot-service boundaries are asserted
 - general capability answer remains free of maintenance probe sections
 - source-level execution expansion guard covers ai_capability_answer.py
+
+Stage 2F-F-C planning-contract coverage includes:
+
+- maintenance planning contract shape
+- package update signal classification
+- storage pressure classification
+- boot/service signal classification
+- maintenance/readiness report includes the non-executing plan
+- general capability answer remains free of the planning section
+- planner source purity/no-execution guard
+- report source no-execution-expansion guard
 
 The current integrated suite covers:
 

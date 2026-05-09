@@ -5,10 +5,10 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 ## Current status
 
 - Bond is under active development.
-- The current validated baseline is Stage 2F-F-B maintenance readiness report probe integration work.
-- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 242, "failed": 0, "total": 242} (see docs/TESTING.md for exact summary).
-- Stage 2F-F-B wires the existing read-only maintenance probes into the explicit maintenance/readiness report only.
-- Stage 2F-F-B does not add planning, actions, privileged execution, package updates, cleanup, service changes, or broad normal-answer probe backing.
+- The current validated baseline is Stage 2F-F-C non-executing maintenance planning contract work.
+- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 250, "failed": 0, "total": 250} (see docs/TESTING.md for exact summary).
+- Stage 2F-F-C adds a deterministic non-executing maintenance planning contract inside the explicit maintenance/readiness report.
+- Stage 2F-F-C classifies observed maintenance signals only; it does not recommend commands, execute fixes, add actions, add privileged execution, or broaden normal answers.
 - Stage 2F-C hardens deterministic guardrails from telemetry findings (assistant-prefix normalization, mixed-intent handling, high-risk command shaping, and capability alias coverage) while keeping telemetry opt-in and answers telemetry-free by default.
 - Stage 2F-C2 follows with a small regression cleanup for model/language capability prompts, restart-laptop confirmation shaping, and deterministic social check-in handling.
 - Stage 2F-C3 addresses remaining telemetry edge cases: bare capability noun phrases ("installed models", "local models") now deterministically answer as capability questions, and time/project-state queries return bounded deterministic answers instead of timing out.

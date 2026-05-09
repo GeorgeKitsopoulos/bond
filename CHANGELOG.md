@@ -20,6 +20,16 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2F-F-C non-executing maintenance planning contract
+
+- Added a deterministic non-executing maintenance planning contract.
+- The existing maintenance/readiness report now includes a bounded planning summary based on package update status, storage hygiene, and boot/service health signals.
+- The planning layer classifies observed signals only.
+- The planning layer does not recommend shell commands and does not execute fixes.
+- Package update/update execution, cleanup execution, service mutation, privileged execution, dashboards, automation, and broad normal-answer probe backing remain future work.
+- No aliases, probes, actions, privileged execution, package installs, package upgrades, cleanup execution, service mutation, or maintenance automation were added.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 250, "failed": 0, "total": 250}.
+
 ### Stage 2F-F-B maintenance readiness report probe integration
 
 - Integrated Stage 2F-F-A read-only maintenance probe facts into the explicit maintenance/readiness report.

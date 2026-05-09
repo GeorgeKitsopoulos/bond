@@ -44,6 +44,16 @@ Current implemented probe names:
 - General capability answers are not broadly backed by these maintenance probes.
 - Planning, privileged execution, repair/update/cleanup actions, service mutation, dashboards, and automation remain future work.
 
+## Stage 2F-F-C non-executing planning contract
+
+- The explicit maintenance/readiness report includes a non-executing maintenance planning summary.
+- The planning summary consumes existing read-only probe facts only.
+- The planning summary classifies observed signals into bounded statuses such as no immediate signal, manual review, future privileged lane required, and unavailable.
+- The planning summary does not recommend shell commands.
+- The planning summary does not authorize action.
+- Probes remain read-only/rootless.
+- Privileged execution, repair/update/cleanup actions, service mutation, dashboards, automation, and broad normal-answer probe backing remain future work.
+
 Current implementation boundaries:
 
 - probes are read-only and rootless
