@@ -16,6 +16,7 @@ import ai_run
 import ai_capability_answer
 import ai_capability_classifier
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
+from ai_maintenance_report import build_maintenance_readiness_report, format_maintenance_readiness_report
 import ai_linguistic_intent_contract
 from ai_action_contract import (
     ACTION_CHAT,
@@ -6347,6 +6348,231 @@ def run_stage2f_f_c_maintenance_planning_contract_tests() -> list[dict]:
     return results
 
 
+def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(
+        name: str,
+        errors: list[str],
+        *,
+        stdout: str = "",
+        stderr: str = "",
+        returncode: int = 0,
+        cmd: list[str] | None = None,
+    ) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": returncode,
+                "stdout": stdout,
+                "stderr": stderr,
+                "errors": errors,
+                "cmd": cmd or ["stage2f_f_d", name],
+            }
+        )
+
+    # A: stage2f_f_d_maintenance_report_contract_shape
+    errors: list[str] = []
+    fake_probe_results = {
+        "package_update_status": probe_ok(
+            probe_name="package_update_status",
+            layer=0,
+            source_type=SOURCE_OS_API,
+            certainty_class=CERTAINTY_AUTHORITATIVE,
+            refresh_class=REFRESH_LOW_CHURN,
+            supports_live_truth=True,
+            data={"upgradable_count": 3, "cache_freshness_known": False},
+        ),
+        "storage_hygiene": probe_ok(
+            probe_name="storage_hygiene",
+            layer=0,
+            source_type=SOURCE_OS_API,
+            certainty_class=CERTAINTY_AUTHORITATIVE,
+            refresh_class=REFRESH_LOW_CHURN,
+            supports_live_truth=True,
+            data={"paths": [{"label": "root", "exists": True, "free_percent": 12.5}]},
+        ),
+        "boot_service_health": probe_ok(
+            probe_name="boot_service_health",
+            layer=0,
+            source_type=SOURCE_OS_API,
+            certainty_class=CERTAINTY_AUTHORITATIVE,
+            refresh_class=REFRESH_LOW_CHURN,
+            supports_live_truth=True,
+            data={"failed_units_count": 1, "journal_warning_sample_count": 0},
+        ),
+    }
+    report = build_maintenance_readiness_report(fake_probe_results)
+    if report.get("report_kind") != "maintenance_readiness_report":
+        errors.append(f"expected report_kind='maintenance_readiness_report', got {report.get('report_kind')!r}")
+    if report.get("schema_version") != 1:
+        errors.append(f"expected schema_version=1, got {report.get('schema_version')!r}")
+    if report.get("action_authorized") is not False:
+        errors.append("expected action_authorized=False")
+    if report.get("execution_supported") is not False:
+        errors.append("expected execution_supported=False")
+    probes_used = report.get("probes_used")
+    if probes_used != ["package_update_status", "storage_hygiene", "boot_service_health"]:
+        errors.append(f"expected probes_used list, got {probes_used!r}")
+    plan = report.get("plan")
+    if not isinstance(plan, dict):
+        errors.append("expected plan to be a dict")
+    else:
+        if plan.get("plan_kind") != PLAN_KIND:
+            errors.append(f"expected plan.plan_kind={PLAN_KIND!r}, got {plan.get('plan_kind')!r}")
+        if plan.get("action_authorized") is not False:
+            errors.append("expected plan.action_authorized=False")
+        if plan.get("execution_supported") is not False:
+            errors.append("expected plan.execution_supported=False")
+        items = plan.get("items")
+        if not isinstance(items, list) or len(items) == 0:
+            errors.append("expected plan.items to be a non-empty list")
+    _append("stage2f_f_d_maintenance_report_contract_shape", errors, stdout=json.dumps(report, ensure_ascii=False, default=str))
+
+    # B: stage2f_f_d_maintenance_report_probe_validation_shape
+    errors = []
+    report2 = build_maintenance_readiness_report(fake_probe_results)
+    probe_validation = report2.get("probe_validation")
+    if not isinstance(probe_validation, dict):
+        errors.append("expected probe_validation to be a dict")
+    else:
+        expected_keys = {"package_update_status", "storage_hygiene", "boot_service_health"}
+        actual_keys = set(probe_validation.keys())
+        if actual_keys != expected_keys:
+            errors.append(f"expected probe_validation keys={sorted(expected_keys)}, got {sorted(actual_keys)}")
+        for k, v in probe_validation.items():
+            if not isinstance(v, list):
+                errors.append(f"probe_validation[{k!r}] must be a list")
+            elif v:
+                errors.append(f"probe_validation[{k!r}] expected empty for valid fakes, got {v}")
+    _append("stage2f_f_d_maintenance_report_probe_validation_shape", errors)
+
+    # C: stage2f_f_d_maintenance_report_formatter_markers
+    errors = []
+    report3 = build_maintenance_readiness_report(fake_probe_results)
+    lines = format_maintenance_readiness_report(report3)
+    text = "\n".join(lines)
+    required_markers = [
+        "Maintenance/readiness summary:",
+        "Package update status:",
+        "Storage hygiene:",
+        "Boot/service health:",
+        "Non-executing maintenance plan:",
+        "- plan kind:",
+        "- action authorized: no",
+        "- execution supported: no",
+        "- boundary: classification only; this plan does not recommend commands, does not execute fixes, and does not authorize execution.",
+    ]
+    for marker in required_markers:
+        if marker not in text:
+            errors.append(f"formatter output missing required marker: {marker!r}")
+    # "apt update" is permitted as a boundary statement ("does not run apt update")
+    # and is required by existing stage2f_f_b_report_package_boundary test.
+    forbidden_markers = [
+        "sudo ",
+        "pkexec",
+        "doas ",
+        "apt upgrade",
+        "apt install",
+        "rm -rf",
+        "systemctl restart",
+        "systemctl enable",
+        "systemctl disable",
+        "journalctl ",
+    ]
+    for marker in forbidden_markers:
+        if marker in text:
+            errors.append(f"formatter output contains forbidden marker: {marker!r}")
+    _append("stage2f_f_d_maintenance_report_formatter_markers", errors, stdout=text)
+
+    # D: stage2f_f_d_capability_answer_uses_report_contract
+    errors = []
+    answer = answer_capability_question("maintenance readiness report") or ""
+    required_in_answer = [
+        "Maintenance/readiness summary:",
+        "Package update status:",
+        "Storage hygiene:",
+        "Boot/service health:",
+        "Non-executing maintenance plan:",
+        "- action authorized: no",
+        "- execution supported: no",
+    ]
+    for marker in required_in_answer:
+        if marker not in answer:
+            errors.append(f"capability answer missing required marker: {marker!r}")
+    # "apt update" is permitted in boundary statements ("does not run apt update")
+    forbidden_in_answer = [
+        "sudo ",
+        "apt upgrade",
+        "apt install",
+        "rm -rf",
+        "systemctl restart",
+    ]
+    for marker in forbidden_in_answer:
+        if marker in answer:
+            errors.append(f"capability answer contains forbidden marker: {marker!r}")
+    _append("stage2f_f_d_capability_answer_uses_report_contract", errors, stdout=answer)
+
+    # E: stage2f_f_d_general_capability_answer_unaffected
+    errors = []
+    general_answer = answer_capability_question("what can you do?") or ""
+    if "Capability summary:" not in general_answer:
+        errors.append("general capability answer missing 'Capability summary:'")
+    if "Maintenance/readiness summary:" in general_answer:
+        errors.append("general capability answer should not contain 'Maintenance/readiness summary:'")
+    if "Non-executing maintenance plan:" in general_answer:
+        errors.append("general capability answer should not contain 'Non-executing maintenance plan:'")
+    _append("stage2f_f_d_general_capability_answer_unaffected", errors, stdout=general_answer)
+
+    # F: stage2f_f_d_source_purity_no_execution_surface
+    errors = []
+    report_source = (SRC_BOND / "ai_maintenance_report.py").read_text(encoding="utf-8", errors="ignore")
+    answer_source = (SRC_BOND / "ai_capability_answer.py").read_text(encoding="utf-8", errors="ignore")
+    forbidden_in_report = [
+        "import subprocess",
+        "subprocess.",
+        "os.system",
+        "shell=True",
+        "sudo",
+        "pkexec",
+        "doas",
+        "apt update",
+        "apt upgrade",
+        "apt install",
+        "rm -rf",
+        "systemctl restart",
+        "systemctl enable",
+        "systemctl disable",
+        "systemctl mask",
+        "journalctl",
+        "unlink(",
+        "rmtree(",
+    ]
+    for needle in forbidden_in_report:
+        if needle in report_source:
+            errors.append(f"ai_maintenance_report.py contains forbidden execution surface: {needle!r}")
+    forbidden_in_answer = [
+        "import subprocess",
+        "os.system",
+        "shell=True",
+        "apt update",
+        "apt upgrade",
+        "apt install",
+        "rm -rf",
+        "systemctl restart",
+        "systemctl enable",
+        "systemctl disable",
+        "systemctl mask",
+    ]
+    for needle in forbidden_in_answer:
+        if needle in answer_source:
+            errors.append(f"ai_capability_answer.py contains forbidden execution surface: {needle!r}")
+    _append("stage2f_f_d_source_purity_no_execution_surface", errors)
+
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -6766,6 +6992,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_dev_help_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2f_f_d_maintenance_report_contract_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

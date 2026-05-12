@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 250, "failed": 0, "total": 250}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 256, "failed": 0, "total": 256}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -46,7 +46,7 @@ truth capability-answer integration checks, Stage 2F-D-C bounded model-truth
 fallback hardening checks, and Stage 2F-D-D bounded context-capability answer
 checks, plus Stage 2F-E-A capability-classifier-boundary checks.
 
-Coverage now also includes Stage 2F-E-E selftest accounting integrity checks, Stage 2F-F-A maintenance probe foundation checks, Stage 2F-F-B maintenance/readiness report probe-integration checks, and Stage 2F-F-C non-executing maintenance planning contract checks.
+Coverage now also includes Stage 2F-E-E selftest accounting integrity checks, Stage 2F-F-A maintenance probe foundation checks, Stage 2F-F-B maintenance/readiness report probe-integration checks, Stage 2F-F-C non-executing maintenance planning contract checks, and Stage 2F-F-D maintenance report contract boundary checks.
 
 Stage 2F-F-A maintenance probe coverage includes:
 
@@ -75,7 +75,16 @@ Stage 2F-F-C planning-contract coverage includes:
 - general capability answer remains free of the planning section
 - planner source purity/no-execution guard
 - report source no-execution-expansion guard
+- report source no-execution-expansion guard
 
+Stage 2F-F-D report-contract-boundary coverage includes:
+
+- report contract shape (report_kind, schema_version, action_authorized, execution_supported)
+- probe_validation shape for all three maintenance probe keys
+- formatter section markers (all required section headers present in output)
+- `ai_capability_answer.py` delegates to `ai_maintenance_report` module
+- general capability answer unaffected by report contract changes
+- source purity: `ai_maintenance_report.py` contains no shell execution or forbidden substrings
 The current integrated suite covers:
 
 - parsed single action recognition

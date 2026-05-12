@@ -16,16 +16,16 @@ This file exists to prevent drift between:
 
 ## Current Checkpoint
 
-Date: 9 May 2026 (Stage 2F-F-C current; earlier April 2026 Stage 2E / 61/61 checkpoint preserved below)
+Date: 9 May 2026 (Stage 2F-F-D current; earlier checkpoints preserved below)
 
 Current baseline note:
 
-- Stage 2F-F-C non-executing maintenance planning contract is the current repository checkpoint.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 250, "failed": 0, "total": 250}.
-- Stage 2F-F-C is integrated/current as a non-executing maintenance planning contract inside the explicit maintenance/readiness report.
-- The planning summary classifies observed package, storage, and boot/service signals inside the explicit maintenance/readiness report only.
-- The planning layer does not execute fixes, recommend shell commands, add actions, add privileged execution, or broaden normal answers.
-- A first non-executing maintenance planning contract exists; privileged execution, repair/update/cleanup actions, service mutation, dashboards, automation, and broad normal-answer probe backing remain future work.
+- Stage 2F-F-D maintenance report contract boundary is the current repository checkpoint.
+- `src/bond/ai_maintenance_report.py` added as a pure isolated seam for maintenance/readiness report assembly and formatting.
+- Compile and integrated selftest baseline is {"ok": true, "passed": 256, "failed": 0, "total": 256}.
+- Stage 2F-F-C non-executing maintenance planning contract is integrated and current.
+- Stage 2F-F-D adds a clean internal seam between read-only maintenance probes, non-executing maintenance planning, and assistant-facing maintenance/readiness report text.
+- Privileged execution, repair/update/cleanup actions, service mutation, dashboards, automation, and broad normal-answer probe backing remain future work.
 - The older April 2026 Stage 2E / 61/61 checkpoint is preserved below as historical context.
 
 P0B update (source/config/deploy sanitation):

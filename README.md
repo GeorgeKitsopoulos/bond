@@ -5,8 +5,9 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 ## Current status
 
 - Bond is under active development.
-- The current validated baseline is Stage 2F-F-C non-executing maintenance planning contract work.
-- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 250, "failed": 0, "total": 250} (see docs/TESTING.md for exact summary).
+- The current validated baseline is Stage 2F-F-D maintenance report contract boundary.
+- `src/bond/ai_maintenance_report.py` added: pure isolated seam assembling and formatting the maintenance/readiness report with all seven probes and all required sections.
+- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 256, "failed": 0, "total": 256} (see docs/TESTING.md for exact summary).
 - Stage 2F-F-C adds a deterministic non-executing maintenance planning contract inside the explicit maintenance/readiness report.
 - Stage 2F-F-C classifies observed maintenance signals only; it does not recommend commands, execute fixes, add actions, add privileged execution, or broaden normal answers.
 - Stage 2F-C hardens deterministic guardrails from telemetry findings (assistant-prefix normalization, mixed-intent handling, high-risk command shaping, and capability alias coverage) while keeping telemetry opt-in and answers telemetry-free by default.
