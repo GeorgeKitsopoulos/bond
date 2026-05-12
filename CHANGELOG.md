@@ -20,6 +20,13 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2F-F-D docs hygiene: roadmap duplicate guard
+
+- Removed a duplicated Stage 2F-F-C maintenance-planning checkpoint note from `ROADMAP.md`.
+- Added a selftest guard so the duplicate roadmap note cannot silently return.
+- No runtime behavior, probes, aliases, routes, actions, execution authority, service mutation, dashboards, automation, or broad normal-answer probe backing were added.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 257, "failed": 0, "total": 257}.
+
 ### Stage 2F-F-D follow-up: journalctl report key correction
 
 - Corrected maintenance report formatting to read journalctl_available and journalctl_error_kind from boot_service_health probe data.

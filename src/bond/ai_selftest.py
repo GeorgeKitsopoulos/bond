@@ -6600,6 +6600,25 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
             errors.append(f"ai_maintenance_report.py contains forbidden execution surface: {needle!r}")
     _append("stage2f_f_d_source_purity_no_execution_surface", errors)
 
+    # G: stage2f_f_d_roadmap_no_duplicate_maintenance_planning_note
+    errors = []
+    roadmap_source = (BOND_ROOT / "ROADMAP.md").read_text(
+        encoding="utf-8", errors="ignore"
+    )
+    planning_note = "- Stage 2F-F-C adds a first non-executing maintenance planning contract inside the explicit maintenance/readiness report."
+    count = roadmap_source.count(planning_note)
+    if count != 1:
+        errors.append(
+            "expected one Stage 2F-F-C maintenance planning checkpoint note "
+            f"in ROADMAP.md, got {count}"
+        )
+    if f"{planning_note}\n{planning_note}" in roadmap_source:
+        errors.append(
+            "ROADMAP.md contains adjacent duplicate Stage 2F-F-C maintenance "
+            "planning checkpoint notes"
+        )
+    _append("stage2f_f_d_roadmap_no_duplicate_maintenance_planning_note", errors)
+
     return results
 
 
