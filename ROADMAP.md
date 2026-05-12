@@ -262,13 +262,12 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest latest run summary is {"ok": true, "passed": 256, "failed": 0, "total": 256}.
+- integrated selftest latest run summary is {"ok": true, "passed": 258, "failed": 0, "total": 258}.
 - coverage includes routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, telemetry-derived guardrail regressions, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, and the C5 follow-up strict-timeout cleanup checks.
 - coverage also includes Stage 2F-D probe foundation/cleanup checks, Stage 2F-D-B bounded model-truth checks, Stage 2F-D-C model-truth fallback checks, Stage 2F-D-D bounded context-capability answer checks, Stage 2F-E-A classifier-boundary checks, events bucket, and core memory flows.
 - coverage now also includes Stage 2F-E-E selftest accounting integrity checks.
 - coverage now also includes Stage 2F-F-A maintenance probe registration, shape, inclusion, and read-only command-guard checks.
 - coverage now also includes Stage 2F-F-B explicit maintenance/readiness report probe integration checks.
-- coverage now also includes Stage 2F-F-C non-executing maintenance planning contract checks.
 - coverage now also includes Stage 2F-F-C non-executing maintenance planning contract checks.
 - coverage now also includes Stage 2F-F-D maintenance report contract boundary checks.
 - integrated selftest baseline now includes confirmation-token flow coverage (token creation, invalid/expired/consumed handling, confirmed dry-run, and non-reuse)

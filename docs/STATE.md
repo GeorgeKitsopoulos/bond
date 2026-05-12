@@ -22,7 +22,7 @@ Current baseline note:
 
 - Stage 2F-F-D maintenance report contract boundary is the current repository checkpoint.
 - `src/bond/ai_maintenance_report.py` added as a pure isolated seam for narrow maintenance/readiness report assembly and formatting.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 256, "failed": 0, "total": 256}.
+- Compile and integrated selftest baseline is {"ok": true, "passed": 258, "failed": 0, "total": 258}.
 - Stage 2F-F-C non-executing maintenance planning contract is integrated and current.
 - Stage 2F-F-D adds a clean internal seam between read-only maintenance probes, non-executing maintenance planning, and assistant-facing maintenance/readiness report text.
 - Privileged execution, repair/update/cleanup actions, service mutation, dashboards, automation, and broad normal-answer probe backing remain future work.

@@ -20,6 +20,14 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2F-F-D docs hygiene: baseline and coverage guard
+
+- Aligned current baseline documentation in `README.md`, `ROADMAP.md`, `docs/STATE.md`, and `docs/TESTING.md`.
+- Removed duplicate maintenance coverage bullets from `ROADMAP.md` and `docs/TESTING.md`.
+- Added a selftest guard so stale current baseline summaries and duplicate maintenance coverage bullets cannot silently return.
+- No runtime behavior, probes, aliases, routes, actions, execution authority, service mutation, dashboards, automation, or broad normal-answer probe backing were added.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 258, "failed": 0, "total": 258}.
+
 ### Stage 2F-F-D docs hygiene: roadmap duplicate guard
 
 - Removed a duplicated Stage 2F-F-C maintenance-planning checkpoint note from `ROADMAP.md`.

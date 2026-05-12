@@ -6619,6 +6619,50 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         )
     _append("stage2f_f_d_roadmap_no_duplicate_maintenance_planning_note", errors)
 
+    # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
+    errors = []
+    current_summary = '{"ok": true, "passed": 258, "failed": 0, "total": 258}'
+    stale_summaries = [
+        '{"ok": true, "passed": 256, "failed": 0, "total": 256}',
+        '{"ok": true, "passed": 257, "failed": 0, "total": 257}',
+    ]
+    current_docs = [
+        BOND_ROOT / "README.md",
+        BOND_ROOT / "ROADMAP.md",
+        BOND_ROOT / "docs" / "STATE.md",
+        BOND_ROOT / "docs" / "TESTING.md",
+    ]
+    for path in current_docs:
+        source = path.read_text(encoding="utf-8", errors="ignore")
+        display = path.relative_to(BOND_ROOT).as_posix()
+        if current_summary not in source:
+            errors.append(f"{display} missing current selftest summary {current_summary}")
+        for stale_summary in stale_summaries:
+            if stale_summary in source:
+                errors.append(f"{display} contains stale current selftest summary {stale_summary}")
+
+    exact_line_expectations = {
+        "ROADMAP.md": [
+            "- Stage 2F-F-C adds a first non-executing maintenance planning contract inside the explicit maintenance/readiness report.",
+            "- coverage now also includes Stage 2F-F-C non-executing maintenance planning contract checks.",
+        ],
+        "docs/TESTING.md": [
+            "- report source no-execution-expansion guard",
+        ],
+    }
+    for relative_path, expected_once_lines in exact_line_expectations.items():
+        source = (BOND_ROOT / relative_path).read_text(
+            encoding="utf-8", errors="ignore"
+        )
+        for line in expected_once_lines:
+            count = source.count(line)
+            if count != 1:
+                errors.append(f"{relative_path} expected {line!r} exactly once, got {count}")
+            if f"{line}\n{line}" in source:
+                errors.append(f"{relative_path} contains adjacent duplicate line: {line!r}")
+
+    _append("stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes", errors)
+
     return results
 
 
