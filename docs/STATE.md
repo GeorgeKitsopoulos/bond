@@ -21,7 +21,7 @@ Date: 9 May 2026 (Stage 2F-F-D current; earlier checkpoints preserved below)
 Current baseline note:
 
 - Stage 2F-F-D maintenance report contract boundary is the current repository checkpoint.
-- `src/bond/ai_maintenance_report.py` added as a pure isolated seam for maintenance/readiness report assembly and formatting.
+- `src/bond/ai_maintenance_report.py` added as a pure isolated seam for narrow maintenance/readiness report assembly and formatting.
 - Compile and integrated selftest baseline is {"ok": true, "passed": 256, "failed": 0, "total": 256}.
 - Stage 2F-F-C non-executing maintenance planning contract is integrated and current.
 - Stage 2F-F-D adds a clean internal seam between read-only maintenance probes, non-executing maintenance planning, and assistant-facing maintenance/readiness report text.
@@ -126,7 +126,7 @@ P0F preparation update (current-doc reference cleanup):
 - Stage 2F-E-C does not inspect real package freshness, logs, or storage usage.
 - Stage 2F-E-E is integrated/current as a validation-trust cleanup: selftest pass accounting no longer double-counts memory tests, and selftest accounting integrity is guarded.
 - Stage 2F-F-C is integrated/current as a non-executing maintenance planning contract for bounded read-only maintenance probes (`package_update_status`, `storage_hygiene`, `boot_service_health`).
-- Explicit maintenance/readiness report integration exists; maintenance planning, privileged execution, repair/update/cleanup actions, dashboarding, and broad normal-answer probe backing remain future work.
+- Explicit maintenance/readiness report integration exists; non-executing maintenance planning is integrated/current, while privileged execution, repair/update/cleanup actions, service mutation, dashboards, automation, and broad normal-answer probe backing remain future work.
 - Normal assistant answers are not yet dynamically probe-backed; general capability discovery is still not dynamically probe-backed.
 - Temporary dev/test telemetry exists behind `BOND_DEV_TELEMETRY=1`. It emits one JSON line to stderr with elapsed_ms and safe routing/decision metadata for testing. Normal Bond answers remain telemetry-free by default, and final product behavior must not include telemetry in assistant answers.
 - capability-registry honesty tests now verify planned/unsupported capabilities are not reported as available

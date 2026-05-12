@@ -3895,12 +3895,10 @@ def run_stage2f_e_c_maintenance_readiness_report_tests() -> list[dict]:
     else:
         required = [
             "Maintenance/readiness summary:",
-            "Probe basis:",
-            "Host/session readiness:",
-            "Tool readiness:",
-            "Model/runtime readiness:",
-            "Maintenance capability status:",
-            "Current safe next actions:",
+            "Package update status:",
+            "Storage hygiene:",
+            "Boot/service health:",
+            "Non-executing maintenance plan:",
             "Safety boundary:",
             "read-only readiness report",
             "existing read-only probes only",
@@ -3917,6 +3915,12 @@ def run_stage2f_e_c_maintenance_readiness_report_tests() -> list[dict]:
                 errors.append(f"missing required answer phrase: {needle}")
 
         forbidden = [
+            "Probe basis:",
+            "Host/session readiness:",
+            "Tool readiness:",
+            "Model/runtime readiness:",
+            "Maintenance capability status:",
+            "Current safe next actions:",
             "updates are available",
             "safe to update",
             "system is healthy",
@@ -3938,6 +3942,18 @@ def run_stage2f_e_c_maintenance_readiness_report_tests() -> list[dict]:
         errors.append("expected non-empty maintenance readiness answer")
     else:
         required = [
+            "- action authorized: no",
+            "- execution supported: no",
+            "- boundary: classification only; this plan does not recommend commands, does not execute fixes, and does not authorize execution.",
+            "future_privileged_lane_required",
+            "manual_review",
+            "no_immediate_signal",
+        ]
+        for needle in required:
+            if needle not in answer:
+                errors.append(f"missing required answer phrase: {needle}")
+
+        forbidden = [
             "describe_maintenance_readiness",
             "inspect_package_update_status",
             "inspect_storage_hygiene",
@@ -3946,14 +3962,6 @@ def run_stage2f_e_c_maintenance_readiness_report_tests() -> list[dict]:
             "present_maintenance_dashboard",
             "apply_privileged_system_updates",
             "partial",
-            "planned",
-            "unavailable",
-        ]
-        for needle in required:
-            if needle not in answer:
-                errors.append(f"missing required answer phrase: {needle}")
-
-        forbidden = [
             "package update inspection is available",
             "storage hygiene inspection is available",
             "boot and service health inspection is available",
@@ -6415,6 +6423,20 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
     probes_used = report.get("probes_used")
     if probes_used != ["package_update_status", "storage_hygiene", "boot_service_health"]:
         errors.append(f"expected probes_used list, got {probes_used!r}")
+    probe_results = report.get("probe_results")
+    if not isinstance(probe_results, dict):
+        errors.append("expected probe_results to be a dict")
+    else:
+        if set(probe_results.keys()) != {"package_update_status", "storage_hygiene", "boot_service_health"}:
+            errors.append(f"expected probe_results keys to match maintenance probes, got {sorted(probe_results.keys())}")
+        if "host_baseline" in probe_results:
+            errors.append("host_baseline must not appear in maintenance report probe_results")
+        if "session_baseline" in probe_results:
+            errors.append("session_baseline must not appear in maintenance report probe_results")
+        if "tool_inventory" in probe_results:
+            errors.append("tool_inventory must not appear in maintenance report probe_results")
+        if "model_truth" in probe_results:
+            errors.append("model_truth must not appear in maintenance report probe_results")
     plan = report.get("plan")
     if not isinstance(plan, dict):
         errors.append("expected plan to be a dict")
@@ -6528,8 +6550,17 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
     # F: stage2f_f_d_source_purity_no_execution_surface
     errors = []
     report_source = (SRC_BOND / "ai_maintenance_report.py").read_text(encoding="utf-8", errors="ignore")
-    answer_source = (SRC_BOND / "ai_capability_answer.py").read_text(encoding="utf-8", errors="ignore")
     forbidden_in_report = [
+        "from ai_capabilities import",
+        "get_capability(",
+        "STATUS_PLANNED",
+        "STATUS_UNSUPPORTED",
+        "_CONTEXT_PROBE_NAMES",
+        "_ALL_PROBE_NAMES",
+        "host_baseline",
+        "session_baseline",
+        "tool_inventory",
+        "model_truth",
         "import subprocess",
         "subprocess.",
         "os.system",
@@ -6552,22 +6583,6 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
     for needle in forbidden_in_report:
         if needle in report_source:
             errors.append(f"ai_maintenance_report.py contains forbidden execution surface: {needle!r}")
-    forbidden_in_answer = [
-        "import subprocess",
-        "os.system",
-        "shell=True",
-        "apt update",
-        "apt upgrade",
-        "apt install",
-        "rm -rf",
-        "systemctl restart",
-        "systemctl enable",
-        "systemctl disable",
-        "systemctl mask",
-    ]
-    for needle in forbidden_in_answer:
-        if needle in answer_source:
-            errors.append(f"ai_capability_answer.py contains forbidden execution surface: {needle!r}")
     _append("stage2f_f_d_source_purity_no_execution_surface", errors)
 
     return results

@@ -6,7 +6,7 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 
 - Bond is under active development.
 - The current validated baseline is Stage 2F-F-D maintenance report contract boundary.
-- `src/bond/ai_maintenance_report.py` added: pure isolated seam assembling and formatting the maintenance/readiness report with all seven probes and all required sections.
+- `src/bond/ai_maintenance_report.py` added: pure isolated seam assembling and formatting a narrow maintenance/readiness report contract using only `package_update_status`, `storage_hygiene`, `boot_service_health`, and the existing non-executing maintenance plan.
 - Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 256, "failed": 0, "total": 256} (see docs/TESTING.md for exact summary).
 - Stage 2F-F-C adds a deterministic non-executing maintenance planning contract inside the explicit maintenance/readiness report.
 - Stage 2F-F-C classifies observed maintenance signals only; it does not recommend commands, execute fixes, add actions, add privileged execution, or broaden normal answers.
@@ -38,7 +38,7 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 - Stage 2F-E-C does not fix anything, does not install packages, does not write files, does not delete files, does not restart services, and does not authorize execution.
 - Stage 2F-E-C does not inspect real package freshness, real logs, or real storage usage yet.
 - Stage 2F-E-E is a validation/accounting cleanup and does not add maintenance automation.
-- A first bounded read-only maintenance probe foundation now exists; maintenance planning and any future fix/update/cleanup actions remain future work.
+- A bounded read-only maintenance probe foundation and non-executing maintenance planning contract now exist; privileged execution, repair/update/cleanup actions, service mutation, dashboards, automation, and broad normal-answer probe backing remain future work.
 - Stage 2F-D-C keeps unavailable inventory explicit: missing/extra installed-model sets are unknown for that run, not zero.
 - Probe-backed capability discovery in normal assistant answers is still not implemented.
 - Bond is not yet a general-purpose desktop assistant.

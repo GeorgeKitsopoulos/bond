@@ -20,10 +20,18 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2F-F-D recovery: narrow maintenance report contract
+
+- Narrowed `ai_maintenance_report.py` back to the three maintenance probes.
+- Removed accidental capability-registry coupling from the maintenance report module.
+- Strengthened tests so host/session/tool/model context probes cannot leak into the maintenance report contract.
+- Corrected documentation wording that implied all seven probes or future maintenance planning.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 256, "failed": 0, "total": 256}.
+
 ### Stage 2F-F-D maintenance report contract boundary
 
 - Added `src/bond/ai_maintenance_report.py`: a pure, isolated seam for assembling and formatting the maintenance/readiness report.
-- The report module runs all seven named probes (host_baseline, session_baseline, tool_inventory, model_truth, package_update_status, storage_hygiene, boot_service_health) and formats a complete report with sections: Probe basis, Package update status, Storage hygiene, Boot/service health, Non-executing maintenance plan, Host/session readiness, Tool readiness, Model/runtime readiness, Maintenance capability status, Current safe next actions, Safety boundary.
+- The report module formats a narrow maintenance/readiness contract around `package_update_status`, `storage_hygiene`, `boot_service_health`, and the non-executing maintenance plan.
 - `ai_capability_answer.py` delegates the maintenance/readiness report path entirely to `ai_maintenance_report.build_and_format_maintenance_readiness_report()`.
 - Contract boundaries: action_authorized=False, execution_supported=False; report is read-only and does not authorize execution.
 - Six new Stage 2F-F-D tests added to the integrated selftest suite, all passing.

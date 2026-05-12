@@ -257,10 +257,11 @@ Stage 2F-E-C adds a bounded explicit maintenance/readiness answer path.
 
 Stage 2F-F-D adds `src/bond/ai_maintenance_report.py` as a clean, isolated seam for maintenance/readiness report assembly and formatting.
 
-- `ai_maintenance_report.py` is the single owner of report assembly: it runs all seven named probes, builds the structured report dict, and formats the complete text.
+- `ai_maintenance_report.py` owns only the explicit maintenance/readiness report contract around `package_update_status`, `storage_hygiene`, `boot_service_health`, and `ai_maintenance_plan` output.
 - `ai_capability_answer.py` delegates the maintenance/readiness report path entirely to `ai_maintenance_report.build_and_format_maintenance_readiness_report()`.
 - The report dict always carries `action_authorized=False` and `execution_supported=False`.
-- The formatted report contains: Probe basis, Package update status, Storage hygiene, Boot/service health, Non-executing maintenance plan, Host/session readiness, Tool readiness, Model/runtime readiness, Maintenance capability status, Current safe next actions, Safety boundary.
+- The formatted report contains: Maintenance/readiness summary, Package update status, Storage hygiene, Boot/service health, Non-executing maintenance plan, Safety boundary.
+- Host/session/tool/model context readiness remains outside this Stage 2F-F-D module.
 - Source purity: `ai_maintenance_report.py` must not contain shell execution, subprocess, or forbidden privileged-command substrings in its source.
 ### Rootless-first capability ordering
 

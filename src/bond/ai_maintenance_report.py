@@ -12,31 +12,14 @@ from typing import Any, Mapping
 from ai_probe_contract import validate_probe_result
 from ai_probes import run_named_probe
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
-from ai_capabilities import (
-    STATUS_PLANNED,
-    STATUS_UNSUPPORTED,
-    get_capability,
-)
 
 REPORT_KIND = "maintenance_readiness_report"
 REPORT_SCHEMA_VERSION = 1
-# Full set of probes used for the maintenance readiness report.
-# Context probes (host_baseline, session_baseline, tool_inventory, model_truth)
-# are run for the host/tool/model sections; maintenance probes are run for the
-# package/storage/boot sections.
-_CONTEXT_PROBE_NAMES = (
-    "host_baseline",
-    "session_baseline",
-    "tool_inventory",
-    "model_truth",
-)
-_MAINTENANCE_SPECIFIC_PROBE_NAMES = (
+MAINTENANCE_PROBE_NAMES = (
     "package_update_status",
     "storage_hygiene",
     "boot_service_health",
 )
-MAINTENANCE_PROBE_NAMES = _MAINTENANCE_SPECIFIC_PROBE_NAMES
-_ALL_PROBE_NAMES = _CONTEXT_PROBE_NAMES + _MAINTENANCE_SPECIFIC_PROBE_NAMES
 
 _BOUNDARIES: list[str] = [
     "read-only/rootless probe facts only",
@@ -52,7 +35,7 @@ _BOUNDARIES: list[str] = [
 
 def _collect_probe_results() -> dict[str, Any]:
     collected: dict[str, Any] = {}
-    for name in _ALL_PROBE_NAMES:
+    for name in MAINTENANCE_PROBE_NAMES:
         try:
             collected[name] = run_named_probe(name)
         except Exception:
@@ -65,17 +48,14 @@ def build_maintenance_readiness_report(
 ) -> dict[str, object]:
     """Build the structured maintenance readiness report dict.
 
-    If probe_results is None, run all named probes.  If supplied, use only those
-    supplied values (context probes default to None if not supplied).
+    If probe_results is None, run only the named maintenance probes. If supplied,
+    use only values for those probe names.
     Never runs any command directly.
     """
     if probe_results is None:
         results: dict[str, Any] = _collect_probe_results()
     else:
-        # Accept maintenance-specific probes from caller; context probes optional
-        results = {}
-        for name in _ALL_PROBE_NAMES:
-            results[name] = probe_results.get(name)
+        results = {name: probe_results.get(name) for name in MAINTENANCE_PROBE_NAMES}
 
     probe_validation: dict[str, list[str]] = {}
     for name in MAINTENANCE_PROBE_NAMES:
@@ -335,127 +315,6 @@ def format_maintenance_readiness_report(report: Mapping[str, Any]) -> list[str]:
         "ecute fixes, and does not authorize execution."
     )
 
-    # -----------------------------------------------------------------------
-    # Additional sections required by Stage 2F-E-C tests
-    # -----------------------------------------------------------------------
-
-    # Probe basis section
-    host_result = raw_results.get("host_baseline")
-    session_result = raw_results.get("session_baseline")
-    tools_result = raw_results.get("tool_inventory")
-    model_result = raw_results.get("model_truth")
-
-    lines.extend(
-        [
-            "",
-            "Probe basis:",
-            f"- host_baseline: {_probe_status(host_result)}",
-            f"- session_baseline: {_probe_status(session_result)}",
-            f"- tool_inventory: {_probe_status(tools_result)}",
-            f"- model_truth: {_probe_status(model_result)}",
-            f"- package_update_status: {package_probe_status}",
-            f"- storage_hygiene: {storage_probe_status}",
-            f"- boot_service_health: {boot_probe_status}",
-        ]
-    )
-
-    # Host/session readiness section
-    host_data = _probe_data(host_result)
-    session_data = _probe_data(session_result)
-    lines.extend(
-        [
-            "",
-            "Host/session readiness:",
-            f"- platform_system: {_value(host_data, 'platform_system')}",
-            f"- platform_release: {_value(host_data, 'platform_release')}",
-            f"- platform_machine: {_value(host_data, 'platform_machine')}",
-            f"- python_version: {_value(host_data, 'python_version')}",
-            f"- xdg_current_desktop: {_value(session_data, 'xdg_current_desktop')}",
-            f"- desktop_session: {_value(session_data, 'desktop_session')}",
-            f"- xdg_session_type: {_value(session_data, 'xdg_session_type')}",
-            f"- has_display: {_yes_no_unknown(_as_bool(session_data.get('has_display')))}",
-            f"- has_wayland_display: {_yes_no_unknown(_as_bool(session_data.get('has_wayland_display')))}",
-            f"- has_dbus_session_bus: {_yes_no_unknown(_as_bool(session_data.get('has_dbus_session_bus')))}",
-        ]
-    )
-
-    # Tool readiness section
-    tools_data = _probe_data(tools_result)
-    tools_node = tools_data.get("tools") if isinstance(tools_data, dict) else None
-    _tool_names = (
-        "apt",
-        "snap",
-        "flatpak",
-        "xdg-open",
-        "gio",
-        "notify-send",
-        "ollama",
-    )
-    lines.append("")
-    lines.append("Tool readiness:")
-    for tool_name in _tool_names:
-        state = "unknown"
-        if isinstance(tools_node, dict):
-            entry = tools_node.get(tool_name)
-            if isinstance(entry, dict):
-                available = entry.get("available")
-                if isinstance(available, bool):
-                    state = "available" if available else "unavailable"
-        lines.append(f"- {tool_name}: {state}")
-
-    # Model/runtime readiness section
-    model_data = _probe_data(model_result)
-    model_truth_status = _value(model_data, "truth_status")
-    inventory_raw = model_data.get("inventory_available") if isinstance(model_data, dict) else None
-    if isinstance(inventory_raw, bool):
-        model_inventory_status = "available" if inventory_raw else "unavailable"
-    else:
-        model_inventory_status = "unavailable"
-    lines.extend(
-        [
-            "",
-            "Model/runtime readiness:",
-            "- configured route targets and installed local model inventory are separate facts",
-            f"- installed local model inventory status for this run: {model_inventory_status} (truth_status={model_truth_status})",
-            "- installed inventory may be unavailable",
-            "- this does not prove which model is currently answering, runtime health, model quality, or privileged/system capability",
-        ]
-    )
-
-    # Maintenance capability status section
-    _capability_status_names = [
-        "describe_maintenance_readiness",
-        "inspect_package_update_status",
-        "inspect_storage_hygiene",
-        "inspect_boot_and_service_health",
-        "generate_periodic_health_report",
-        "present_maintenance_dashboard",
-        "apply_privileged_system_updates",
-    ]
-    lines.append("")
-    lines.append("Maintenance capability status:")
-    for cap_name in _capability_status_names:
-        cap = get_capability(cap_name)
-        status = cap.status if cap is not None else "unknown"
-        if cap_name == "describe_maintenance_readiness":
-            lines.append(f"- {cap_name}: status={status} (partial/read-only)")
-        elif status in {STATUS_PLANNED, STATUS_UNSUPPORTED}:
-            lines.append(f"- {cap_name}: status={status} (unavailable)")
-        else:
-            lines.append(f"- {cap_name}: status={status}")
-    lines.append("- planned/blocked capabilities remain unavailable")
-
-    # Current safe next actions section
-    lines.extend(
-        [
-            "",
-            "Current safe next actions:",
-            "- The user can ask for this bounded read-only readiness report.",
-            "- Future work can add a separate maintenance planning layer that classifies observed signals without executing fixes.",
-            "- Future privileged actions must be designed as a separate policy-gated and confirmation-gated lane.",
-        ]
-    )
-
     # Safety boundary section
     lines.extend(
         [
@@ -471,6 +330,7 @@ def format_maintenance_readiness_report(report: Mapping[str, Any]) -> list[str]:
             "- no background maintenance daemon",
             "- no arbitrary shell execution",
             "- does not authorize execution",
+            "- Future work can add privileged execution, repair/update/cleanup actions, service mutation, dashboards, automation, or broader report presentation only behind separate contracts.",
         ]
     )
 

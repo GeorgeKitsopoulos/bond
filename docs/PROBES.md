@@ -47,7 +47,9 @@ Current implemented probe names:
 ## Stage 2F-F-D maintenance report contract boundary
 
 - `ai_maintenance_report.py` is the single owner of maintenance/readiness report assembly and formatting.
-- The module runs all seven named probes: `host_baseline`, `session_baseline`, `tool_inventory`, `model_truth`, `package_update_status`, `storage_hygiene`, `boot_service_health`.
+- Stage 2F-F-D is not a new probe layer.
+- The report contract consumes only `package_update_status`, `storage_hygiene`, and `boot_service_health`.
+- Context probes remain separate and are not pulled into this contract.
 - The structured report dict carries `action_authorized=False` and `execution_supported=False`.
 - The formatted report includes sections for all probe signals and all contract boundaries.
 - Source purity is enforced: the module source must not contain shell execution or forbidden privileged-command substrings.

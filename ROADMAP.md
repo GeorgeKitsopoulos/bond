@@ -146,7 +146,7 @@ Current checkpoint note:
 - Stage 2F-B wires read-only capability questions into deterministic registry-backed answers.
 - Stage 2F-F-C adds a first non-executing maintenance planning contract inside the explicit maintenance/readiness report.
 - Stage 2F-F-C adds a first non-executing maintenance planning contract inside the explicit maintenance/readiness report.
-- Stage 2F-F-D adds `ai_maintenance_report.py` as a clean, isolated seam for the full maintenance/readiness report assembly and formatting contract.
+- Stage 2F-F-D adds `ai_maintenance_report.py` as a clean, isolated seam for the narrow maintenance/readiness report contract shape and formatting only.
 - Stage 2F-C applies telemetry-driven guardrail hardening for assistant-prefix normalization, high-risk natural command shaping, mixed-intent preemption safety, expanded capability aliases, and deterministic dry-run step metadata.
 - Stage 2F-D-D adds bounded explicit context-capability discovery for explicit context questions using existing read-only probes only.
 - Stage 2F-E-A completes a deterministic classifier boundary between capability-question detection and capability answer generation.
