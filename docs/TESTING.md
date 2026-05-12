@@ -49,6 +49,7 @@ checks, plus Stage 2F-E-A capability-classifier-boundary checks.
 Coverage now also includes Stage 2F-E-E selftest accounting integrity checks, Stage 2F-F-A maintenance probe foundation checks, Stage 2F-F-B maintenance/readiness report probe-integration checks, Stage 2F-F-C non-executing maintenance planning contract checks, and Stage 2F-F-D maintenance report contract boundary checks.
 
 Stage 2F-F-D tests also guard against accidental inclusion of host/session/tool/model context probes inside `ai_maintenance_report.py`; the maintenance report contract must stay limited to the three maintenance probes plus the non-executing plan output.
+Formatter tests also verify journalctl_available is surfaced as known data instead of falling back to unknown because of misspelled report keys.
 
 Stage 2F-F-A maintenance probe coverage includes:
 

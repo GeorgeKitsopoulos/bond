@@ -20,6 +20,13 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2F-F-D follow-up: journalctl report key correction
+
+- Corrected maintenance report formatting to read journalctl_available and journalctl_error_kind from boot_service_health probe data.
+- Strengthened Stage 2F-F-D formatter/source tests so the misspelled jrnctl keys cannot return.
+- No probes, aliases, routes, actions, execution authority, service mutation, dashboards, automation, or broad normal-answer probe backing were added.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 256, "failed": 0, "total": 256}.
+
 ### Stage 2F-F-D recovery: narrow maintenance report contract
 
 - Narrowed `ai_maintenance_report.py` back to the three maintenance probes.

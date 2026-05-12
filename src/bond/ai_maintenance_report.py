@@ -218,12 +218,12 @@ def format_maintenance_readiness_report(report: Mapping[str, Any]) -> list[str]:
             storage_paths_by_label[label] = record
 
     systemctl_available = _yes_no_unknown(_as_bool(boot_data.get("systemctl_available")))
-    jctl_avail = _yes_no_unknown(_as_bool(boot_data.get("jrnctl_available")))
+    jctl_avail = _yes_no_unknown(_as_bool(boot_data.get("journalctl_available")))
     failed_units_observed = _safe_count(boot_data.get("failed_units_count"))
     boot_warning_count = _safe_count(boot_data.get("journal_warning_sample_count"))
     failed_unit_sample = _sample_names(boot_data.get("failed_units_sample"), "unit")
     systemctl_error_kind = _value(boot_data, "systemctl_error_kind", fallback="none")
-    jctl_error_kind = _value(boot_data, "jrnctl_error_kind", fallback="none")
+    jctl_error_kind = _value(boot_data, "journalctl_error_kind", fallback="none")
 
     plan_items = plan.get("items", [])
     if not isinstance(plan_items, list):
@@ -278,7 +278,7 @@ def format_maintenance_readiness_report(report: Mapping[str, Any]) -> list[str]:
 
     if (
         isinstance(boot_data.get("systemctl_error_kind"), str)
-        or isinstance(boot_data.get("jrnctl_error_kind"), str)
+        or isinstance(boot_data.get("journalctl_error_kind"), str)
     ):
         lines.append(
             f"- signal limitations: systemctl={systemctl_error_kind}, jctl={jctl_error_kind}"

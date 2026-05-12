@@ -15,6 +15,7 @@ import ai_memory_rotate
 import ai_run
 import ai_capability_answer
 import ai_capability_classifier
+import ai_maintenance_report
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
 from ai_maintenance_report import build_maintenance_readiness_report, format_maintenance_readiness_report
 import ai_linguistic_intent_contract
@@ -3979,6 +3980,7 @@ def run_stage2f_e_c_maintenance_readiness_report_tests() -> list[dict]:
     )
 
     original_run_named_probe = ai_capability_answer.run_named_probe
+    original_report_run_named_probe = ai_maintenance_report.run_named_probe
     errors = []
     answer = ""
     try:
@@ -3986,6 +3988,7 @@ def run_stage2f_e_c_maintenance_readiness_report_tests() -> list[dict]:
             raise RuntimeError("maintenance probe boom")
 
         ai_capability_answer.run_named_probe = _fake_probe_exception
+        ai_maintenance_report.run_named_probe = _fake_probe_exception
         answer = answer_capability_question("maintenance readiness report") or ""
         if not answer:
             errors.append("expected non-empty maintenance readiness answer")
@@ -4003,6 +4006,7 @@ def run_stage2f_e_c_maintenance_readiness_report_tests() -> list[dict]:
         errors.append(f"answer_capability_question raised unexpectedly: {exc}")
     finally:
         ai_capability_answer.run_named_probe = original_run_named_probe
+        ai_maintenance_report.run_named_probe = original_report_run_named_probe
     _append("stage2f_e_c_maintenance_probe_exception_fallback", errors, stdout=answer)
 
     errors = []
@@ -6408,7 +6412,12 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
             certainty_class=CERTAINTY_AUTHORITATIVE,
             refresh_class=REFRESH_LOW_CHURN,
             supports_live_truth=True,
-            data={"failed_units_count": 1, "journal_warning_sample_count": 0},
+            data={
+                "failed_units_count": 1,
+                "journal_warning_sample_count": 0,
+                "journalctl_available": True,
+                "journalctl_error_kind": None,
+            },
         ),
     }
     report = build_maintenance_readiness_report(fake_probe_results)
@@ -6489,6 +6498,10 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
     for marker in required_markers:
         if marker not in text:
             errors.append(f"formatter output missing required marker: {marker!r}")
+    if "- journal tool available: yes" not in text:
+        errors.append("formatter output missing '- journal tool available: yes'")
+    if "- journal tool available: unknown" in text:
+        errors.append("formatter output must not contain '- journal tool available: unknown'")
     # "apt update" is permitted as a boundary statement ("does not run apt update")
     # and is required by existing stage2f_f_b_report_package_boundary test.
     forbidden_markers = [
@@ -6561,6 +6574,8 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         "session_baseline",
         "tool_inventory",
         "model_truth",
+        "jrnctl_available",
+        "jrnctl_error_kind",
         "import subprocess",
         "subprocess.",
         "os.system",
@@ -6576,7 +6591,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         "systemctl enable",
         "systemctl disable",
         "systemctl mask",
-        "journalctl",
+        "journalctl ",
         "unlink(",
         "rmtree(",
     ]
