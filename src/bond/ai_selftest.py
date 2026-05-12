@@ -17,7 +17,11 @@ import ai_capability_answer
 import ai_capability_classifier
 import ai_maintenance_report
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
-from ai_maintenance_report import build_maintenance_readiness_report, format_maintenance_readiness_report
+from ai_maintenance_report import (
+    build_maintenance_readiness_report,
+    build_report_readiness_metadata,
+    format_maintenance_readiness_report,
+)
 import ai_linguistic_intent_contract
 from ai_action_contract import (
     ACTION_CHAT,
@@ -6423,8 +6427,8 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
     report = build_maintenance_readiness_report(fake_probe_results)
     if report.get("report_kind") != "maintenance_readiness_report":
         errors.append(f"expected report_kind='maintenance_readiness_report', got {report.get('report_kind')!r}")
-    if report.get("schema_version") != 1:
-        errors.append(f"expected schema_version=1, got {report.get('schema_version')!r}")
+    if report.get("schema_version") != 2:
+        errors.append(f"expected schema_version=2, got {report.get('schema_version')!r}")
     if report.get("action_authorized") is not False:
         errors.append("expected action_authorized=False")
     if report.get("execution_supported") is not False:
@@ -6459,6 +6463,26 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         items = plan.get("items")
         if not isinstance(items, list) or len(items) == 0:
             errors.append("expected plan.items to be a non-empty list")
+    report_readiness = report.get("report_readiness")
+    if report_readiness is None:
+        errors.append("expected report_readiness to exist")
+    elif not isinstance(report_readiness, dict):
+        errors.append("expected report_readiness to be a dict")
+    else:
+        if report_readiness.get("readiness_kind") != "maintenance_report_readiness":
+            errors.append(
+                "expected report_readiness['readiness_kind']='maintenance_report_readiness'"
+            )
+        if report_readiness.get("schema_version") != 1:
+            errors.append("expected report_readiness['schema_version']=1")
+        if report_readiness.get("action_authorized") is not False:
+            errors.append("expected report_readiness['action_authorized']=False")
+        if report_readiness.get("execution_supported") is not False:
+            errors.append("expected report_readiness['execution_supported']=False")
+        if report_readiness.get("automation_supported") is not False:
+            errors.append("expected report_readiness['automation_supported']=False")
+        if report_readiness.get("schedule_supported") is not False:
+            errors.append("expected report_readiness['schedule_supported']=False")
     _append("stage2f_f_d_maintenance_report_contract_shape", errors, stdout=json.dumps(report, ensure_ascii=False, default=str))
 
     # B: stage2f_f_d_maintenance_report_probe_validation_shape
@@ -6621,10 +6645,11 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 258, "failed": 0, "total": 258}'
+    current_summary = '{"ok": true, "passed": 262, "failed": 0, "total": 262}'
     stale_summaries = [
         '{"ok": true, "passed": 256, "failed": 0, "total": 256}',
         '{"ok": true, "passed": 257, "failed": 0, "total": 257}',
+        '{"ok": true, "passed": 258, "failed": 0, "total": 258}',
     ]
     current_docs = [
         BOND_ROOT / "README.md",
@@ -6662,6 +6687,199 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
                 errors.append(f"{relative_path} contains adjacent duplicate line: {line!r}")
 
     _append("stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes", errors)
+
+    # I: stage2f_f_e_report_readiness_metadata_shape
+    errors = []
+    report4 = build_maintenance_readiness_report(fake_probe_results)
+    metadata = report4.get("report_readiness")
+    if not isinstance(metadata, dict):
+        errors.append("expected report_readiness to be a dict")
+    else:
+        expected_pairs = {
+            "readiness_kind": "maintenance_report_readiness",
+            "schema_version": 1,
+            "status": "ready_with_findings",
+            "can_generate_report": True,
+            "action_authorized": False,
+            "execution_supported": False,
+            "automation_supported": False,
+            "schedule_supported": False,
+            "probe_count": 3,
+            "validation_issue_count": 0,
+            "plan_item_count": 3,
+            "manual_review_signal_count": 3,
+            "future_privileged_lane_signal_count": 1,
+        }
+        for key, expected in expected_pairs.items():
+            actual = metadata.get(key)
+            if actual != expected:
+                errors.append(f"report_readiness[{key!r}] expected {expected!r}, got {actual!r}")
+        boundaries = metadata.get("boundaries")
+        if not isinstance(boundaries, list):
+            errors.append("report_readiness.boundaries must be a list")
+        else:
+            for required_boundary in [
+                "metadata only",
+                "no scheduled generation",
+                "no background jobs",
+                "no dashboard",
+                "no action authorization",
+                "no execution",
+                "no privileged lane",
+            ]:
+                if required_boundary not in boundaries:
+                    errors.append(f"missing report_readiness boundary {required_boundary!r}")
+    _append("stage2f_f_e_report_readiness_metadata_shape", errors)
+
+    # J: stage2f_f_e_report_readiness_metadata_limited_signals
+    errors = []
+    limited_report = build_maintenance_readiness_report(
+        {
+            "package_update_status": None,
+            "storage_hygiene": None,
+            "boot_service_health": None,
+            "host_baseline": probe_ok(
+                probe_name="host_baseline",
+                layer=0,
+                source_type=SOURCE_OS_API,
+                certainty_class=CERTAINTY_AUTHORITATIVE,
+                refresh_class=REFRESH_LOW_CHURN,
+                supports_live_truth=True,
+                data={"should_not": "appear"},
+            ),
+        }
+    )
+    limited_metadata = limited_report.get("report_readiness")
+    if not isinstance(limited_metadata, dict):
+        errors.append("expected limited report_readiness to be a dict")
+    else:
+        if limited_metadata.get("status") != "ready_with_limited_signals":
+            errors.append(
+                "limited report_readiness status expected "
+                f"'ready_with_limited_signals', got {limited_metadata.get('status')!r}"
+            )
+        if limited_metadata.get("validation_issue_count") != 3:
+            errors.append(
+                "limited report_readiness validation_issue_count expected 3, "
+                f"got {limited_metadata.get('validation_issue_count')!r}"
+            )
+        if limited_metadata.get("can_generate_report") is not True:
+            errors.append("limited report_readiness can_generate_report must remain True")
+        if limited_metadata.get("automation_supported") is not False:
+            errors.append("limited report_readiness automation_supported must be False")
+        if limited_metadata.get("schedule_supported") is not False:
+            errors.append("limited report_readiness schedule_supported must be False")
+    limited_probe_results = limited_report.get("probe_results")
+    if not isinstance(limited_probe_results, dict):
+        errors.append("expected limited probe_results to be a dict")
+    elif "host_baseline" in limited_probe_results:
+        errors.append("host_baseline must not appear in limited maintenance report probe_results")
+    _append("stage2f_f_e_report_readiness_metadata_limited_signals", errors)
+
+    # K: stage2f_f_e_formatter_includes_report_readiness_metadata
+    errors = []
+    formatted = "\n".join(format_maintenance_readiness_report(report4))
+    required_markers = [
+        "Report readiness metadata:",
+        "- status: ready_with_findings",
+        "- can generate report now: yes",
+        "- probe count: 3",
+        "- validation issue count: 0",
+        "- plan item count: 3",
+        "- manual review signals: 3",
+        "- future privileged lane signals: 1",
+        "- automation supported: no",
+        "- scheduled generation supported: no",
+        "- boundary: metadata only; this does not schedule reports, start background jobs, or authorize execution.",
+    ]
+    for marker in required_markers:
+        if marker not in formatted:
+            errors.append(f"formatter output missing report readiness marker: {marker!r}")
+    forbidden_markers = [
+        "cron",
+        "systemd timer",
+        "systemctl enable",
+        "systemctl start",
+        "apt install",
+        "apt upgrade",
+        "rm -rf",
+    ]
+    for marker in forbidden_markers:
+        if marker in formatted:
+            errors.append(f"formatter output contains forbidden marker: {marker!r}")
+    _append("stage2f_f_e_formatter_includes_report_readiness_metadata", errors, stdout=formatted)
+
+    # L: stage2f_f_e_docs_and_source_boundary
+    errors = []
+    if tuple(ai_maintenance_report.MAINTENANCE_PROBE_NAMES) != (
+        "package_update_status",
+        "storage_hygiene",
+        "boot_service_health",
+    ):
+        errors.append(
+            "MAINTENANCE_PROBE_NAMES must stay limited to package_update_status, "
+            "storage_hygiene, and boot_service_health"
+        )
+
+    report_source = (SRC_BOND / "ai_maintenance_report.py").read_text(
+        encoding="utf-8", errors="ignore"
+    )
+    forbidden_source_markers = [
+        "from ai_capabilities import",
+        "get_capability(",
+        "host_baseline",
+        "session_baseline",
+        "tool_inventory",
+        "model_truth",
+        "import subprocess",
+        "subprocess.",
+        "os.system",
+        "shell=True",
+        "sudo",
+        "pkexec",
+        "doas",
+        "apt upgrade",
+        "apt install",
+        "rm -rf",
+        "systemctl restart",
+        "systemctl enable",
+        "systemctl disable",
+        "systemctl mask",
+        "journalctl ",
+        "unlink(",
+        "rmtree(",
+    ]
+    for needle in forbidden_source_markers:
+        if needle in report_source:
+            errors.append(f"ai_maintenance_report.py contains forbidden source marker: {needle!r}")
+
+    docs_to_check = [
+        BOND_ROOT / "README.md",
+        BOND_ROOT / "ROADMAP.md",
+        BOND_ROOT / "docs" / "STATE.md",
+        BOND_ROOT / "docs" / "ARCHITECTURE.md",
+        BOND_ROOT / "docs" / "PROBES.md",
+        BOND_ROOT / "docs" / "TESTING.md",
+    ]
+    current_summary = '{"ok": true, "passed": 262, "failed": 0, "total": 262}'
+    stale_summaries = [
+        '{"ok": true, "passed": 256, "failed": 0, "total": 256}',
+        '{"ok": true, "passed": 257, "failed": 0, "total": 257}',
+        '{"ok": true, "passed": 258, "failed": 0, "total": 258}',
+    ]
+    for path in docs_to_check:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        display = path.relative_to(BOND_ROOT).as_posix()
+        if "Stage 2F-F-E" not in text:
+            errors.append(f"{display} missing Stage 2F-F-E documentation")
+        if display in {"README.md", "ROADMAP.md", "docs/STATE.md", "docs/TESTING.md"}:
+            if current_summary not in text:
+                errors.append(f"{display} missing current selftest summary {current_summary}")
+            for stale_summary in stale_summaries:
+                if stale_summary in text:
+                    errors.append(f"{display} contains stale current selftest summary {stale_summary}")
+
+    _append("stage2f_f_e_docs_and_source_boundary", errors)
 
     return results
 

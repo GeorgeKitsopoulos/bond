@@ -16,15 +16,16 @@ This file exists to prevent drift between:
 
 ## Current Checkpoint
 
-Date: 9 May 2026 (Stage 2F-F-D current; earlier checkpoints preserved below)
+Date: 12 May 2026 (Stage 2F-F-E current; earlier checkpoints preserved below)
 
 Current baseline note:
 
-- Stage 2F-F-D maintenance report contract boundary is the current repository checkpoint.
+- Stage 2F-F-E maintenance report readiness metadata is the current repository checkpoint.
 - `src/bond/ai_maintenance_report.py` added as a pure isolated seam for narrow maintenance/readiness report assembly and formatting.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 258, "failed": 0, "total": 258}.
+- Compile and integrated selftest baseline is {"ok": true, "passed": 262, "failed": 0, "total": 262}.
 - Stage 2F-F-C non-executing maintenance planning contract is integrated and current.
 - Stage 2F-F-D adds a clean internal seam between read-only maintenance probes, non-executing maintenance planning, and assistant-facing maintenance/readiness report text.
+- Stage 2F-F-E adds metadata-only report readiness inside the explicit maintenance/readiness report and does not add scheduling, automation, dashboards, actions, service mutation, or privileged execution.
 - Privileged execution, repair/update/cleanup actions, service mutation, dashboards, automation, and broad normal-answer probe backing remain future work.
 - The older April 2026 Stage 2E / 61/61 checkpoint is preserved below as historical context.
 

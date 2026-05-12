@@ -263,6 +263,20 @@ Stage 2F-F-D adds `src/bond/ai_maintenance_report.py` as a clean, isolated seam 
 - The formatted report contains: Maintenance/readiness summary, Package update status, Storage hygiene, Boot/service health, Non-executing maintenance plan, Safety boundary.
 - Host/session/tool/model context readiness remains outside this Stage 2F-F-D module.
 - Source purity: `ai_maintenance_report.py` must not contain shell execution, subprocess, or forbidden privileged-command substrings in its source.
+
+### Maintenance report readiness metadata (Stage 2F-F-E)
+
+Stage 2F-F-E adds metadata-only readiness fields inside the explicit maintenance/readiness report contract.
+
+- The metadata is derived from existing probe validation and the existing non-executing maintenance plan.
+- It does not add probes.
+- It does not schedule reports.
+- It does not start background jobs.
+- It does not add dashboards.
+- It does not authorize actions.
+- It does not add privileged execution.
+- It does not broaden normal assistant answers.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

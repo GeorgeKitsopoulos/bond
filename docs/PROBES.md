@@ -55,6 +55,14 @@ Current implemented probe names:
 - Source purity is enforced: the module source must not contain shell execution or forbidden privileged-command substrings.
 - `ai_capability_answer.py` delegates entirely to this module; it no longer assembles the report inline.
 
+## Stage 2F-F-E maintenance report readiness metadata
+
+- The explicit maintenance/readiness report now carries metadata-only readiness fields.
+- The metadata is derived from existing probe validation and the existing non-executing maintenance plan.
+- This is not a new probe layer.
+- The maintenance probe list remains limited to `package_update_status`, `storage_hygiene`, and `boot_service_health`.
+- The metadata does not schedule reports, start background jobs, create dashboards, authorize actions, mutate services, or add privileged execution.
+
 ## Stage 2F-F-C non-executing planning contract
 
 - The explicit maintenance/readiness report includes a non-executing maintenance planning summary.

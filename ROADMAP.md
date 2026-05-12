@@ -146,6 +146,7 @@ Current checkpoint note:
 - Stage 2F-B wires read-only capability questions into deterministic registry-backed answers.
 - Stage 2F-F-C adds a first non-executing maintenance planning contract inside the explicit maintenance/readiness report.
 - Stage 2F-F-D adds `ai_maintenance_report.py` as a clean, isolated seam for the narrow maintenance/readiness report contract shape and formatting only.
+- Stage 2F-F-E adds metadata-only maintenance report readiness fields to the explicit maintenance/readiness report contract and keeps execution/scheduling/automation unauthorized.
 - Stage 2F-C applies telemetry-driven guardrail hardening for assistant-prefix normalization, high-risk natural command shaping, mixed-intent preemption safety, expanded capability aliases, and deterministic dry-run step metadata.
 - Stage 2F-D-D adds bounded explicit context-capability discovery for explicit context questions using existing read-only probes only.
 - Stage 2F-E-A completes a deterministic classifier boundary between capability-question detection and capability answer generation.
@@ -210,6 +211,7 @@ Current checkpoint note:
 - Stage 2F-E-C read-only maintenance/readiness report is complete/current.
 - Stage 2F-E-E adds selftest accounting integrity coverage.
 - Stage 2F-F-A adds first bounded read-only maintenance probes (`package_update_status`, `storage_hygiene`, `boot_service_health`).
+- Stage 2F-F-E adds metadata-only maintenance report readiness fields derived from existing maintenance probe validation and non-executing plan signals.
 - M4 is not complete: broader probe domains, normal assistant answer grounding, telemetry direction, and action-planning integration remain open.
 
 Exit criteria:
@@ -262,7 +264,7 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest latest run summary is {"ok": true, "passed": 258, "failed": 0, "total": 258}.
+- integrated selftest latest run summary is {"ok": true, "passed": 262, "failed": 0, "total": 262}.
 - coverage includes routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, telemetry-derived guardrail regressions, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, and the C5 follow-up strict-timeout cleanup checks.
 - coverage also includes Stage 2F-D probe foundation/cleanup checks, Stage 2F-D-B bounded model-truth checks, Stage 2F-D-C model-truth fallback checks, Stage 2F-D-D bounded context-capability answer checks, Stage 2F-E-A classifier-boundary checks, events bucket, and core memory flows.
 - coverage now also includes Stage 2F-E-E selftest accounting integrity checks.
@@ -270,6 +272,7 @@ Current checkpoint note:
 - coverage now also includes Stage 2F-F-B explicit maintenance/readiness report probe integration checks.
 - coverage now also includes Stage 2F-F-C non-executing maintenance planning contract checks.
 - coverage now also includes Stage 2F-F-D maintenance report contract boundary checks.
+- coverage now also includes Stage 2F-F-E maintenance report readiness metadata checks.
 - integrated selftest baseline now includes confirmation-token flow coverage (token creation, invalid/expired/consumed handling, confirmed dry-run, and non-reuse)
 - Stage 2E improves parser honesty and preflight failure behavior; Stage 2F-A/2F-B/2F-C add static registry truth, read-only capability answers, and telemetry-driven deterministic guardrail hardening, but do not expand executor authorization
 - this does not imply full behavioral coverage or assistant maturity

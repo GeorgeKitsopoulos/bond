@@ -14,7 +14,9 @@ from ai_probes import run_named_probe
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
 
 REPORT_KIND = "maintenance_readiness_report"
-REPORT_SCHEMA_VERSION = 1
+REPORT_SCHEMA_VERSION = 2
+REPORT_READINESS_KIND = "maintenance_report_readiness"
+REPORT_READINESS_SCHEMA_VERSION = 1
 MAINTENANCE_PROBE_NAMES = (
     "package_update_status",
     "storage_hygiene",
@@ -41,6 +43,70 @@ def _collect_probe_results() -> dict[str, Any]:
         except Exception:
             collected[name] = None
     return collected
+
+
+def build_report_readiness_metadata(
+    probe_validation: Mapping[str, list[str]],
+    plan: Mapping[str, Any],
+) -> dict[str, object]:
+    """Build metadata about whether the read-only report can be generated.
+
+    This is report metadata only. It does not schedule reports, start background
+    work, authorize actions, or broaden the maintenance report probe scope.
+    """
+    validation_issue_count = 0
+    for issues in probe_validation.values():
+        if isinstance(issues, list):
+            validation_issue_count += len(issues)
+        else:
+            validation_issue_count += 1
+
+    raw_plan_items = plan.get("items")
+    plan_items = raw_plan_items if isinstance(raw_plan_items, list) else []
+
+    manual_review_signal_count = 0
+    future_privileged_lane_signal_count = 0
+    for item in plan_items:
+        if not isinstance(item, dict):
+            continue
+        status = item.get("status")
+        requires_future_privileged_lane = item.get("requires_future_privileged_lane")
+        if status in {"manual_review", "future_privileged_lane_required"}:
+            manual_review_signal_count += 1
+        if status == "future_privileged_lane_required" or requires_future_privileged_lane is True:
+            future_privileged_lane_signal_count += 1
+
+    if validation_issue_count > 0:
+        status = "ready_with_limited_signals"
+    elif manual_review_signal_count > 0 or future_privileged_lane_signal_count > 0:
+        status = "ready_with_findings"
+    else:
+        status = "ready"
+
+    return {
+        "readiness_kind": REPORT_READINESS_KIND,
+        "schema_version": REPORT_READINESS_SCHEMA_VERSION,
+        "status": status,
+        "can_generate_report": True,
+        "action_authorized": False,
+        "execution_supported": False,
+        "automation_supported": False,
+        "schedule_supported": False,
+        "probe_count": len(MAINTENANCE_PROBE_NAMES),
+        "validation_issue_count": validation_issue_count,
+        "plan_item_count": len(plan_items),
+        "manual_review_signal_count": manual_review_signal_count,
+        "future_privileged_lane_signal_count": future_privileged_lane_signal_count,
+        "boundaries": [
+            "metadata only",
+            "no scheduled generation",
+            "no background jobs",
+            "no dashboard",
+            "no action authorization",
+            "no execution",
+            "no privileged lane",
+        ],
+    }
 
 
 def build_maintenance_readiness_report(
@@ -71,6 +137,7 @@ def build_maintenance_readiness_report(
     plan = build_maintenance_plan(
         {name: results.get(name) for name in MAINTENANCE_PROBE_NAMES}
     )
+    report_readiness = build_report_readiness_metadata(probe_validation, plan)
 
     return {
         "report_kind": REPORT_KIND,
@@ -81,6 +148,7 @@ def build_maintenance_readiness_report(
         "probe_validation": probe_validation,
         "probe_results": results,
         "plan": plan,
+        "report_readiness": report_readiness,
         "boundaries": list(_BOUNDARIES),
     }
 
@@ -189,6 +257,7 @@ def format_maintenance_readiness_report(report: Mapping[str, Any]) -> list[str]:
     """Return assistant-facing report lines from the structured report dict."""
     raw_results: dict[str, Any] = dict(report.get("probe_results") or {})
     plan: dict[str, Any] = dict(report.get("plan") or {})
+    report_readiness: dict[str, Any] = dict(report.get("report_readiness") or {})
 
     package_result = raw_results.get("package_update_status")
     storage_result = raw_results.get("storage_hygiene")
@@ -234,6 +303,24 @@ def format_maintenance_readiness_report(report: Mapping[str, Any]) -> list[str]:
         "This is a read-only readiness report based on existing read-only probes only.",
         "It does not fix anything, does not install packages, does not write files, does not delete files, does not restart services, and does not authorize execution.",
         "It uses bounded read-only maintenance signals only; package metadata freshness is not proven, storage hygiene is bounded to disk-usage records, and boot/service health is limited to failed-unit and recent boot-warning signals.",
+        "",
+        "Report readiness metadata:",
+        f"- status: {_value(report_readiness, 'status')}",
+        "- can generate report now: "
+        f"{_yes_no_unknown(_as_bool(report_readiness.get('can_generate_report')))}",
+        f"- probe count: {_safe_count(report_readiness.get('probe_count'))}",
+        "- validation issue count: "
+        f"{_safe_count(report_readiness.get('validation_issue_count'))}",
+        f"- plan item count: {_safe_count(report_readiness.get('plan_item_count'))}",
+        "- manual review signals: "
+        f"{_safe_count(report_readiness.get('manual_review_signal_count'))}",
+        "- future privileged lane signals: "
+        f"{_safe_count(report_readiness.get('future_privileged_lane_signal_count'))}",
+        "- automation supported: "
+        f"{_yes_no_unknown(_as_bool(report_readiness.get('automation_supported')))}",
+        "- scheduled generation supported: "
+        f"{_yes_no_unknown(_as_bool(report_readiness.get('schedule_supported')))}",
+        "- boundary: metadata only; this does not schedule reports, start background jobs, or authorize execution.",
         "",
         "Package update status:",
         f"- probe status: {package_probe_status}",

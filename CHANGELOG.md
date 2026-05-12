@@ -20,6 +20,15 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2F-F-E maintenance report readiness metadata
+
+- Added metadata-only readiness fields to the explicit maintenance/readiness report contract.
+- The metadata is derived from existing probe validation and the existing non-executing maintenance plan.
+- The maintenance probe scope remains limited to `package_update_status`, `storage_hygiene`, and `boot_service_health`.
+- Added selftest coverage for readiness metadata shape, limited-signal behavior, formatter markers, and source/documentation boundaries.
+- No probes, aliases, routes, actions, execution authority, service mutation, dashboards, scheduling, automation, privileged execution, or broad normal-answer probe backing were added.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 262, "failed": 0, "total": 262}.
+
 ### Stage 2F-F-D docs hygiene: baseline and coverage guard
 
 - Aligned current baseline documentation in `README.md`, `ROADMAP.md`, `docs/STATE.md`, and `docs/TESTING.md`.
