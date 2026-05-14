@@ -98,10 +98,14 @@ def _is_external_media_path(mount_point: str, external_roots: list[str] | None) 
 
 def _is_steam_deck_sd_path(device: str, mount_point: str) -> bool:
     lower_blob = f"{device} {mount_point}".lower()
+    lower_device = device.lower()
     if _path_is_under(mount_point, "/run/media/deck"):
         return True
-    for token in ("mmcblk", "sdcard", "steamdeck", "steam-deck"):
-        if token in lower_blob:
+    is_removable_mount = _is_external_media_path(mount_point, list(_DEFAULT_EXTERNAL_ROOTS))
+    if "mmcblk" in lower_device:
+        return is_removable_mount
+    for token in ("sdcard", "steamdeck", "steam-deck"):
+        if token in lower_blob and is_removable_mount:
             return True
     return False
 
@@ -138,10 +142,10 @@ def parse_proc_mounts_text(text: str) -> list[dict[str, object]]:
         line = raw_line.strip()
         if not line:
             continue
-        parts = line.split(None, 3)
+        parts = line.split()
         if len(parts) < 4:
             continue
-        device, mount_point, fs_type, options_text = parts
+        device, mount_point, fs_type, options_text = parts[:4]
         options = [option for option in options_text.split(",") if option]
         records.append(
             {
@@ -188,7 +192,11 @@ def classify_mount_record(
     else:
         options = [option for option in _text(raw_options).split(",") if option]
 
-    read_only = _coerce_bool(record.get("read_only", False))
+    normalized_options = [_text(option).strip().lower() for option in options if _text(option).strip()]
+    if "read_only" in record:
+        read_only = _coerce_bool(record.get("read_only"))
+    else:
+        read_only = "ro" in normalized_options
     is_pseudo = is_pseudo_filesystem(fs_type)
     is_large_candidate = is_large_data_filesystem_candidate(fs_type)
     is_external = _is_external_media_path(mount_point, external_roots)
@@ -313,14 +321,31 @@ def summarize_mount_candidates(
     }
     disk_usage_cache: dict[str, dict[str, object]] = {}
 
+    def _mount_specificity(path: str) -> int:
+        normalized = path.strip("/")
+        if not normalized:
+            return 0
+        return len([segment for segment in normalized.split("/") if segment])
+
     for record in mounts[:64]:
         classified = classify_mount_record(record, home_path=home_path)
         mount_point = _text(classified.get("mount_point"))
         needs_usage = False
 
-        if classified["is_home_mount_candidate"] and home_mount is None:
-            home_mount = classified
-            needs_usage = True
+        if classified["is_home_mount_candidate"]:
+            candidate_mount = _text(classified.get("mount_point"))
+            if home_mount is None:
+                home_mount = classified
+                needs_usage = True
+            else:
+                current_mount = _text(home_mount.get("mount_point"))
+                candidate_depth = _mount_specificity(candidate_mount)
+                current_depth = _mount_specificity(current_mount)
+                if candidate_depth > current_depth or (
+                    candidate_depth == current_depth and candidate_mount < current_mount
+                ):
+                    home_mount = classified
+                    needs_usage = True
         if classified["is_external_media_path"]:
             external_candidates.append(classified)
             needs_usage = True
@@ -360,6 +385,7 @@ def collect_bond_environment_paths(env: Mapping[str, str] | None = None) -> dict
         "BOND_MODEL_DIR": ROLE_MODELS,
         "BOND_TELEMETRY_DIR": ROLE_TELEMETRY,
         "BOND_LOG_DIR": ROLE_LOGS,
+        "BOND_BACKUP_DIR": ROLE_BACKUPS,
     }
     collected: dict[str, dict[str, object]] = {}
     for name, role in role_map.items():
@@ -401,25 +427,69 @@ def build_storage_recommendations(
     strategy = STORAGE_STRATEGY_MANUAL_REVIEW
     requires_manual_review = True
     reason = "manual_review_required"
+    bond_home_path = _observed_path(env_paths, "BOND_HOME") or home_path
+
+    def _candidate_pressure(candidate: Mapping[str, object]) -> str:
+        usage = candidate.get("disk_usage")
+        if isinstance(usage, Mapping):
+            return classify_space_pressure(usage)
+        return "unknown"
+
+    def _candidate_sort_key(candidate: Mapping[str, object]) -> tuple[int, str]:
+        pressure = _candidate_pressure(candidate)
+        pressure_rank = {
+            "large_data_friendly": 0,
+            "adequate": 1,
+            "low": 2,
+            "critical": 3,
+            "unknown": 4,
+        }.get(pressure, 5)
+        mount_point = _text(candidate.get("mount_point"))
+        return (pressure_rank, mount_point)
 
     if isinstance(large_data_candidates, list) and large_data_candidates:
-        first_candidate = large_data_candidates[0]
-        if isinstance(first_candidate, Mapping):
-            preferred_large_data_base = _text(first_candidate.get("mount_point")) or None
-        preferred_config_base = home_path or _observed_path(env_paths, "BOND_CONFIG_DIR") or home_mount_point
-        strategy = STORAGE_STRATEGY_EXTERNAL_LARGE_DATA_PREFERRED
-        requires_manual_review = False
-        reason = STORAGE_STRATEGY_EXTERNAL_LARGE_DATA_PREFERRED
+        mapping_candidates = [candidate for candidate in large_data_candidates if isinstance(candidate, Mapping)]
+        suitable_candidates = [
+            candidate
+            for candidate in mapping_candidates
+            if not _coerce_bool(candidate.get("read_only"))
+            and _candidate_pressure(candidate) in {"adequate", "large_data_friendly"}
+        ]
+        if suitable_candidates:
+            selected_candidate = sorted(suitable_candidates, key=_candidate_sort_key)[0]
+            preferred_large_data_base = _text(selected_candidate.get("mount_point")) or None
+            preferred_config_base = _observed_path(env_paths, "BOND_CONFIG_DIR") or bond_home_path or home_mount_point
+            strategy = STORAGE_STRATEGY_EXTERNAL_LARGE_DATA_PREFERRED
+            requires_manual_review = False
+            reason = STORAGE_STRATEGY_EXTERNAL_LARGE_DATA_PREFERRED
+        else:
+            preferred_config_base = _observed_path(env_paths, "BOND_CONFIG_DIR") or bond_home_path or home_mount_point
+            strategy = STORAGE_STRATEGY_MANUAL_REVIEW
+            requires_manual_review = True
+            reason = "manual_review_required_external_candidate_pressure"
     elif home_mount_point:
-        preferred_large_data_base = home_path or home_mount_point
-        preferred_config_base = home_path or home_mount_point
+        preferred_large_data_base = bond_home_path or home_mount_point
+        preferred_config_base = _observed_path(env_paths, "BOND_CONFIG_DIR") or bond_home_path or home_mount_point
         strategy = STORAGE_STRATEGY_HOME_LOCAL_FALLBACK
         requires_manual_review = False
         reason = STORAGE_STRATEGY_HOME_LOCAL_FALLBACK
     else:
-        preferred_config_base = _observed_path(env_paths, "BOND_CONFIG_DIR") or home_path
+        preferred_config_base = _observed_path(env_paths, "BOND_CONFIG_DIR") or bond_home_path
 
     def _role_base(role: str) -> str | None:
+        role_env_map: dict[str, tuple[str, ...]] = {
+            ROLE_CONFIG: ("BOND_CONFIG_DIR",),
+            ROLE_DATA: ("BOND_DATA_DIR",),
+            ROLE_CACHE: ("BOND_CACHE_DIR",),
+            ROLE_MODELS: ("BOND_MODEL_DIR",),
+            ROLE_TELEMETRY: ("BOND_TELEMETRY_DIR",),
+            ROLE_LOGS: ("BOND_TELEMETRY_DIR", "BOND_LOG_DIR"),
+            ROLE_BACKUPS: ("BOND_BACKUP_DIR",),
+        }
+        for env_name in role_env_map.get(role, ()): 
+            observed_path = _observed_path(env_paths, env_name)
+            if observed_path:
+                return observed_path
         if role == ROLE_CONFIG:
             return preferred_config_base
         if strategy in {
@@ -427,17 +497,6 @@ def build_storage_recommendations(
             STORAGE_STRATEGY_HOME_LOCAL_FALLBACK,
         }:
             return preferred_large_data_base or preferred_config_base
-        role_env_map = {
-            ROLE_DATA: "BOND_DATA_DIR",
-            ROLE_CACHE: "BOND_CACHE_DIR",
-            ROLE_MODELS: "BOND_MODEL_DIR",
-            ROLE_TELEMETRY: "BOND_TELEMETRY_DIR",
-            ROLE_LOGS: "BOND_LOG_DIR",
-            ROLE_BACKUPS: "BOND_DATA_DIR",
-        }
-        observed_path = _observed_path(env_paths, role_env_map.get(role, ""))
-        if observed_path:
-            return observed_path
         return preferred_config_base or preferred_large_data_base
 
     role_recommendations: list[dict[str, object]] = []

@@ -6648,7 +6648,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 274, "failed": 0, "total": 274}'
+    current_summary = '{"ok": true, "passed": 281, "failed": 0, "total": 281}'
     stale_summaries = [
         '{"ok": true, "passed": 262, "failed": 0, "total": 262}',
         '{"ok": true, "passed": 256, "failed": 0, "total": 256}',
@@ -6865,7 +6865,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 274, "failed": 0, "total": 274}'
+    current_summary = '{"ok": true, "passed": 281, "failed": 0, "total": 281}'
     stale_summaries = [
         '{"ok": true, "passed": 262, "failed": 0, "total": 262}',
         '{"ok": true, "passed": 256, "failed": 0, "total": 256}',
@@ -7409,6 +7409,188 @@ badline
     if "host_portability_profile" in ai_maintenance_report.MAINTENANCE_PROBE_NAMES:
         errors.append("host_portability_profile must not be in maintenance probe names")
     _append("stage2g_b_storage_profile_probe_registration_and_scope", errors)
+
+    errors = []
+    internal_record = ai_storage_profile.classify_mount_record(
+        {
+            "device": "/dev/mmcblk0p2",
+            "mount_point": "/",
+            "fs_type": "ext4",
+            "options": ["rw"],
+            "source": "test",
+        },
+        home_path="/home/deck",
+    )
+    if internal_record.get("is_steam_deck_sd_path") is not False:
+        errors.append("internal mmc mount at / must not be sd-like")
+    profile = ai_storage_profile.build_storage_portability_profile(
+        mounts=[
+            {
+                "device": "/dev/mmcblk0p2",
+                "mount_point": "/",
+                "fs_type": "ext4",
+                "options": ["rw"],
+                "source": "test",
+            }
+        ],
+        home_path="/home/deck",
+        env={},
+        platform_system="Linux",
+        disk_usage_func=fake_large_usage,
+    )
+    if profile.get("candidate_summary", {}).get("steam_deck_sd_candidates"):
+        errors.append("internal mmc mount must not appear in steam_deck_sd_candidates")
+    if profile.get("recommendations", {}).get("strategy") == "external_large_data_preferred":
+        errors.append("internal mmc mount must not trigger external_large_data_preferred")
+    _append("stage2g_b_storage_profile_internal_mmc_not_sd_candidate", errors)
+
+    errors = []
+    removable_record = ai_storage_profile.classify_mount_record(
+        {
+            "device": "/dev/mmcblk0p1",
+            "mount_point": "/run/media/deck/BOND_SD",
+            "fs_type": "exfat",
+            "options": ["rw"],
+            "source": "test",
+        },
+        home_path="/home/deck",
+    )
+    if removable_record.get("is_steam_deck_sd_path") is not True:
+        errors.append("removable mmc mount under /run/media/deck must be sd-like")
+    if removable_record.get("is_bond_large_data_candidate") is not True:
+        errors.append("removable mmc mount under /run/media/deck must be large-data candidate")
+    _append("stage2g_b_storage_profile_removable_mmc_sd_candidate", errors)
+
+    errors = []
+    summary = ai_storage_profile.summarize_mount_candidates(
+        mounts=[
+            {
+                "device": "/dev/nvme0n1p1",
+                "mount_point": "/",
+                "fs_type": "ext4",
+                "options": ["rw"],
+                "source": "test",
+            },
+            {
+                "device": "/dev/nvme0n1p2",
+                "mount_point": "/home",
+                "fs_type": "ext4",
+                "options": ["rw"],
+                "source": "test",
+            },
+        ],
+        home_path="/home/deck",
+        disk_usage_func=fake_large_usage,
+    )
+    home_mount = summary.get("home_mount")
+    if not isinstance(home_mount, dict):
+        errors.append("home_mount must be selected")
+    elif home_mount.get("mount_point") != "/home":
+        errors.append("home_mount must prefer deepest match /home over /")
+    _append("stage2g_b_storage_profile_home_mount_prefers_deepest_match", errors)
+
+    errors = []
+    parsed = ai_storage_profile.parse_proc_mounts_text(
+        "/dev/sda1 /run/media/deck/BOND_SD ext4 rw,nosuid,nodev 0 0\n"
+    )
+    if len(parsed) != 1:
+        errors.append("expected one parsed mount")
+    else:
+        options = parsed[0].get("options")
+        if options != ["rw", "nosuid", "nodev"]:
+            errors.append(f"options must be clean parsed list, got {options!r}")
+        if any(option in {"0", "0 0"} for option in options):
+            errors.append("options must not include dump/pass fields")
+    _append("stage2g_b_storage_profile_proc_mounts_options_clean", errors)
+
+    errors = []
+    ro_record = ai_storage_profile.classify_mount_record(
+        {
+            "device": "/dev/sdb1",
+            "mount_point": "/run/media/deck/RO_SD",
+            "fs_type": "exfat",
+            "options": ["ro"],
+            "source": "test",
+        },
+        home_path="/home/deck",
+    )
+    if ro_record.get("read_only") is not True:
+        errors.append("options ['ro'] without explicit read_only must classify read_only true")
+    if ro_record.get("is_bond_large_data_candidate") is not False:
+        errors.append("read_only mount must not be selected as writable large-data candidate")
+    _append("stage2g_b_storage_profile_read_only_from_ro_option", errors)
+
+    errors = []
+    profile = ai_storage_profile.build_storage_portability_profile(
+        mounts=[
+            {
+                "device": "/dev/mmcblk0p1",
+                "mount_point": "/run/media/deck/FAST_SD",
+                "fs_type": "exfat",
+                "options": ["rw"],
+                "source": "test",
+            }
+        ],
+        home_path="/home/deck",
+        env={
+            "BOND_CONFIG_DIR": "/custom/bond-config",
+            "BOND_DATA_DIR": "/custom/bond-data",
+            "BOND_CACHE_DIR": "/custom/bond-cache",
+            "BOND_MODEL_DIR": "/custom/bond-models",
+            "BOND_TELEMETRY_DIR": "/custom/bond-telemetry",
+            "BOND_BACKUP_DIR": "/custom/bond-backups",
+        },
+        platform_system="Linux",
+        disk_usage_func=fake_large_usage,
+    )
+    role_recs = profile.get("recommendations", {}).get("role_recommendations", [])
+    role_map = {
+        rec.get("role"): rec.get("preferred_base")
+        for rec in role_recs
+        if isinstance(rec, dict)
+    }
+    expected_role_paths = {
+        "config": "/custom/bond-config",
+        "data": "/custom/bond-data",
+        "cache": "/custom/bond-cache",
+        "models": "/custom/bond-models",
+        "telemetry": "/custom/bond-telemetry",
+        "backups": "/custom/bond-backups",
+    }
+    for role, expected_path in expected_role_paths.items():
+        if role_map.get(role) != expected_path:
+            errors.append(f"{role} preferred_base expected {expected_path!r}, got {role_map.get(role)!r}")
+    _append("stage2g_b_storage_profile_env_role_overrides", errors)
+
+    errors = []
+    def fake_low_usage(path: str) -> Usage:
+        if path == "/run/media/deck/TIGHT_SD":
+            return Usage(total=64 * 1024**3, used=60 * 1024**3, free=4 * 1024**3)
+        return Usage(total=128 * 1024**3, used=64 * 1024**3, free=64 * 1024**3)
+
+    profile = ai_storage_profile.build_storage_portability_profile(
+        mounts=[
+            {
+                "device": "/dev/mmcblk0p1",
+                "mount_point": "/run/media/deck/TIGHT_SD",
+                "fs_type": "exfat",
+                "options": ["rw"],
+                "source": "test",
+            }
+        ],
+        home_path="/home/deck",
+        env={},
+        platform_system="Linux",
+        disk_usage_func=fake_low_usage,
+    )
+    recommendations = profile.get("recommendations", {})
+    if recommendations.get("strategy") != "manual_review":
+        errors.append("low-pressure external candidate must require manual_review strategy")
+    if recommendations.get("requires_manual_review") is not True:
+        errors.append("low-pressure external candidate must set requires_manual_review true")
+    if recommendations.get("preferred_large_data_base") is not None:
+        errors.append("low-pressure external candidate must not be selected as preferred_large_data_base")
+    _append("stage2g_b_storage_profile_low_pressure_external_requires_review", errors)
 
     return results
 

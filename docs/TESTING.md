@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 274, "failed": 0, "total": 274}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 281, "failed": 0, "total": 281}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -49,6 +49,15 @@ checks, plus Stage 2F-E-A capability-classifier-boundary checks.
 Coverage now also includes Stage 2F-E-E selftest accounting integrity checks, Stage 2F-F-A maintenance probe foundation checks, Stage 2F-F-B maintenance/readiness report probe-integration checks, Stage 2F-F-C non-executing maintenance planning contract checks, Stage 2F-F-D maintenance report contract boundary checks, and Stage 2F-F-E maintenance report readiness metadata checks.
 Coverage now also includes Stage 2G-A host portability profile parser, platform-signal detection, dependency-strategy selection, contract-boundary, and probe registration/scope checks.
 Coverage now also includes Stage 2G-B storage portability profile mount parser, candidate classification, space-pressure summary, observed environment paths, contract boundary, and probe registration/scope checks.
+Coverage now also includes Stage 2G-B storage portability hardening regression checks:
+
+- `stage2g_b_storage_profile_internal_mmc_not_sd_candidate`
+- `stage2g_b_storage_profile_removable_mmc_sd_candidate`
+- `stage2g_b_storage_profile_home_mount_prefers_deepest_match`
+- `stage2g_b_storage_profile_proc_mounts_options_clean`
+- `stage2g_b_storage_profile_read_only_from_ro_option`
+- `stage2g_b_storage_profile_env_role_overrides`
+- `stage2g_b_storage_profile_low_pressure_external_requires_review`
 
 Stage 2F-F-D tests also guard against accidental inclusion of host/session/tool/model context probes inside `ai_maintenance_report.py`; the maintenance report contract must stay limited to the three maintenance probes plus the non-executing plan output.
 Stage 2F-F-D docs hygiene coverage also guards against duplicate maintenance-planning and coverage checkpoint notes in ROADMAP.md and docs/TESTING.md, plus stale current baseline drift across README.md, ROADMAP.md, docs/STATE.md, and docs/TESTING.md.

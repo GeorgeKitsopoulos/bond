@@ -22,10 +22,11 @@ Current baseline note:
 
 - Stage 2G-B storage portability profile is the current repository checkpoint.
 - `src/bond/ai_maintenance_report.py` added as a pure isolated seam for narrow maintenance/readiness report assembly and formatting.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 274, "failed": 0, "total": 274}.
+- Compile and integrated selftest baseline is {"ok": true, "passed": 281, "failed": 0, "total": 281}.
 - Stage 2G-B continues the portable installer/updater/satellite track with a read-only storage portability profile.
 - Stage 2G-A starts the portable installer/updater/satellite track with a read-only host portability profile.
 - Stage 2G-A host portability profile remains integrated/current.
+- Stage 2G-B storage classification is hardened with conservative SD/external detection, clean mount-options parsing, explicit role-env-path precedence, read-only derivation from `ro` options, deepest home-mount fallback selection, and low-space external manual-review behavior.
 - Stage 2G-B classifies storage portability signals only and does not create directories, move data, delete data, clean caches, mount/unmount, format/partition, authorize execution, or add automation.
 - Stage 2G-A classifies host portability signals only and does not install packages, update systems, layer packages, mutate services, authorize execution, or add automation.
 - Stage 2F-F-C non-executing maintenance planning contract is integrated and current.

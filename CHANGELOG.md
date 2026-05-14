@@ -26,8 +26,9 @@ Until formal release tagging is established, this changelog should follow these 
 - Detects mount candidates, external media paths, Steam Deck SD-card-like paths, home fallback, disk free-space pressure, Bond environment path observations, and bounded storage placement recommendations.
 - Adds `storage_portability_profile` as a read-only probe for future installer/updater/satellite planning.
 - Adds Stage 2G-B selftests for mount parsing, SD/external candidate detection, home fallback, environment-path observation, contract boundaries, and probe registration/scope checks.
+- Hardens Stage 2G-B storage classification with conservative SD/external detection, clean `/proc/mounts` option parsing, explicit Bond env-path precedence by role, read-only derivation from mount options, deepest home-mount selection, and low-space external manual-review behavior.
 - Does not create directories, move data, delete data, clean caches, mount or unmount, format or partition, authorize execution, start automation, write manifests, run an updater, or broaden normal assistant answers.
-- Final integrated selftest JSON summary: {"ok": true, "passed": 274, "failed": 0, "total": 274}.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 281, "failed": 0, "total": 281}.
 
 ### Stage 2G-A host portability profile
 
