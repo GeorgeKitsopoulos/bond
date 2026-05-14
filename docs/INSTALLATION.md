@@ -206,6 +206,28 @@ detect -> compare -> show -> explicitly authorize -> execute -> verify -> report
 
 Execution is not added in this stage.
 
+## Package-manager classification and dependency planning prerequisite (Stage 2G-D)
+
+Future installer/updater work must classify package managers and plan dependencies before any package installation execution path exists.
+
+Stage 2G-D adds deterministic, read-only package-manager classification and dependency planning contracts without authorizing installation or execution.
+
+It can classify package managers into strategy categories (mutable, immutable user-space-preferred, unknown) based on host facts and distro signals.
+
+It can map core and optional capabilities (Python runtime, git, build tools, containers, local LLM) to package-manager-specific package names.
+
+It can classify capability status as: already observed, needs planning, requires manual review, or optional and not needed.
+
+This stage does not call package managers, authorize installation, execute commands, install packages, or mutate hosts.
+
+All authorization fields (execution_authorized, install_authorized, etc.) remain explicitly False.
+
+Any future installer/dependency flow must remain:
+
+classify -> plan -> show -> explicitly authorize -> execute -> verify -> report
+
+Package manager execution is not added in this stage.
+
 ## Uninstall direction
 
 Uninstall must eventually become explicit.

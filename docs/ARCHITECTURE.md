@@ -330,6 +330,23 @@ Stage 2F-F-E adds metadata-only readiness fields inside the explicit maintenance
 - It does not mutate storage.
 - It does not broaden normal assistant answers.
 
+### Package-manager classification and dependency planning (Stage 2G-D)
+
+- Module owners: `src/bond/ai_package_manager.py` and `src/bond/ai_dependency_plan.py`.
+- Probe owner: `dependency_plan` in `src/bond/ai_probes.py`.
+- Purpose: classify package manager strategies and plan dependencies for future installer/updater/satellite design.
+- `ai_package_manager.py` classifies package managers (apt, dnf, zypper, pacman, rpm-ostree, etc.) into strategy categories (mutable, immutable user-space-preferred, unknown) based on distro signals, immutability hints, and Steam Deck detection.
+- `ai_dependency_plan.py` maps requested capabilities (python3, git, make, optional containers, optional local LLM) to package-manager-specific package names and classifies capability status (observed, planned, manual-review, optional).
+- Output includes strategy classification, capability-to-package mappings, capability status (observed_available, plan_needed, manual_review_needed, optional_not_required), and deterministic next-step recommendations.
+- The modules are pure deterministic and read-only.
+- They do not call package managers.
+- They do not inspect live system state.
+- They do not authorize installation or execution.
+- They do not generate executable commands.
+- They do not mutate hosts.
+- All authorization fields are explicitly False.
+- They do not broaden normal assistant answers.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

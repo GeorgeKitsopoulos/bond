@@ -12,6 +12,8 @@ from typing import Any
 from ai_host_profile import build_current_host_portability_profile
 from ai_install_manifest import build_install_manifest, compare_install_manifest
 from ai_storage_profile import build_current_storage_portability_profile
+from ai_package_manager import classify_package_manager_strategy
+from ai_dependency_plan import build_dependency_plan
 from ai_core import BOND_ROOT, CONFIG_FILE, get_memory_root, get_router_config_path, get_state_root
 from ai_probe_contract import (
     CERTAINTY_AUTHORITATIVE,
@@ -42,6 +44,7 @@ AVAILABLE_PROBES = (
     "package_update_status",
     "storage_hygiene",
     "boot_service_health",
+    "dependency_plan",
 )
 
 
@@ -686,6 +689,54 @@ def probe_boot_service_health() -> ProbeResult:
     )
 
 
+def probe_dependency_plan() -> ProbeResult:
+    """
+    Read-only dependency planning probe.
+    
+    Does not call package managers or authorize installation.
+    Computes deterministic plan from host portability profile and available facts.
+    """
+    try:
+        # Get host portability profile
+        host_result = probe_host_portability_profile()
+        host_profile = host_result.data if host_result.ok else {}
+
+        # Get tool inventory for observed_tools
+        tool_result = probe_tool_inventory()
+        tool_data = tool_result.data if tool_result.ok else {}
+        observed_tools = tool_data.get("tools", {}) if isinstance(tool_data, dict) else {}
+
+        # Build dependency plan using both profiles
+        plan = build_dependency_plan(
+            host_profile=host_profile,
+            observed_tools=observed_tools,
+            python_version=platform.python_version(),
+            bond_root=str(BOND_ROOT),
+        )
+
+        return probe_ok(
+            probe_name="dependency_plan",
+            layer=2,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_DERIVED,
+            refresh_class=REFRESH_MEDIUM_CHURN,
+            supports_live_truth=True,
+            data=plan,
+            notes="Read-only dependency plan for future installer/updater planning; execution, installation, and all mutation are not authorized in this stage.",
+        )
+    except Exception as exc:
+        return probe_error(
+            probe_name="dependency_plan",
+            layer=2,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_UNKNOWN,
+            refresh_class=REFRESH_MEDIUM_CHURN,
+            supports_live_truth=False,
+            data={},
+            error=standard_error("computation_failed", str(exc)[:400]),
+        )
+
+
 def run_named_probe(name: str) -> ProbeResult:
     if name == "all":
         return probe_error(
@@ -712,6 +763,7 @@ def run_named_probe(name: str) -> ProbeResult:
         "package_update_status": probe_package_update_status,
         "storage_hygiene": probe_storage_hygiene,
         "boot_service_health": probe_boot_service_health,
+        "dependency_plan": probe_dependency_plan,
     }
     func = dispatch.get(name)
     if func is None:

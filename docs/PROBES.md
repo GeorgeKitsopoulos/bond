@@ -25,6 +25,7 @@ Current implemented probe names:
 - `package_update_status`
 - `storage_hygiene`
 - `boot_service_health`
+- `dependency_plan`
 
 ## Stage 2G-A host portability profile
 
@@ -59,6 +60,24 @@ Current implemented probe names:
 - It does not authorize execution.
 - It is not part of the maintenance report contract.
 - Maintenance report scope remains limited to `package_update_status`, `storage_hygiene`, and `boot_service_health`.
+
+### Stage 2G-D package-manager classification and dependency planning
+
+- `dependency_plan` is a read-only dependency planning probe for future installer/updater/satellite planning.
+- It classifies package managers and maps capabilities to package-manager-specific package names without authorizing installation.
+- It consumes the existing read-only `host_portability_profile` and `tool_inventory` probes.
+- It classifies package managers as: mutable-strategy (apt, dnf, zypper, apk, xbps, nix, brew), immutable-user-space-preferred (rpm-ostree), steam-deck-or-atomic (pacman with Steam Deck/immutable signals), or unknown-requires-manual-review.
+- It maps bounded capabilities (core_python_runtime, git_source_checkout, selftest_validation, local_llm_runtime_optional, container_user_space_optional) to package manager-specific package names.
+- It classifies capability status as: observed_available (tools already present), plan_needed (unsupported manager prevents planning), manual_review_needed (unknown manager), or optional_not_required (optional capability without tools).
+- All authorization fields are explicitly False: execution_authorized, install_authorized, upgrade_authorized, service_authorized, write_plan_authorized.
+- No commands are generated.
+- It does not call package managers.
+- It does not authorize installation.
+- It does not authorize execution.
+- It does not mutate hosts.
+- It is not part of the maintenance report contract.
+- Maintenance report scope remains limited to `package_update_status`, `storage_hygiene`, and `boot_service_health`.
+- It does not broaden normal assistant answers.
 
 ## Stage 2F-F-A read-only maintenance probe foundation
 

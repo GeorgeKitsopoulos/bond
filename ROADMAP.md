@@ -150,6 +150,7 @@ Current checkpoint note:
 - Stage 2G-A starts the portable installer/updater/satellite track with a read-only host portability profile and implements only the first sequence item (read-only host profile).
 - Stage 2G-B adds the second safe slice of that track with a read-only storage portability profile and implements only the second sequence item (read-only storage profile).
 - Stage 2G-C adds the third safe slice of that track with a read-only install manifest and drift detection layer and implements only the third sequence item (install manifest and drift detection).
+- Stage 2G-D adds the fourth safe slice of that track with a read-only package-manager classification and dependency planning contract and implements only the fourth sequence item (package manager strategy classification and dependency planning).
 - Stage 2F-C applies telemetry-driven guardrail hardening for assistant-prefix normalization, high-risk natural command shaping, mixed-intent preemption safety, expanded capability aliases, and deterministic dry-run step metadata.
 - Stage 2F-D-D adds bounded explicit context-capability discovery for explicit context questions using existing read-only probes only.
 - Stage 2F-E-A completes a deterministic classifier boundary between capability-question detection and capability answer generation.
@@ -267,7 +268,7 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest latest run summary is {"ok": true, "passed": 288, "failed": 0, "total": 288}.
+- integrated selftest latest run summary is {"ok": true, "passed": 296, "failed": 0, "total": 296}.
 - coverage includes routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, telemetry-derived guardrail regressions, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, and the C5 follow-up strict-timeout cleanup checks.
 - coverage also includes Stage 2F-D probe foundation/cleanup checks, Stage 2F-D-B bounded model-truth checks, Stage 2F-D-C model-truth fallback checks, Stage 2F-D-D bounded context-capability answer checks, Stage 2F-E-A classifier-boundary checks, events bucket, and core memory flows.
 - coverage now also includes Stage 2F-E-E selftest accounting integrity checks.
@@ -276,6 +277,8 @@ Current checkpoint note:
 - coverage now also includes Stage 2F-F-C non-executing maintenance planning contract checks.
 - coverage now also includes Stage 2F-F-D maintenance report contract boundary checks.
 - coverage now also includes Stage 2F-F-E maintenance report readiness metadata checks.
+- coverage now also includes Stage 2G-A host portability profile, Stage 2G-B storage portability hardening, and Stage 2G-C install manifest/drift detection checks.
+- coverage now also includes Stage 2G-D package-manager strategy classification and dependency planning checks.
 - integrated selftest baseline now includes confirmation-token flow coverage (token creation, invalid/expired/consumed handling, confirmed dry-run, and non-reuse)
 - Stage 2E improves parser honesty and preflight failure behavior; Stage 2F-A/2F-B/2F-C add static registry truth, read-only capability answers, and telemetry-driven deterministic guardrail hardening, but do not expand executor authorization
 - this does not imply full behavioral coverage or assistant maturity
@@ -298,6 +301,7 @@ Current sequence implementation boundary:
 - Stage 2G-A implements only item 1.
 - Stage 2G-B implements only item 2.
 - Stage 2G-C implements only item 3.
+- Stage 2G-D implements only item 4.
 
 ### M7 - Service layer
 

@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 288, "failed": 0, "total": 288}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 296, "failed": 0, "total": 296}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -67,6 +67,17 @@ Coverage now also includes Stage 2G-C install manifest/drift detection regressio
 - `stage2g_c_install_drift_critical_host_change` — critical host portability drift requires manual review
 - `stage2g_c_install_drift_env_path_change_requires_review` — explicit Bond path drift is reported as read-only env/path drift
 - `stage2g_c_install_manifest_probe_missing_saved_manifest_is_read_only` — probe defaults to missing-saved-manifest/manual-review behavior without persistence
+
+Coverage now also includes Stage 2G-D package-manager classification and dependency planning contract checks:
+
+- `stage2g_d_package_strategy_apt_mutable_read_only` — standard mutable package managers (apt, dnf, zypper, apk, xbps, nix, brew) are recognized with mutable strategy and no mutation authorized
+- `stage2g_d_package_strategy_rpm_ostree_user_space_preferred` — rpm-ostree immutable strategy is recognized with user-space preferred surface and manual review required
+- `stage2g_d_package_strategy_steam_deck_pacman_manual_review` — pacman with steam_deck_hint or SteamOS distro produces user-space strategy with manual review
+- `stage2g_d_package_strategy_unknown_requires_manual_review` — unknown package managers are unsupported and require manual review
+- `stage2g_d_dependency_plan_shape_and_boundaries` — plan shape, bounded summaries, all authorizations false, and no execution
+- `stage2g_d_dependency_plan_observed_tools_no_install_needed` — observed tools (python3, git) mark capabilities as already available and plan_needed false
+- `stage2g_d_dependency_plan_optional_llm_not_package_claimed` — optional local-llm-runtime capability does not claim Ollama packages for automatic installation
+- `stage2g_d_dependency_plan_probe_is_read_only` — dependency_plan probe invocation returns correct kind with all authorizations false
 
 Stage 2F-F-D tests also guard against accidental inclusion of host/session/tool/model context probes inside `ai_maintenance_report.py`; the maintenance report contract must stay limited to the three maintenance probes plus the non-executing plan output.
 Stage 2F-F-D docs hygiene coverage also guards against duplicate maintenance-planning and coverage checkpoint notes in ROADMAP.md and docs/TESTING.md, plus stale current baseline drift across README.md, ROADMAP.md, docs/STATE.md, and docs/TESTING.md.

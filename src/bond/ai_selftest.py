@@ -9,6 +9,7 @@ import stat
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 import ai_confirmation
 import ai_exec
 import ai_memory_rotate
@@ -6650,8 +6651,9 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 288, "failed": 0, "total": 288}'
+    current_summary = '{"ok": true, "passed": 296, "failed": 0, "total": 296}'
     stale_summaries = [
+        '{"ok": true, "passed": 288, "failed": 0, "total": 288}',
         '{"ok": true, "passed": 281, "failed": 0, "total": 281}',
         '{"ok": true, "passed": 262, "failed": 0, "total": 262}',
         '{"ok": true, "passed": 256, "failed": 0, "total": 256}',
@@ -6868,8 +6870,9 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 288, "failed": 0, "total": 288}'
+    current_summary = '{"ok": true, "passed": 296, "failed": 0, "total": 296}'
     stale_summaries = [
+        '{"ok": true, "passed": 288, "failed": 0, "total": 288}',
         '{"ok": true, "passed": 281, "failed": 0, "total": 281}',
         '{"ok": true, "passed": 262, "failed": 0, "total": 262}',
         '{"ok": true, "passed": 256, "failed": 0, "total": 256}',
@@ -7876,6 +7879,152 @@ def run_stage2g_c_install_manifest_tests() -> list[dict]:
     return results
 
 
+def run_stage2g_d_dependency_plan_tests() -> list[dict[str, Any]]:
+    """Test Stage 2G-D package manager classification and dependency planning contracts."""
+    import ai_package_manager
+    import ai_dependency_plan
+
+    results: list[dict[str, Any]] = []
+
+    def _append(name: str, errors: list[str]) -> None:
+        ok = len(errors) == 0
+        results.append({
+            "name": name,
+            "ok": ok,
+            "returncode": 0 if ok else 1,
+            "stdout": "\n".join(errors),
+            "stderr": "",
+            "errors": errors,
+        })
+
+    # Test 1: Package strategy for apt (mutable, no review needed by default)
+    errors = []
+    strategy = ai_package_manager.classify_package_manager_strategy(package_manager="apt", os_family="debian")
+    if not strategy.get("supported_package_manager"):
+        errors.append("apt strategy should be supported")
+    if strategy.get("strategy_kind") != "mutable_package_manager_plan":
+        errors.append(f"apt strategy should be 'mutable_package_manager_plan', got {strategy.get('strategy_kind')}")
+    if strategy.get("execution_authorized") is not False:
+        errors.append("execution_authorized must be False")
+    if strategy.get("install_authorized") is not False:
+        errors.append("install_authorized must be False")
+    if strategy.get("host_mutation_default_allowed") is not False:
+        errors.append("host_mutation_default_allowed must be False")
+    _append("stage2g_d_package_strategy_apt_mutable_read_only", errors)
+
+    # Test 2: Package strategy for rpm-ostree (immutable, requires review)
+    errors = []
+    strategy = ai_package_manager.classify_package_manager_strategy(
+        package_manager="rpm-ostree",
+        distro_id="fedora-silverblue",
+        immutable_hint=True
+    )
+    if not strategy.get("supported_package_manager"):
+        errors.append("rpm-ostree strategy should be supported")
+    if strategy.get("preferred_install_surface") != "distrobox_or_user_space":
+        errors.append(f"rpm-ostree preferred surface should be 'distrobox_or_user_space', got {strategy.get('preferred_install_surface')}")
+    if not strategy.get("requires_manual_review"):
+        errors.append("rpm-ostree with immutable_hint should require manual review")
+    _append("stage2g_d_package_strategy_rpm_ostree_user_space_preferred", errors)
+
+    # Test 3: Package strategy for pacman with Steam Deck hint (user-space, requires review)
+    errors = []
+    strategy = ai_package_manager.classify_package_manager_strategy(
+        package_manager="pacman",
+        distro_id="steamos",
+        steam_deck_hint=True
+    )
+    if not strategy.get("supported_package_manager"):
+        errors.append("pacman strategy should be supported with steam_deck_hint")
+    if strategy.get("preferred_install_surface") != "distrobox_or_user_space":
+        errors.append(f"steam deck pacman should prefer user-space, got {strategy.get('preferred_install_surface')}")
+    if not strategy.get("requires_manual_review"):
+        errors.append("steam deck pacman should require manual review")
+    _append("stage2g_d_package_strategy_steam_deck_pacman_manual_review", errors)
+
+    # Test 4: Unknown package manager requires manual review
+    errors = []
+    strategy = ai_package_manager.classify_package_manager_strategy(package_manager="unknown_pm")
+    if strategy.get("supported_package_manager"):
+        errors.append("unknown package manager should not be supported")
+    if not strategy.get("requires_manual_review"):
+        errors.append("unknown package manager should require manual review")
+    if strategy.get("strategy_kind") != "unknown_requires_manual_review":
+        errors.append(f"unknown pm strategy should be 'unknown_requires_manual_review', got {strategy.get('strategy_kind')}")
+    _append("stage2g_d_package_strategy_unknown_requires_manual_review", errors)
+
+    # Test 5: Dependency plan shape and authorization fields
+    errors = []
+    plan = ai_dependency_plan.build_dependency_plan()
+    if plan.get("kind") != "bond_dependency_plan":
+        errors.append(f"plan kind should be 'bond_dependency_plan', got {plan.get('kind')}")
+    if plan.get("schema_version") != 1:
+        errors.append(f"plan schema_version should be 1, got {plan.get('schema_version')}")
+    if plan.get("execution_authorized") is not False:
+        errors.append("execution_authorized must be False")
+    if plan.get("install_authorized") is not False:
+        errors.append("install_authorized must be False")
+    if plan.get("commands_generated") is not False:
+        errors.append("commands_generated must be False")
+    if not isinstance(plan.get("plan_items"), list):
+        errors.append("plan_items must be a list")
+    _append("stage2g_d_dependency_plan_shape_and_boundaries", errors)
+
+    # Test 6: Observed tools produces observed_available status
+    errors = []
+    observed = {
+        "python3": {"available": True},
+        "git": {"available": True},
+    }
+    plan = ai_dependency_plan.build_dependency_plan(observed_tools=observed)
+    python_item = next((item for item in plan.get("plan_items", []) if item["capability"] == "core_python_runtime"), None)
+    git_item = next((item for item in plan.get("plan_items", []) if item["capability"] == "git_source_checkout"), None)
+    if python_item is None:
+        errors.append("plan should have core_python_runtime item")
+    elif python_item.get("status") != "observed_available":
+        errors.append(f"python should be observed_available, got {python_item.get('status')}")
+    if git_item is None:
+        errors.append("plan should have git_source_checkout item")
+    elif git_item.get("status") != "observed_available":
+        errors.append(f"git should be observed_available, got {git_item.get('status')}")
+    _append("stage2g_d_dependency_plan_observed_tools_no_install_needed", errors)
+
+    # Test 7: Optional LLM runtime not claimed as package
+    errors = []
+    plan = ai_dependency_plan.build_dependency_plan()
+    llm_item = next((item for item in plan.get("plan_items", []) if item["capability"] == "local_llm_runtime_optional"), None)
+    if llm_item is None:
+        errors.append("plan should have local_llm_runtime_optional item")
+    else:
+        if llm_item.get("status") != "optional_not_required":
+            errors.append(f"llm optional should be 'optional_not_required', got {llm_item.get('status')}")
+        pkg_by_mgr = llm_item.get("package_names_by_manager", {})
+        if pkg_by_mgr:
+            errors.append(f"llm optional should not have package managers listed, got {pkg_by_mgr}")
+    _append("stage2g_d_dependency_plan_optional_llm_not_package_claimed", errors)
+
+    # Test 8: Probe is read-only and returns correct kind
+    errors = []
+    try:
+        import ai_probes
+        result = ai_probes.probe_dependency_plan()
+        if not result.ok:
+            errors.append(f"dependency_plan probe failed: {result.error}")
+        else:
+            data = result.data
+            if data.get("kind") != "bond_dependency_plan":
+                errors.append(f"probe data kind should be 'bond_dependency_plan', got {data.get('kind')}")
+            if data.get("execution_authorized") is not False:
+                errors.append("probe data execution_authorized must be False")
+            if data.get("install_authorized") is not False:
+                errors.append("probe data install_authorized must be False")
+    except Exception as exc:
+        errors.append(f"probe_dependency_plan raised exception: {str(exc)[:200]}")
+    _append("stage2g_d_dependency_plan_probe_is_read_only", errors)
+
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -8344,6 +8493,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2g_c_install_manifest_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2g_d_dependency_plan_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

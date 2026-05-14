@@ -20,6 +20,19 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-D package-manager classification and dependency planning contract
+
+- Adds a read-only package-manager strategy classification and dependency planning contract for future installer/updater/satellite planning.
+- Adds `ai_package_manager.py` as a pure deterministic classifier for package manager strategies (mutable, immutable, unknown) based on package manager, OS family, distro signals, and immutability hints.
+- Adds `ai_dependency_plan.py` as a pure deterministic planner that maps requested capabilities to package manager-specific package names without authorizing installation or execution.
+- Adds `dependency_plan` as a read-only probe that combines host portability facts and observed tools to generate deterministic dependency plans.
+- Covers 8 package managers: apt, dnf, zypper, apk, xbps, nix, brew (mutable strategies); rpm-ostree (immutable user-space preferred); pacman (mutable or user-space depending on Steam Deck/immutable hints); and unknown (requires manual review).
+- Supports 5 bounded capabilities: core_python_runtime, git_source_checkout, selftest_validation, local_llm_runtime_optional, container_user_space_optional.
+- Classifies capability status as: observed_available (tool already present), plan_needed (unsupported package manager prevents automatic planning), manual_review_needed (unknown manager), optional_not_required (optional capability without tools).
+- All authorization fields (execution_authorized, install_authorized, etc.) are explicitly False; no commands are generated; no package managers are called.
+- Adds 8 selftests covering package strategy classification for apt/mutable, rpm-ostree/immutable, pacman/Steam-Deck, unknown managers, dependency plan shape, observed-tools integration, optional-LLM non-claiming, and probe read-only boundaries.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 296, "failed": 0, "total": 296}.
+
 ### Stage 2G-C install manifest drift detection
 
 - Adds a read-only install manifest and drift detection contract for future installer/updater/satellite planning.

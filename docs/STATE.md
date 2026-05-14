@@ -16,15 +16,16 @@ This file exists to prevent drift between:
 
 ## Current Checkpoint
 
-Date: 14 May 2026 (Stage 2G-C current; earlier checkpoints preserved below)
+Date: (Stage 2G-D current)
 
 Current baseline note:
 
-- Stage 2G-C install manifest drift detection is the current repository checkpoint.
-- `src/bond/ai_maintenance_report.py` added as a pure isolated seam for narrow maintenance/readiness report assembly and formatting.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 288, "failed": 0, "total": 288}.
-- Stage 2G-C adds a read-only install manifest and drift detection layer built from bounded host/storage portability facts and explicit inputs only.
-- Stage 2G-C does not persist manifests, perform reconfiguration, install packages, update services, or mutate storage.
+- Stage 2G-D deterministic dependency planning and package-manager classification contract is the current repository checkpoint.
+- `src/bond/ai_package_manager.py` and `src/bond/ai_dependency_plan.py` added as pure deterministic, non-executing contracts for package manager strategy classification and dependency planning.
+- Compile and integrated selftest baseline is {"ok": true, "passed": 296, "failed": 0, "total": 296}.
+- Stage 2G-D adds a read-only package-manager classification and dependency planning contract built from bounded host portability facts and explicit inputs only.
+- Stage 2G-D does not authorize installation, execute package managers, perform configuration changes, or mutate hosts.
+- Stage 2G-C install manifest drift detection remains integrated/current.
 - Stage 2G-B continues the portable installer/updater/satellite track with a read-only storage portability profile.
 - Stage 2G-A starts the portable installer/updater/satellite track with a read-only host portability profile.
 - Stage 2G-A host portability profile remains integrated/current.
