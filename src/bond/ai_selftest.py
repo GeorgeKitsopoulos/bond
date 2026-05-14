@@ -6651,8 +6651,9 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 300, "failed": 0, "total": 300}'
+    current_summary = '{"ok": true, "passed": 302, "failed": 0, "total": 302}'
     stale_summaries = [
+        '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
         '{"ok": true, "passed": 288, "failed": 0, "total": 288}',
         '{"ok": true, "passed": 281, "failed": 0, "total": 281}',
         '{"ok": true, "passed": 262, "failed": 0, "total": 262}',
@@ -6871,8 +6872,9 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 300, "failed": 0, "total": 300}'
+    current_summary = '{"ok": true, "passed": 302, "failed": 0, "total": 302}'
     stale_summaries = [
+        '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
         '{"ok": true, "passed": 296, "failed": 0, "total": 296}',
         '{"ok": true, "passed": 288, "failed": 0, "total": 288}',
         '{"ok": true, "passed": 281, "failed": 0, "total": 281}',
@@ -8174,6 +8176,91 @@ def run_stage2g_d_dependency_plan_tests() -> list[dict[str, Any]]:
     if "plan_needed means unsupported" in plan_notes.lower():
         errors.append("plan_notes must not contain stale wording 'plan_needed means unsupported'")
     _append("stage2g_d_dependency_plan_status_wording_contract", errors)
+
+    # Test 13: manual-review items must not have status plan_needed
+    errors = []
+    rpm_ostree_mr_strategy = ai_package_manager.classify_package_manager_strategy(
+        package_manager="rpm-ostree",
+        immutable_hint=True,
+    )
+    mr_plan = ai_dependency_plan.build_dependency_plan(
+        package_strategy=rpm_ostree_mr_strategy,
+        requested_capabilities=(
+            "core_python_runtime",
+            "git_source_checkout",
+            "container_user_space_optional",
+        ),
+        observed_tools={},
+    )
+    for item in mr_plan.get("plan_items", []):
+        if item.get("requires_manual_review") and item.get("status") == "plan_needed":
+            errors.append(
+                f"item '{item['capability']}' has requires_manual_review=True but status='plan_needed'; "
+                f"must be 'manual_review_needed'"
+            )
+        if item.get("requires_manual_review") and item.get("status") not in (
+            "manual_review_needed",
+            "observed_available",
+            "optional_not_required",
+        ):
+            errors.append(
+                f"item '{item['capability']}' requires_manual_review=True but has unexpected "
+                f"status '{item.get('status')}'"
+            )
+        # package_names_by_manager must be empty for manual-review items
+        if item.get("requires_manual_review") and item.get("package_names_by_manager"):
+            errors.append(
+                f"item '{item['capability']}' requires_manual_review=True must have empty "
+                f"package_names_by_manager, got {item.get('package_names_by_manager')}"
+            )
+    # Authorization and commands_generated must all be False
+    for field in ("execution_authorized", "install_authorized", "upgrade_authorized",
+                  "service_authorized", "write_plan_authorized", "commands_generated"):
+        if mr_plan.get(field) is not False:
+            errors.append(f"{field} must be False, got {mr_plan.get(field)}")
+    _append("stage2g_d_dependency_plan_manual_review_items_not_plan_needed", errors)
+
+    # Test 14: item-level requires_manual_review drives top-level manual_dependency_review
+    errors = []
+    steam_deck_strategy = ai_package_manager.classify_package_manager_strategy(
+        package_manager="pacman",
+        immutable_hint=True,
+    )
+    mr_top_plan = ai_dependency_plan.build_dependency_plan(
+        package_strategy=steam_deck_strategy,
+        requested_capabilities=(
+            "core_python_runtime",
+            "container_user_space_optional",
+        ),
+        observed_tools={},
+    )
+    # At least one item must have requires_manual_review True
+    any_item_requires_review = any(
+        item.get("requires_manual_review") for item in mr_top_plan.get("plan_items", [])
+    )
+    if not any_item_requires_review:
+        errors.append("expected at least one plan item with requires_manual_review=True")
+    # Top-level requires_manual_review must be True
+    if not mr_top_plan.get("requires_manual_review"):
+        errors.append("top-level requires_manual_review must be True when any item requires review")
+    # recommended_next_step_kind must be manual_dependency_review
+    next_step = mr_top_plan.get("recommended_next_step_kind")
+    if next_step != "manual_dependency_review":
+        errors.append(
+            f"recommended_next_step_kind must be 'manual_dependency_review' when any item "
+            f"requires_manual_review=True, got '{next_step}'"
+        )
+    if next_step in ("none", "review_dependency_plan"):
+        errors.append(
+            f"recommended_next_step_kind must not be '{next_step}' when manual review required"
+        )
+    # No execution/install/upgrade/service/write authorization
+    for field in ("execution_authorized", "install_authorized", "upgrade_authorized",
+                  "service_authorized", "write_plan_authorized"):
+        if mr_top_plan.get(field) is not False:
+            errors.append(f"{field} must be False, got {mr_top_plan.get(field)}")
+    _append("stage2g_d_dependency_plan_item_requires_review_drives_top_level_review", errors)
+
     return results
 
 

@@ -184,7 +184,8 @@ def build_dependency_plan(
                 "immutable_host_user_space_preferred",
                 "steam_deck_or_atomic_user_space_preferred",
             ):
-                status = "plan_needed"  # Recommended for immutable hosts
+                # Manual-review strategies require manual review, not a plain plan
+                status = "manual_review_needed"
             elif observed_podman:
                 status = "observed_available"
             else:
@@ -226,7 +227,11 @@ def build_dependency_plan(
         plan_items.append(item)
 
     # Determine recommended next step
-    if any(item["status"] == "manual_review_needed" for item in plan_items):
+    # Check requires_manual_review on items first, then fall back to status checks
+    if (
+        any(item["requires_manual_review"] for item in plan_items)
+        or any(item["status"] == "manual_review_needed" for item in plan_items)
+    ):
         recommended_next = "manual_dependency_review"
     elif any(item["status"] == "plan_needed" for item in plan_items):
         recommended_next = "review_dependency_plan"

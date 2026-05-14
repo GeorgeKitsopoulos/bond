@@ -40,7 +40,15 @@ Until formal release tagging is established, this changelog should follow these 
 - Required core capabilities (core_python_runtime, git_source_checkout, selftest_validation) now produce `manual_review_needed` status for immutable/rpm-ostree/unknown strategies unless the tool is explicitly observed available.
 - Fixes `recommended_next_step_kind` aggregation: if any plan item is `manual_review_needed` the top-level result is `manual_dependency_review`; else if any item is `plan_needed` the result is `review_dependency_plan`; else `none`. The previous logic allowed "all core tools observed" to suppress manual-review items.
 - No execution behavior added. No package managers called. No commands generated. All authorization fields remain False.
-- Adds 4 regression selftests for the above corrections; selftest baseline is now {"ok": true, "passed": 300, "failed": 0, "total": 300}.
+- Adds 4 regression selftests for the above corrections; selftest baseline at this checkpoint advanced to 300 passing tests (superseded by Stage 2G-D second forward-fix below).
+
+### Stage 2G-D forward-fix: align dependency plan manual-review status aggregation
+
+- Aligns `ai_dependency_plan.py` so that item-level manual review cannot be hidden behind a `plan_needed` status: if a plan item requires manual review, its status is now `manual_review_needed`, not `plan_needed`.
+- Specifically, `container_user_space_optional` on rpm-ostree, immutable, and Steam Deck-like strategies now returns `manual_review_needed` rather than `plan_needed`.
+- Hardens top-level `recommended_next_step_kind` aggregation to consult item-level `requires_manual_review` in addition to item status, ensuring `manual_dependency_review` is returned whenever any item carries `requires_manual_review: true`.
+- `package_names_by_manager` remains empty for manual-review items. No command strings generated. No execution behavior added. All authorization fields remain False.
+- Adds 2 regression selftests (`stage2g_d_dependency_plan_manual_review_items_not_plan_needed`, `stage2g_d_dependency_plan_item_requires_review_drives_top_level_review`); selftest baseline is now {"ok": true, "passed": 302, "failed": 0, "total": 302}.
 
 ### Stage 2G-C install manifest drift detection
 

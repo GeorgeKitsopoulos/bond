@@ -22,9 +22,9 @@ Current baseline note:
 
 - Stage 2G-D deterministic dependency planning and package-manager classification contract is the current repository checkpoint.
 - `src/bond/ai_package_manager.py` and `src/bond/ai_dependency_plan.py` added as pure deterministic, non-executing contracts for package manager strategy classification and dependency planning.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 300, "failed": 0, "total": 300} (Stage 2G-D forward-fix applied).
+- Compile and integrated selftest baseline is {"ok": true, "passed": 302, "failed": 0, "total": 302} (Stage 2G-D second forward-fix applied).
 - Stage 2G-D adds a read-only package-manager classification and dependency planning contract built from bounded host portability facts and explicit inputs only.
-- Stage 2G-D forward-fix hardens host_profile distro_like resolution, rpm-ostree/immutable non-host-package-claim planning, and manual-review next-step aggregation. No execution behavior added.
+- Stage 2G-D second forward-fix aligns item-level manual-review status semantics: items requiring manual review now carry status manual_review_needed rather than plan_needed, and top-level recommended_next_step_kind consults requires_manual_review on plan items. Dependency planning remains read-only and plan-only; no execution behavior added.
 - Stage 2G-D does not authorize installation, execute package managers, perform configuration changes, or mutate hosts.
 - Stage 2G-C install manifest drift detection remains integrated/current.
 - Stage 2G-B continues the portable installer/updater/satellite track with a read-only storage portability profile.
