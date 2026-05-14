@@ -16,16 +16,16 @@ This file exists to prevent drift between:
 
 ## Current Checkpoint
 
-Date: (Stage 2G-D current)
+Date: (Stage 2G-E current)
 
 Current baseline note:
 
-- Stage 2G-D deterministic dependency planning and package-manager classification contract is the current repository checkpoint.
-- `src/bond/ai_package_manager.py` and `src/bond/ai_dependency_plan.py` added as pure deterministic, non-executing contracts for package manager strategy classification and dependency planning.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 302, "failed": 0, "total": 302} (Stage 2G-D second forward-fix applied).
-- Stage 2G-D adds a read-only package-manager classification and dependency planning contract built from bounded host portability facts and explicit inputs only.
-- Stage 2G-D second forward-fix aligns item-level manual-review status semantics: items requiring manual review now carry status manual_review_needed rather than plan_needed, and top-level recommended_next_step_kind consults requires_manual_review on plan items. Dependency planning remains read-only and plan-only; no execution behavior added.
-- Stage 2G-D does not authorize installation, execute package managers, perform configuration changes, or mutate hosts.
+- Stage 2G-E read-only installer planning contract is the current repository checkpoint.
+- `src/bond/ai_installer_plan.py` added as a pure deterministic, non-executing contract for installer/reconfigure planning.
+- Compile and integrated selftest baseline is {"ok": true, "passed": 309, "failed": 0, "total": 309} (Stage 2G-E applied).
+- Stage 2G-E adds a read-only installer planning contract composing Stage 2G profile, drift, and dependency facts into a bounded plan without authorizing execution, installation, reconfiguration, service changes, manifest writes, or storage mutation.
+- Stage 2G-E does not authorize installation, reconfiguration, service changes, manifest writes, storage mutations, or execution of any kind.
+- Stage 2G-D deterministic dependency planning and package-manager classification contract remains integrated/current.
 - Stage 2G-C install manifest drift detection remains integrated/current.
 - Stage 2G-B continues the portable installer/updater/satellite track with a read-only storage portability profile.
 - Stage 2G-A starts the portable installer/updater/satellite track with a read-only host portability profile.

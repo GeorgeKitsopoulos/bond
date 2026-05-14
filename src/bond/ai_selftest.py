@@ -125,6 +125,7 @@ from ai_probes import (
     probe_boot_service_health,
     probe_host_baseline,
     probe_host_portability_profile,
+    probe_installer_plan,
     probe_model_truth,
     probe_ollama_model_inventory,
     probe_package_update_status,
@@ -6651,8 +6652,9 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 302, "failed": 0, "total": 302}'
+    current_summary = '{"ok": true, "passed": 309, "failed": 0, "total": 309}'
     stale_summaries = [
+        '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
         '{"ok": true, "passed": 288, "failed": 0, "total": 288}',
         '{"ok": true, "passed": 281, "failed": 0, "total": 281}',
@@ -6872,8 +6874,9 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 302, "failed": 0, "total": 302}'
+    current_summary = '{"ok": true, "passed": 309, "failed": 0, "total": 309}'
     stale_summaries = [
+        '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
         '{"ok": true, "passed": 296, "failed": 0, "total": 296}',
         '{"ok": true, "passed": 288, "failed": 0, "total": 288}',
@@ -8264,6 +8267,266 @@ def run_stage2g_d_dependency_plan_tests() -> list[dict[str, Any]]:
     return results
 
 
+def run_stage2g_e_installer_plan_tests() -> list[dict[str, Any]]:
+    import ai_installer_plan
+    import ai_package_manager
+    import ai_dependency_plan
+
+    results: list[dict] = []
+
+    def _append(name: str, errors: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": "",
+                "stderr": "",
+                "errors": errors,
+            }
+        )
+
+    # Synthetic complete inputs for most tests
+    _host = {
+        "architecture": "x86_64",
+        "os_family": "linux",
+        "package_manager": "apt",
+        "immutable_hint": False,
+        "steam_deck_hint": False,
+    }
+    _storage = {
+        "preferred_large_data_base": "/home/user/.local/share",
+        "requires_manual_review": False,
+        "storage_pressure": "low",
+        "home_mount_point": "/home",
+    }
+    _strategy = {
+        "strategy_kind": "mutable_supported",
+        "preferred_install_surface": "package_manager",
+        "requires_manual_review": False,
+        "supported_package_manager": True,
+        "package_manager": "apt",
+    }
+    _dep_plan = {
+        "kind": "bond_dependency_plan",
+        "schema_version": 1,
+        "requires_manual_review": False,
+        "recommended_next_step_kind": "none",
+        "plan_items": [
+            {"capability": "core_python_runtime", "status": "observed_available",
+             "requires_manual_review": False, "execution_authorized": False, "command": None},
+        ],
+    }
+    _drift = {
+        "drift_severity": "none",
+        "recommended_next_step_kind": "none",
+        "requires_manual_review": False,
+    }
+
+    # Test 1: shape and boundaries
+    errors: list[str] = []
+    plan = ai_installer_plan.build_installer_plan(
+        host_profile=_host,
+        storage_profile=_storage,
+        package_strategy=_strategy,
+        dependency_plan=_dep_plan,
+        install_drift_report=_drift,
+    )
+    if plan.get("kind") != ai_installer_plan.INSTALLER_PLAN_KIND:
+        errors.append(f"kind mismatch: {plan.get('kind')}")
+    if plan.get("schema_version") != ai_installer_plan.INSTALLER_PLAN_SCHEMA_VERSION:
+        errors.append(f"schema_version mismatch: {plan.get('schema_version')}")
+    for field in ("execution_authorized", "install_authorized", "upgrade_authorized",
+                  "reconfigure_authorized", "service_authorized", "write_plan_authorized",
+                  "write_manifest_authorized", "commands_generated"):
+        if plan.get(field) is not False:
+            errors.append(f"{field} must be False, got {plan.get(field)}")
+    items = plan.get("plan_items", [])
+    if not items:
+        errors.append("plan_items must not be empty")
+    for item in items:
+        if item.get("execution_authorized") is not False:
+            errors.append(f"item '{item.get('step_id')}' execution_authorized must be False")
+        if item.get("command") is not None:
+            errors.append(f"item '{item.get('step_id')}' command must be None")
+    _append("stage2g_e_installer_plan_shape_and_boundaries", errors)
+
+    # Test 2: missing inputs block review
+    errors = []
+    blocked_plan = ai_installer_plan.build_installer_plan(
+        host_profile=None,
+        storage_profile=None,
+        package_strategy=_strategy,
+        dependency_plan=_dep_plan,
+    )
+    if blocked_plan.get("plan_status") != "blocked_missing_inputs":
+        errors.append(
+            f"plan_status must be 'blocked_missing_inputs' when host/storage missing, "
+            f"got '{blocked_plan.get('plan_status')}'"
+        )
+    if blocked_plan.get("recommended_next_step_kind") != "collect_missing_profile_facts":
+        errors.append(
+            f"recommended_next_step_kind must be 'collect_missing_profile_facts', "
+            f"got '{blocked_plan.get('recommended_next_step_kind')}'"
+        )
+    for field in ("execution_authorized", "install_authorized", "reconfigure_authorized"):
+        if blocked_plan.get(field) is not False:
+            errors.append(f"{field} must be False")
+    _append("stage2g_e_installer_plan_missing_inputs_block_review", errors)
+
+    # Test 3: dependency manual review propagates
+    errors = []
+    manual_dep = {
+        "kind": "bond_dependency_plan",
+        "schema_version": 1,
+        "requires_manual_review": True,
+        "recommended_next_step_kind": "manual_dependency_review",
+        "plan_items": [
+            {"capability": "core_python_runtime", "status": "manual_review_needed",
+             "requires_manual_review": True, "execution_authorized": False, "command": None},
+        ],
+    }
+    mr_plan = ai_installer_plan.build_installer_plan(
+        host_profile=_host,
+        storage_profile=_storage,
+        package_strategy=_strategy,
+        dependency_plan=manual_dep,
+        install_drift_report=_drift,
+    )
+    if mr_plan.get("plan_status") != "manual_review_required":
+        errors.append(
+            f"plan_status must be 'manual_review_required' when dep requires review, "
+            f"got '{mr_plan.get('plan_status')}'"
+        )
+    if mr_plan.get("recommended_next_step_kind") != "manual_installer_review":
+        errors.append(
+            f"recommended_next_step_kind must be 'manual_installer_review', "
+            f"got '{mr_plan.get('recommended_next_step_kind')}'"
+        )
+    # review_reasons or plan_items must mention dependency
+    review_reasons = mr_plan.get("review_reasons", [])
+    plan_items_mr = mr_plan.get("plan_items", [])
+    dep_item = next((i for i in plan_items_mr if i.get("step_id") == "review_dependency_plan"), None)
+    dep_mentioned = (
+        any("dependency" in r.lower() for r in review_reasons)
+        or (dep_item is not None and dep_item.get("requires_manual_review"))
+    )
+    if not dep_mentioned:
+        errors.append("review_reasons or plan_items must mention dependency review")
+    if mr_plan.get("execution_authorized") is not False:
+        errors.append("execution_authorized must be False")
+    _append("stage2g_e_installer_plan_dependency_manual_review_propagates", errors)
+
+    # Test 4: critical drift requires manual review
+    errors = []
+    critical_drift = {
+        "drift_severity": "critical",
+        "recommended_next_step_kind": "review_before_reconfigure",
+        "requires_manual_review": True,
+    }
+    drift_plan = ai_installer_plan.build_installer_plan(
+        host_profile=_host,
+        storage_profile=_storage,
+        package_strategy=_strategy,
+        dependency_plan=_dep_plan,
+        install_drift_report=critical_drift,
+    )
+    if drift_plan.get("plan_status") != "manual_review_required":
+        errors.append(
+            f"plan_status must be 'manual_review_required' for critical drift, "
+            f"got '{drift_plan.get('plan_status')}'"
+        )
+    if drift_plan.get("plan_status") == "ready_for_human_review":
+        errors.append("plan_status must not be 'ready_for_human_review' for critical drift")
+    if drift_plan.get("reconfigure_authorized") is not False:
+        errors.append("reconfigure_authorized must be False")
+    _append("stage2g_e_installer_plan_critical_drift_requires_manual_review", errors)
+
+    # Test 5: omits identity and secret fields
+    errors = []
+    sensitive_host = dict(_host)
+    sensitive_host["hostname"] = "my-secret-machine"
+    sensitive_host["username"] = "john.doe"
+    sensitive_host["email"] = "john@example.com"
+    sensitive_host["token"] = "supersecrettoken123"
+    sensitive_storage = dict(_storage)
+    sensitive_storage["password"] = "hunter2"
+    sensitive_storage["secret"] = "top_secret"
+    sensitive_dep = dict(_dep_plan)
+    sensitive_dep["api_key"] = "api-key-value-12345"
+    secret_plan = ai_installer_plan.build_installer_plan(
+        host_profile=sensitive_host,
+        storage_profile=sensitive_storage,
+        package_strategy=_strategy,
+        dependency_plan=sensitive_dep,
+        install_drift_report=_drift,
+    )
+    # Convert to string representation for checking
+    plan_str = str(secret_plan)
+    for sensitive_val in ("my-secret-machine", "john.doe", "john@example.com",
+                          "supersecrettoken123", "hunter2", "top_secret", "api-key-value-12345"):
+        if sensitive_val in plan_str:
+            errors.append(f"sensitive value '{sensitive_val}' must not appear in plan output")
+    _append("stage2g_e_installer_plan_omits_identity_and_secret_fields", errors)
+
+    # Test 6: format_installer_plan is non-executing
+    errors = []
+    fmt_plan = ai_installer_plan.build_installer_plan(
+        host_profile=_host,
+        storage_profile=_storage,
+        package_strategy=_strategy,
+        dependency_plan=_dep_plan,
+        install_drift_report=_drift,
+    )
+    formatted = ai_installer_plan.format_installer_plan(fmt_plan)
+    if "Installer planning report" not in formatted:
+        errors.append("formatted output must include 'Installer planning report'")
+    if "Execution authorized: false" not in formatted:
+        errors.append("formatted output must include 'Execution authorized: false'")
+    if "No install, update, reconfigure, service, storage, or manifest write action was performed." not in formatted:
+        errors.append("formatted output must include the no-mutation disclaimer")
+    # Must not include shell command patterns
+    for shell_pattern in ("apt install", "dnf install", "pacman -S", "rpm-ostree install",
+                          "sudo ", "bash -c", "sh -c"):
+        if shell_pattern in formatted:
+            errors.append(f"formatted output must not include shell command '{shell_pattern}'")
+    _append("stage2g_e_installer_plan_format_is_non_executing", errors)
+
+    # Test 7: installer_plan probe is read-only
+    errors = []
+    try:
+        probe_result = probe_installer_plan()
+        probe_data = probe_result.data if probe_result.ok else probe_result.data
+        # Probe must contain installer plan kind
+        plan_kind = None
+        if isinstance(probe_data, dict):
+            plan_kind = probe_data.get("kind")
+        if plan_kind != ai_installer_plan.INSTALLER_PLAN_KIND:
+            errors.append(
+                f"probe data kind must be '{ai_installer_plan.INSTALLER_PLAN_KIND}', "
+                f"got '{plan_kind}'"
+            )
+        # All authorization fields must be False
+        if isinstance(probe_data, dict):
+            for field in ("execution_authorized", "install_authorized", "upgrade_authorized",
+                          "reconfigure_authorized", "service_authorized", "write_plan_authorized",
+                          "write_manifest_authorized"):
+                if probe_data.get(field) is not False:
+                    errors.append(f"probe {field} must be False, got {probe_data.get(field)}")
+        # Probe must not be coupled to maintenance report (check probe_name)
+        if probe_result.probe_name == "maintenance_report":
+            errors.append("installer_plan probe must not have probe_name 'maintenance_report'")
+        if probe_result.probe_name != "installer_plan":
+            errors.append(
+                f"probe_name must be 'installer_plan', got '{probe_result.probe_name}'"
+            )
+    except Exception as exc:
+        errors.append(f"probe_installer_plan raised unexpectedly: {exc}")
+    _append("stage2g_e_installer_plan_probe_is_read_only", errors)
+
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -8744,6 +9007,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2g_d_dependency_plan_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2g_e_installer_plan_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

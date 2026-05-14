@@ -14,6 +14,7 @@ from ai_install_manifest import build_install_manifest, compare_install_manifest
 from ai_storage_profile import build_current_storage_portability_profile
 from ai_package_manager import classify_package_manager_strategy
 from ai_dependency_plan import build_dependency_plan
+from ai_installer_plan import build_installer_plan
 from ai_core import BOND_ROOT, CONFIG_FILE, get_memory_root, get_router_config_path, get_state_root
 from ai_probe_contract import (
     CERTAINTY_AUTHORITATIVE,
@@ -45,6 +46,7 @@ AVAILABLE_PROBES = (
     "storage_hygiene",
     "boot_service_health",
     "dependency_plan",
+    "installer_plan",
 )
 
 
@@ -764,6 +766,7 @@ def run_named_probe(name: str) -> ProbeResult:
         "storage_hygiene": probe_storage_hygiene,
         "boot_service_health": probe_boot_service_health,
         "dependency_plan": probe_dependency_plan,
+        "installer_plan": probe_installer_plan,
     }
     func = dispatch.get(name)
     if func is None:
@@ -778,6 +781,66 @@ def run_named_probe(name: str) -> ProbeResult:
             error=standard_error("unknown_probe", f"unknown probe: {name}"),
         )
     return func()
+
+
+def probe_installer_plan() -> ProbeResult:
+    """
+    Read-only installer/reconfigure planning probe.
+
+    Composes existing read-only profile, drift, and dependency facts into
+    a bounded installer plan without authorizing execution, installation,
+    reconfiguration, service changes, manifest writes, or storage mutations.
+    """
+    try:
+        host_result = probe_host_portability_profile()
+        host_profile = host_result.data if host_result.ok else {}
+
+        storage_result = probe_storage_portability_profile()
+        storage_profile = storage_result.data if storage_result.ok else {}
+
+        drift_result = probe_install_manifest_drift()
+        install_drift_report = drift_result.data if drift_result.ok else {}
+
+        dep_result = probe_dependency_plan()
+        dependency_plan = dep_result.data if dep_result.ok else {}
+
+        # Extract package strategy from dependency plan if available
+        pkg_strategy = dependency_plan.get("package_strategy") if isinstance(dependency_plan, dict) else {}
+
+        plan = build_installer_plan(
+            host_profile=host_profile,
+            storage_profile=storage_profile,
+            install_drift_report=install_drift_report,
+            dependency_plan=dependency_plan,
+            package_strategy=pkg_strategy,
+            bond_root=str(BOND_ROOT),
+        )
+
+        return probe_ok(
+            probe_name="installer_plan",
+            layer=3,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_DERIVED,
+            refresh_class=REFRESH_MEDIUM_CHURN,
+            supports_live_truth=True,
+            data=plan,
+            notes=(
+                "Read-only installer planning probe; does not execute package-manager commands, "
+                "authorize installation, reconfiguration, service changes, manifest writes, "
+                "or storage mutations. Not part of the maintenance report contract."
+            ),
+        )
+    except Exception as exc:
+        return probe_error(
+            probe_name="installer_plan",
+            layer=3,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_UNKNOWN,
+            refresh_class=REFRESH_MEDIUM_CHURN,
+            supports_live_truth=False,
+            data={},
+            error=standard_error("computation_failed", str(exc)[:400]),
+        )
 
 
 def run_all_probes() -> list[ProbeResult]:

@@ -347,6 +347,23 @@ Stage 2F-F-E adds metadata-only readiness fields inside the explicit maintenance
 - All authorization fields are explicitly False.
 - They do not broaden normal assistant answers.
 
+### Installer planning (Stage 2G-E)
+
+- Module owner: `src/bond/ai_installer_plan.py`.
+- Probe owner: `installer_plan` in `src/bond/ai_probes.py`.
+- Purpose: compose Stage 2G read-only facts (host profile, storage profile, install manifest drift, dependency plan) into a bounded installer plan without authorizing execution.
+- Input: host_profile, storage_profile, install_manifest, install_drift_report, package_strategy, dependency_plan, requested_mode, bond_root.
+- Output: installer plan with plan items (step_id, status, requires_manual_review, execution_authorized, command), plan status, recommended next steps, and non-executing format documentation.
+- Plan statuses: `ready_for_human_review`, `manual_review_required`, `blocked_missing_inputs`, `unsupported_manual_review`.
+- The module is pure deterministic and read-only.
+- It does not call package managers.
+- It does not inspect live system state.
+- It does not authorize installation, reconfiguration, service changes, or storage mutations.
+- It does not generate executable commands.
+- It does not mutate hosts or storage.
+- All authorization fields are explicitly False.
+- It does not broaden normal assistant answers.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

@@ -228,6 +228,32 @@ classify -> plan -> show -> explicitly authorize -> execute -> verify -> report
 
 Package manager execution is not added in this stage.
 
+## Installer planning prerequisite (Stage 2G-E)
+
+Future installer/updater work must compose bounded plans from Stage 2G read-only facts before any interactive or execution work begins.
+
+Stage 2G-E adds a deterministic, read-only installer planning contract that composes host profiles, storage profiles, install manifest drift, and dependency plans into bounded installer plans without authorizing execution.
+
+It can compose read-only Stage 2G facts into a plan structure with discrete steps (collect_host_profile, collect_storage_profile, review_install_manifest_drift, review_dependency_plan, review_storage_locations, review_service_strategy, final_human_approval).
+
+It can classify plan readiness as: ready_for_human_review, manual_review_required, blocked_missing_inputs, or unsupported_manual_review.
+
+It can recommend deterministic next steps: review_installer_plan, manual_installer_review, collect_missing_profile_facts, or manual_platform_review.
+
+It omits sensitive fields (hostname, username, email, token, password, secret, api_key, machine_id) from plan output to prevent credential leakage.
+
+This stage does not call package managers, perform reconfigurations, update services, write manifests, move storage, authorize execution, execute commands, or mutate hosts in any way.
+
+All authorization fields (execution_authorized, install_authorized, reconfigure_authorized, service_authorized, write_plan_authorized, write_manifest_authorized, etc.) remain explicitly False.
+
+The formatted plan output includes an explicit disclaimer: "No install, update, reconfigure, service, storage, or manifest write action was performed."
+
+Any future installer/dependency flow must remain:
+
+classify -> plan -> show -> explicitly authorize -> execute -> verify -> report
+
+Installation, reconfiguration, and storage execution are not added in this stage.
+
 ## Uninstall direction
 
 Uninstall must eventually become explicit.

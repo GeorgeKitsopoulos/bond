@@ -20,6 +20,19 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-E read-only installer planning contract
+
+- Adds a read-only installer planning contract composing Stage 2G profile, drift, and dependency facts into a bounded installer plan.
+- Adds `ai_installer_plan.py` as a pure deterministic builder that composes host profile, storage profile, install manifest drift, and dependency plan into a plan structure.
+- Adds `installer_plan` as a read-only probe that generates bounded installer plans from Stage 2G read-only facts.
+- Defines plan readiness statuses: ready_for_human_review (plan complete, no manual review needed); manual_review_required (plan complete but manual review required); blocked_missing_inputs (profile facts incomplete); unsupported_manual_review (unsupported configurations detected).
+- Defines deterministic next-step recommendations: review_installer_plan (for ready status); manual_installer_review (for manual-review status); collect_missing_profile_facts (for blocked status); manual_platform_review (for unsupported status).
+- Defines plan steps: collect_host_profile, collect_storage_profile, review_install_manifest_drift, review_dependency_plan, review_storage_locations, review_service_strategy, final_human_approval.
+- Omits sensitive fields (hostname, username, email, token, password, secret, api_key, machine_id) from plan output to prevent credential leakage.
+- All authorization fields (execution_authorized, install_authorized, upgrade_authorized, reconfigure_authorized, service_authorized, write_plan_authorized, write_manifest_authorized) are explicitly False; no commands are generated; no package managers, services, storage, or installers are called.
+- Adds 7 selftests covering plan shape/boundaries, missing-inputs blocking, dependency-manual-review propagation, critical-drift-manual-review triggering, sensitive-field exclusion, non-executing format output, and probe read-only shape.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 309, "failed": 0, "total": 309}.
+
 ### Stage 2G-D package-manager classification and dependency planning contract
 
 - Adds a read-only package-manager strategy classification and dependency planning contract for future installer/updater/satellite planning.
@@ -48,7 +61,7 @@ Until formal release tagging is established, this changelog should follow these 
 - Specifically, `container_user_space_optional` on rpm-ostree, immutable, and Steam Deck-like strategies now returns `manual_review_needed` rather than `plan_needed`.
 - Hardens top-level `recommended_next_step_kind` aggregation to consult item-level `requires_manual_review` in addition to item status, ensuring `manual_dependency_review` is returned whenever any item carries `requires_manual_review: true`.
 - `package_names_by_manager` remains empty for manual-review items. No command strings generated. No execution behavior added. All authorization fields remain False.
-- Adds 2 regression selftests (`stage2g_d_dependency_plan_manual_review_items_not_plan_needed`, `stage2g_d_dependency_plan_item_requires_review_drives_top_level_review`); selftest baseline is now {"ok": true, "passed": 302, "failed": 0, "total": 302}.
+- Adds 2 regression selftests (`stage2g_d_dependency_plan_manual_review_items_not_plan_needed`, `stage2g_d_dependency_plan_item_requires_review_drives_top_level_review`); selftest baseline is now 302 tests passing (superseded by Stage 2G-E baseline of 309 passing tests).
 
 ### Stage 2G-C install manifest drift detection
 

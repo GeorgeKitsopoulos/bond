@@ -80,6 +80,25 @@ Current implemented probe names:
 - Maintenance report scope remains limited to `package_update_status`, `storage_hygiene`, and `boot_service_health`.
 - It does not broaden normal assistant answers.
 
+### Stage 2G-E installer planning
+
+- `installer_plan` is a read-only installer planning probe for future installer/updater/satellite planning.
+- It composes Stage 2G read-only facts (host profile, storage profile, install manifest drift, dependency plan) into a bounded installer plan.
+- It consumes `host_portability_profile`, `storage_portability_profile`, `install_manifest_drift`, and `dependency_plan` probes.
+- It builds plan items with distinct steps: collect_host_profile, collect_storage_profile, review_install_manifest_drift, review_dependency_plan, review_storage_locations, review_service_strategy, final_human_approval.
+- It classifies plan readiness as: ready_for_human_review, manual_review_required, blocked_missing_inputs, or unsupported_manual_review.
+- It recommends deterministic next steps: review_installer_plan, manual_installer_review, collect_missing_profile_facts, or manual_platform_review.
+- It omits sensitive fields (hostname, username, email, token, password, secret, api_key, machine_id) from plan output.
+- All authorization fields are explicitly False: execution_authorized, install_authorized, upgrade_authorized, reconfigure_authorized, service_authorized, write_plan_authorized, write_manifest_authorized.
+- No commands are generated.
+- It does not call package managers.
+- It does not authorize installation, reconfiguration, service changes, or storage mutation.
+- It does not authorize execution.
+- It does not mutate hosts or storage.
+- It is not part of the maintenance report contract.
+- Maintenance report scope remains limited to `package_update_status`, `storage_hygiene`, and `boot_service_health`.
+- It does not broaden normal assistant answers.
+
 ## Stage 2F-F-A read-only maintenance probe foundation
 
 - `package_update_status` inspects local apt upgradable-package cache only.
