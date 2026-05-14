@@ -174,6 +174,22 @@ detect -> plan -> show -> explicitly authorize -> execute -> verify -> report
 
 Execution is not added in this stage.
 
+## Storage portability profiling prerequisite (Stage 2G-B)
+
+Future installer/updater work must understand storage before creating directories, placing models, moving telemetry, or writing manifests.
+
+Stage 2G-B can classify internal/home fallback, external media paths, Steam Deck SD-card-like paths, free-space pressure, and Bond role placement recommendations from safe signals.
+
+Bazzite, Steam Deck, and SteamOS-like systems should prefer SD-card or external-storage recommendations for large Bond data, models, telemetry, logs, backups, and RAG/index data when detected, but must not hardcode a Deck path.
+
+This is not a working installer, updater, cleanup tool, data mover, mount manager, or satellite runtime.
+
+Any future storage-affecting flow must remain:
+
+detect -> plan -> show -> explicitly authorize -> execute -> verify -> report
+
+Execution is not added in this stage.
+
 ## Uninstall direction
 
 Uninstall must eventually become explicit.

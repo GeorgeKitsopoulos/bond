@@ -15,6 +15,7 @@ Current implemented probe names:
 
 - `host_baseline`
 - `host_portability_profile`
+- `storage_portability_profile`
 - `session_baseline`
 - `tool_inventory`
 - `router_config_models`
@@ -34,6 +35,17 @@ Current implemented probe names:
 - It does not authorize host mutation.
 - It is not part of the maintenance report contract.
 - Maintenance report scope remains limited to `package_update_status`, `storage_hygiene`, and `boot_service_health`.
+
+### Stage 2G-B storage portability profile
+
+- `storage_portability_profile` is a read-only storage portability profile probe for future installer/updater/satellite planning.
+- It consumes only `/proc/mounts`, platform metadata, `BOND_*` environment path observations, and safe disk-usage calls.
+- It detects mount candidates, external media paths, Steam Deck SD-card-like paths, home fallback signals, free-space pressure, and bounded placement recommendations for Bond roles.
+- It is not part of the maintenance report contract.
+- `storage_hygiene` remains separate.
+- Maintenance report scope remains limited to `package_update_status`, `storage_hygiene`, and `boot_service_health`.
+- It does not create directories, move data, delete data, clean caches, mount, unmount, format, partition, or authorize storage mutation.
+- It does not broaden normal assistant answers.
 
 ## Stage 2F-F-A read-only maintenance probe foundation
 

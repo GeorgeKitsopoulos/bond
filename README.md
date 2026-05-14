@@ -5,11 +5,13 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 ## Current status
 
 - Bond is under active development.
-- The current validated baseline is Stage 2G-A host portability profile.
+- The current validated baseline is Stage 2G-B storage portability profile.
 - `src/bond/ai_maintenance_report.py` added: pure isolated seam assembling and formatting a narrow maintenance/readiness report contract using only `package_update_status`, `storage_hygiene`, `boot_service_health`, and the existing non-executing maintenance plan.
-- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 268, "failed": 0, "total": 268} (see docs/TESTING.md for exact summary).
-- Stage 2G-A starts the portable installer/updater/satellite track with a read-only host portability profile.
+- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 274, "failed": 0, "total": 274} (see docs/TESTING.md for exact summary).
+- Stage 2G-B continues the portable installer/updater/satellite track with a read-only storage portability profile.
+- Stage 2G-A host portability profile remains integrated and current.
 - Stage 2G-A does not implement a finished installer, updater, package installer, package layering, service mutation, Steam Deck deployment, or satellite runtime.
+- Stage 2G-B does not implement a finished installer, updater, package installer, data mover, cleanup tool, mount manager, Steam Deck deployment, or satellite runtime.
 - Stage 2F-F-E adds metadata-only maintenance report readiness fields for the explicit maintenance/readiness report; it does not schedule reports, start background work, add dashboards, authorize actions, or broaden probe-backed normal answers.
 - Stage 2F-F-C adds a deterministic non-executing maintenance planning contract inside the explicit maintenance/readiness report.
 - Stage 2F-F-C classifies observed maintenance signals only; it does not recommend commands, execute fixes, add actions, add privileged execution, or broaden normal answers.

@@ -16,14 +16,17 @@ This file exists to prevent drift between:
 
 ## Current Checkpoint
 
-Date: 14 May 2026 (Stage 2G-A current; earlier checkpoints preserved below)
+Date: 14 May 2026 (Stage 2G-B current; earlier checkpoints preserved below)
 
 Current baseline note:
 
-- Stage 2G-A host portability profile is the current repository checkpoint.
+- Stage 2G-B storage portability profile is the current repository checkpoint.
 - `src/bond/ai_maintenance_report.py` added as a pure isolated seam for narrow maintenance/readiness report assembly and formatting.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 268, "failed": 0, "total": 268}.
+- Compile and integrated selftest baseline is {"ok": true, "passed": 274, "failed": 0, "total": 274}.
+- Stage 2G-B continues the portable installer/updater/satellite track with a read-only storage portability profile.
 - Stage 2G-A starts the portable installer/updater/satellite track with a read-only host portability profile.
+- Stage 2G-A host portability profile remains integrated/current.
+- Stage 2G-B classifies storage portability signals only and does not create directories, move data, delete data, clean caches, mount/unmount, format/partition, authorize execution, or add automation.
 - Stage 2G-A classifies host portability signals only and does not install packages, update systems, layer packages, mutate services, authorize execution, or add automation.
 - Stage 2F-F-C non-executing maintenance planning contract is integrated and current.
 - Stage 2F-F-D adds a clean internal seam between read-only maintenance probes, non-executing maintenance planning, and assistant-facing maintenance/readiness report text.

@@ -16,6 +16,7 @@ import ai_run
 import ai_capability_answer
 import ai_capability_classifier
 import ai_host_profile
+import ai_storage_profile
 import ai_maintenance_report
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
 from ai_maintenance_report import (
@@ -6647,7 +6648,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 268, "failed": 0, "total": 268}'
+    current_summary = '{"ok": true, "passed": 274, "failed": 0, "total": 274}'
     stale_summaries = [
         '{"ok": true, "passed": 262, "failed": 0, "total": 262}',
         '{"ok": true, "passed": 256, "failed": 0, "total": 256}',
@@ -6864,7 +6865,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 268, "failed": 0, "total": 268}'
+    current_summary = '{"ok": true, "passed": 274, "failed": 0, "total": 274}'
     stale_summaries = [
         '{"ok": true, "passed": 262, "failed": 0, "total": 262}',
         '{"ok": true, "passed": 256, "failed": 0, "total": 256}',
@@ -7138,6 +7139,276 @@ MALFORMED_LINE
     if "host_portability_profile" in ai_maintenance_report.MAINTENANCE_PROBE_NAMES:
         errors.append("host_portability_profile must not be in maintenance probe names")
     _append("stage2g_a_host_profile_probe_registration_and_scope", errors)
+
+    return results
+
+
+def run_stage2g_b_storage_portability_profile_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(name: str, errors: list[str], stdout: str = "", stderr: str = "", cmd: list[str] | None = None) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0 if not errors else 1,
+                "stdout": stdout,
+                "stderr": stderr,
+                "errors": errors,
+                "cmd": cmd or ["stage2g_b", name],
+            }
+        )
+
+    class Usage:
+        def __init__(self, total: int, used: int, free: int) -> None:
+            self.total = total
+            self.used = used
+            self.free = free
+
+    def fake_large_usage(path: str) -> Usage:
+        if path == "/run/media/deck/FAST_SD":
+            return Usage(total=512 * 1024**3, used=100 * 1024**3, free=412 * 1024**3)
+        if path == "/home/deck" or path == "/home/example":
+            return Usage(total=64 * 1024**3, used=50 * 1024**3, free=14 * 1024**3)
+        return Usage(total=128 * 1024**3, used=64 * 1024**3, free=64 * 1024**3)
+
+    errors: list[str] = []
+    parsed_mounts = ai_storage_profile.parse_proc_mounts_text(
+        """
+/dev/sda1 / ext4 rw,relatime 0 0
+/dev/mmcblk0p1 /run/media/deck/My\\040SD vfat ro,nosuid 0 0
+tmpfs /run tmpfs rw,nosuid 0 0
+badline
+"""
+    )
+    if len(parsed_mounts) != 3:
+        errors.append("parser must keep only valid mount lines")
+    if parsed_mounts[1].get("mount_point") != "/run/media/deck/My SD":
+        errors.append("escaped mount point must decode")
+    if parsed_mounts[0].get("read_only") is not False:
+        errors.append("rw root mount must not be read_only")
+    if parsed_mounts[1].get("read_only") is not True:
+        errors.append("ro mount must be read_only")
+    if not isinstance(parsed_mounts[0].get("options"), list):
+        errors.append("options must be a list")
+    _append("stage2g_b_storage_profile_mount_parser", errors)
+
+    errors = []
+    mounts = [
+        {
+            "device": "/dev/nvme0n1p2",
+            "mount_point": "/",
+            "fs_type": "ext4",
+            "options": ["rw"],
+            "read_only": False,
+            "source": "test",
+        },
+        {
+            "device": "/dev/mmcblk0p1",
+            "mount_point": "/run/media/deck/FAST_SD",
+            "fs_type": "exfat",
+            "options": ["rw"],
+            "read_only": False,
+            "source": "test",
+        },
+        {
+            "device": "tmpfs",
+            "mount_point": "/run",
+            "fs_type": "tmpfs",
+            "options": ["rw"],
+            "read_only": False,
+            "source": "test",
+        },
+    ]
+    profile = ai_storage_profile.build_storage_portability_profile(
+        mounts=mounts,
+        home_path="/home/deck",
+        env={"BOND_DATA_DIR": "/home/deck/Bond/data"},
+        platform_system="Linux",
+        disk_usage_func=fake_large_usage,
+    )
+    summary = profile.get("candidate_summary", {})
+    recommendations = profile.get("recommendations", {})
+    if profile.get("profile_kind") != "storage_portability_profile":
+        errors.append("profile_kind mismatch")
+    if not summary.get("steam_deck_sd_candidates"):
+        errors.append("steam deck sd candidates expected")
+    if not summary.get("large_data_candidates"):
+        errors.append("large data candidates expected")
+    if recommendations.get("strategy") != "external_large_data_preferred":
+        errors.append("strategy must be external_large_data_preferred")
+    if recommendations.get("preferred_large_data_base") != "/run/media/deck/FAST_SD":
+        errors.append("preferred_large_data_base mismatch")
+    if summary.get("space_pressure_summary", {}).get("large_data_friendly", 0) < 1:
+        errors.append("large_data_friendly pressure expected")
+    for key in [
+        "directory_creation_supported",
+        "data_movement_supported",
+        "cleanup_supported",
+        "mount_mutation_supported",
+        "action_authorized",
+    ]:
+        if profile.get(key) is not False:
+            errors.append(f"{key} must be false")
+    _append("stage2g_b_storage_profile_external_sd_candidate", errors)
+
+    errors = []
+    mounts = [
+        {
+            "device": "/dev/nvme0n1p2",
+            "mount_point": "/",
+            "fs_type": "ext4",
+            "options": ["rw"],
+            "read_only": False,
+            "source": "test",
+        },
+        {
+            "device": "/dev/nvme0n1p3",
+            "mount_point": "/home",
+            "fs_type": "ext4",
+            "options": ["rw"],
+            "read_only": False,
+            "source": "test",
+        },
+    ]
+    profile = ai_storage_profile.build_storage_portability_profile(
+        mounts=mounts,
+        home_path="/home/example",
+        env={},
+        platform_system="Linux",
+        disk_usage_func=fake_large_usage,
+    )
+    if profile.get("recommendations", {}).get("strategy") != "home_local_fallback":
+        errors.append("strategy must be home_local_fallback")
+    if profile.get("candidate_summary", {}).get("home_mount") is None:
+        errors.append("home mount expected")
+    if profile.get("recommendations", {}).get("preferred_large_data_base") != "/home/example":
+        errors.append("preferred_large_data_base must be home path")
+    if profile.get("candidate_summary", {}).get("large_data_candidates"):
+        errors.append("no large data candidates expected")
+    for key in [
+        "action_authorized",
+        "execution_supported",
+        "directory_creation_supported",
+        "data_movement_supported",
+        "cleanup_supported",
+        "mount_mutation_supported",
+        "format_or_partition_supported",
+    ]:
+        if profile.get(key) is not False:
+            errors.append(f"{key} must be false")
+    _append("stage2g_b_storage_profile_home_fallback", errors)
+
+    errors = []
+    profile = ai_storage_profile.build_storage_portability_profile(
+        mounts=[],
+        home_path="/home/test",
+        env={
+            "BOND_HOME": "/example/bond",
+            "BOND_DATA_DIR": "/example/bond/data",
+            "BOND_CACHE_DIR": "/example/bond/cache",
+            "BOND_MODEL_DIR": "/example/bond/models",
+            "BOND_TELEMETRY_DIR": "/example/bond/telemetry",
+            "BOND_LOG_DIR": "/example/bond/logs",
+            "BOND_CONFIG_DIR": "/example/bond/config",
+        },
+        platform_system="Linux",
+        disk_usage_func=fake_large_usage,
+    )
+    env_paths = profile.get("env_paths", {})
+    expected_env_names = [
+        "BOND_HOME",
+        "BOND_DATA_DIR",
+        "BOND_CACHE_DIR",
+        "BOND_MODEL_DIR",
+        "BOND_TELEMETRY_DIR",
+        "BOND_LOG_DIR",
+        "BOND_CONFIG_DIR",
+    ]
+    for name in expected_env_names:
+        entry = env_paths.get(name)
+        if not isinstance(entry, dict):
+            errors.append(f"missing env path entry: {name}")
+            continue
+        if entry.get("observed_only") is not True:
+            errors.append(f"{name} must be observed_only")
+        if entry.get("created") is not False:
+            errors.append(f"{name} must not be created")
+    if profile.get("directory_creation_supported") is not False:
+        errors.append("directory_creation_supported must be false")
+    if profile.get("action_authorized") is not False:
+        errors.append("action_authorized must be false")
+    _append("stage2g_b_storage_profile_env_paths_observed_only", errors)
+
+    errors = []
+    profile = ai_storage_profile.build_storage_portability_profile(
+        mounts=[],
+        home_path="/home/test",
+        env={},
+        platform_system="Linux",
+        disk_usage_func=fake_large_usage,
+    )
+    boundaries = profile.get("boundaries", [])
+    for required_boundary in [
+        "read-only storage profiling only",
+        "no directory creation",
+        "no data movement",
+        "no cleanup",
+        "no mount or unmount",
+        "no formatting or partitioning",
+        "no privileged execution",
+        "does not authorize execution",
+        "not an installer",
+        "not an updater",
+        "not a storage mover",
+    ]:
+        if required_boundary not in boundaries:
+            errors.append(f"missing boundary: {required_boundary}")
+    for key in [
+        "directory_creation_supported",
+        "data_movement_supported",
+        "cleanup_supported",
+        "mount_mutation_supported",
+        "format_or_partition_supported",
+        "execution_supported",
+        "action_authorized",
+    ]:
+        if profile.get(key) is not False:
+            errors.append(f"{key} must be false")
+    _append("stage2g_b_storage_profile_contract_boundaries", errors)
+
+    errors = []
+    names = list_probe_names()
+    if "storage_portability_profile" not in names:
+        errors.append("storage_portability_profile missing from list_probe_names")
+    result = run_named_probe("storage_portability_profile")
+    if result.ok is not True:
+        errors.append("storage_portability_profile probe must be ok")
+    if result.probe_name != "storage_portability_profile":
+        errors.append("run_named_probe returned wrong probe name")
+    if result.data.get("profile_kind") != "storage_portability_profile":
+        errors.append("profile_kind mismatch")
+    for key in [
+        "action_authorized",
+        "execution_supported",
+        "directory_creation_supported",
+        "cleanup_supported",
+        "mount_mutation_supported",
+    ]:
+        if result.data.get(key) is not False:
+            errors.append(f"probe result data {key} must be false")
+    expected_maintenance = (
+        "package_update_status",
+        "storage_hygiene",
+        "boot_service_health",
+    )
+    if ai_maintenance_report.MAINTENANCE_PROBE_NAMES != expected_maintenance:
+        errors.append("ai_maintenance_report.MAINTENANCE_PROBE_NAMES changed from expected")
+    if "storage_portability_profile" in ai_maintenance_report.MAINTENANCE_PROBE_NAMES:
+        errors.append("storage_portability_profile must not be in maintenance probe names")
+    if "host_portability_profile" in ai_maintenance_report.MAINTENANCE_PROBE_NAMES:
+        errors.append("host_portability_profile must not be in maintenance probe names")
+    _append("stage2g_b_storage_profile_probe_registration_and_scope", errors)
 
     return results
 
@@ -7585,6 +7856,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2g_a_host_portability_profile_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2g_b_storage_portability_profile_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

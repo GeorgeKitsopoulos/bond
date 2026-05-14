@@ -20,6 +20,15 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-B storage portability profile
+
+- Continues the portable installer/updater/satellite track with a read-only storage portability profile.
+- Detects mount candidates, external media paths, Steam Deck SD-card-like paths, home fallback, disk free-space pressure, Bond environment path observations, and bounded storage placement recommendations.
+- Adds `storage_portability_profile` as a read-only probe for future installer/updater/satellite planning.
+- Adds Stage 2G-B selftests for mount parsing, SD/external candidate detection, home fallback, environment-path observation, contract boundaries, and probe registration/scope checks.
+- Does not create directories, move data, delete data, clean caches, mount or unmount, format or partition, authorize execution, start automation, write manifests, run an updater, or broaden normal assistant answers.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 274, "failed": 0, "total": 274}.
+
 ### Stage 2G-A host portability profile
 
 - Starts the portable installer/updater/satellite track with a read-only host portability profile.

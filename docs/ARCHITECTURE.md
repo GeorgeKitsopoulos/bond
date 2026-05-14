@@ -295,6 +295,26 @@ Stage 2F-F-E adds metadata-only readiness fields inside the explicit maintenance
 - It does not broaden normal assistant answers.
 - Steam Deck/Bazzite handling must remain rootless/user-space-first unless a future explicit host-layering contract exists.
 
+### Storage portability profile (Stage 2G-B)
+
+- Module owner: `src/bond/ai_storage_profile.py`.
+- Probe owner: `storage_portability_profile` in `src/bond/ai_probes.py`.
+- Purpose: detect storage portability signals for future installer/updater/satellite design.
+- Output fields include a bounded mount list, home mount candidate, external media candidates, Steam Deck SD-card-like candidates, large-data candidates, disk usage and space-pressure summaries, observed `BOND_*` environment paths, and role recommendations for config/data/cache/models/telemetry/logs/backups.
+- The profile is read-only and recommendation-only.
+- It does not authorize execution.
+- It does not create directories.
+- It does not move data.
+- It does not delete data.
+- It does not clean caches.
+- It does not mount or unmount.
+- It does not format or partition.
+- It does not write manifests.
+- It does not schedule work.
+- It does not create services.
+- It does not broaden normal assistant answers.
+- Steam Deck/Bazzite storage handling must remain recommendation-only and must not hardcode `/run/media/deck/<SD_LABEL>/Bond` as an actual runtime path.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:
