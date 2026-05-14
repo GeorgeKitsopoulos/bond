@@ -20,6 +20,14 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-C install manifest drift detection
+
+- Adds a read-only install manifest and drift detection contract for future installer/updater/satellite planning.
+- Adds `ai_install_manifest.py` as a pure in-memory manifest builder, bounded drift comparator, and formatter.
+- Adds `install_manifest_drift` as a read-only probe that defaults to missing-saved-manifest/manual-review output because persistence is not implemented in this stage.
+- Does not write manifests, perform reconfiguration, install packages, update services, or mutate storage.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 288, "failed": 0, "total": 288}.
+
 ### Stage 2G-B storage portability profile
 
 - Continues the portable installer/updater/satellite track with a read-only storage portability profile.
@@ -28,7 +36,7 @@ Until formal release tagging is established, this changelog should follow these 
 - Adds Stage 2G-B selftests for mount parsing, SD/external candidate detection, home fallback, environment-path observation, contract boundaries, and probe registration/scope checks.
 - Hardens Stage 2G-B storage classification with conservative SD/external detection, clean `/proc/mounts` option parsing, explicit Bond env-path precedence by role, read-only derivation from mount options, deepest home-mount selection, and low-space external manual-review behavior.
 - Does not create directories, move data, delete data, clean caches, mount or unmount, format or partition, authorize execution, start automation, write manifests, run an updater, or broaden normal assistant answers.
-- Final integrated selftest JSON summary: {"ok": true, "passed": 281, "failed": 0, "total": 281}.
+- The original Stage 2G-B-only checkpoint is preserved in commit history; current unreleased validation is represented by the newer Stage 2G-C baseline above.
 
 ### Stage 2G-A host portability profile
 

@@ -16,13 +16,15 @@ This file exists to prevent drift between:
 
 ## Current Checkpoint
 
-Date: 14 May 2026 (Stage 2G-B current; earlier checkpoints preserved below)
+Date: 14 May 2026 (Stage 2G-C current; earlier checkpoints preserved below)
 
 Current baseline note:
 
-- Stage 2G-B storage portability profile is the current repository checkpoint.
+- Stage 2G-C install manifest drift detection is the current repository checkpoint.
 - `src/bond/ai_maintenance_report.py` added as a pure isolated seam for narrow maintenance/readiness report assembly and formatting.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 281, "failed": 0, "total": 281}.
+- Compile and integrated selftest baseline is {"ok": true, "passed": 288, "failed": 0, "total": 288}.
+- Stage 2G-C adds a read-only install manifest and drift detection layer built from bounded host/storage portability facts and explicit inputs only.
+- Stage 2G-C does not persist manifests, perform reconfiguration, install packages, update services, or mutate storage.
 - Stage 2G-B continues the portable installer/updater/satellite track with a read-only storage portability profile.
 - Stage 2G-A starts the portable installer/updater/satellite track with a read-only host portability profile.
 - Stage 2G-A host portability profile remains integrated/current.

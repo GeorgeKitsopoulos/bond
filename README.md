@@ -5,9 +5,10 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 ## Current status
 
 - Bond is under active development.
-- The current validated baseline is Stage 2G-B storage portability profile.
+- The current validated baseline is Stage 2G-C install manifest drift detection.
 - `src/bond/ai_maintenance_report.py` added: pure isolated seam assembling and formatting a narrow maintenance/readiness report contract using only `package_update_status`, `storage_hygiene`, `boot_service_health`, and the existing non-executing maintenance plan.
-- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 281, "failed": 0, "total": 281} (see docs/TESTING.md for exact summary).
+- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 288, "failed": 0, "total": 288} (see docs/TESTING.md for exact summary).
+- Stage 2G-C adds a read-only install manifest and drift detection layer on top of the existing portability profiles.
 - Stage 2G-B continues the portable installer/updater/satellite track with a read-only storage portability profile.
 - Stage 2G-A host portability profile remains integrated and current.
 - Stage 2G-A does not implement a finished installer, updater, package installer, package layering, service mutation, Steam Deck deployment, or satellite runtime.

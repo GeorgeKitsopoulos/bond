@@ -16,6 +16,7 @@ Current implemented probe names:
 - `host_baseline`
 - `host_portability_profile`
 - `storage_portability_profile`
+- `install_manifest_drift`
 - `session_baseline`
 - `tool_inventory`
 - `router_config_models`
@@ -46,6 +47,18 @@ Current implemented probe names:
 - Maintenance report scope remains limited to `package_update_status`, `storage_hygiene`, and `boot_service_health`.
 - It does not create directories, move data, delete data, clean caches, mount, unmount, format, partition, or authorize storage mutation.
 - It does not broaden normal assistant answers.
+
+### Stage 2G-C install manifest drift detection
+
+- `install_manifest_drift` is a read-only install manifest drift probe for future installer/updater/satellite planning.
+- It can build a current in-memory manifest from the existing read-only host/storage portability profiles and compare it against a supplied manifest contract.
+- Because manifest persistence is not implemented in this stage, the default probe output reports missing saved manifest and requires manual review with `recommended_next_step_kind=create_manifest_review`.
+- It does not write manifests.
+- It does not load manifests from disk.
+- It does not perform reconfiguration.
+- It does not authorize execution.
+- It is not part of the maintenance report contract.
+- Maintenance report scope remains limited to `package_update_status`, `storage_hygiene`, and `boot_service_health`.
 
 ## Stage 2F-F-A read-only maintenance probe foundation
 

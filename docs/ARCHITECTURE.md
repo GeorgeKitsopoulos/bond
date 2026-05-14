@@ -315,6 +315,21 @@ Stage 2F-F-E adds metadata-only readiness fields inside the explicit maintenance
 - It does not broaden normal assistant answers.
 - Steam Deck/Bazzite storage handling must remain recommendation-only and must not hardcode `/run/media/deck/<SD_LABEL>/Bond` as an actual runtime path.
 
+### Install manifest drift detection (Stage 2G-C)
+
+- Module owner: `src/bond/ai_install_manifest.py`.
+- Probe owner: `install_manifest_drift` in `src/bond/ai_probes.py`.
+- Purpose: build a bounded in-memory install manifest from supplied host/storage facts and compare manifests for deterministic read-only drift reporting.
+- The module is pure and read-only.
+- It does not persist manifests.
+- It does not load manifests from disk.
+- It does not authorize execution.
+- It does not perform reconfiguration.
+- It does not install packages.
+- It does not mutate services.
+- It does not mutate storage.
+- It does not broaden normal assistant answers.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

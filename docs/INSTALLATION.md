@@ -190,6 +190,22 @@ detect -> plan -> show -> explicitly authorize -> execute -> verify -> report
 
 Execution is not added in this stage.
 
+## Install manifest and drift detection prerequisite (Stage 2G-C)
+
+Future installer/updater work must compare intended Bond placement facts against current read-only host/storage portability facts before any reconfiguration path exists.
+
+Stage 2G-C adds a read-only, in-memory install manifest and drift detection contract.
+
+It can build a bounded manifest from explicit inputs and existing read-only portability profiles, and it can compare a previous manifest dictionary to a current manifest dictionary for drift review.
+
+This stage does not persist manifests, load manifests from disk, perform reconfiguration, install packages, update services, or mutate storage.
+
+Any future manifest/reconfiguration flow must remain:
+
+detect -> compare -> show -> explicitly authorize -> execute -> verify -> report
+
+Execution is not added in this stage.
+
 ## Uninstall direction
 
 Uninstall must eventually become explicit.

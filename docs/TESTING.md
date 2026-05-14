@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 281, "failed": 0, "total": 281}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 288, "failed": 0, "total": 288}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -58,6 +58,15 @@ Coverage now also includes Stage 2G-B storage portability hardening regression c
 - `stage2g_b_storage_profile_read_only_from_ro_option`
 - `stage2g_b_storage_profile_env_role_overrides`
 - `stage2g_b_storage_profile_low_pressure_external_requires_review`
+Coverage now also includes Stage 2G-C install manifest/drift detection regression checks:
+
+- `stage2g_c_install_manifest_shape_and_boundaries` — manifest shape, bounded summaries, and no-authorization contract
+- `stage2g_c_install_manifest_fingerprint_is_stable` — bounded host fingerprint stability across equivalent inputs
+- `stage2g_c_install_manifest_omits_identity_and_secret_fields` — manifest omits identity/secret fields from synthetic inputs
+- `stage2g_c_install_drift_no_change` — equivalent manifests report no drift
+- `stage2g_c_install_drift_critical_host_change` — critical host portability drift requires manual review
+- `stage2g_c_install_drift_env_path_change_requires_review` — explicit Bond path drift is reported as read-only env/path drift
+- `stage2g_c_install_manifest_probe_missing_saved_manifest_is_read_only` — probe defaults to missing-saved-manifest/manual-review behavior without persistence
 
 Stage 2F-F-D tests also guard against accidental inclusion of host/session/tool/model context probes inside `ai_maintenance_report.py`; the maintenance report contract must stay limited to the three maintenance probes plus the non-executing plan output.
 Stage 2F-F-D docs hygiene coverage also guards against duplicate maintenance-planning and coverage checkpoint notes in ROADMAP.md and docs/TESTING.md, plus stale current baseline drift across README.md, ROADMAP.md, docs/STATE.md, and docs/TESTING.md.

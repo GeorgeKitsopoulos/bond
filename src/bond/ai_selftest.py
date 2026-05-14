@@ -16,6 +16,7 @@ import ai_run
 import ai_capability_answer
 import ai_capability_classifier
 import ai_host_profile
+import ai_install_manifest
 import ai_storage_profile
 import ai_maintenance_report
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
@@ -143,6 +144,7 @@ AI_WRAPPER = BOND_ROOT / "scripts" / "ai"
 AI_SCAN_SYSTEM = SRC_BOND / "ai_scan_system.py"
 AI_PROBE_CONTRACT = SRC_BOND / "ai_probe_contract.py"
 AI_PROBES = SRC_BOND / "ai_probes.py"
+AI_INSTALL_MANIFEST = SRC_BOND / "ai_install_manifest.py"
 AI_MEMORY = SRC_BOND / "ai_memory.py"
 AI_MEMORY_QUERY = SRC_BOND / "ai_memory_query.py"
 AI_MEMORY_REFLECT = SRC_BOND / "ai_memory_reflect.py"
@@ -6648,8 +6650,9 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 281, "failed": 0, "total": 281}'
+    current_summary = '{"ok": true, "passed": 288, "failed": 0, "total": 288}'
     stale_summaries = [
+        '{"ok": true, "passed": 281, "failed": 0, "total": 281}',
         '{"ok": true, "passed": 262, "failed": 0, "total": 262}',
         '{"ok": true, "passed": 256, "failed": 0, "total": 256}',
         '{"ok": true, "passed": 257, "failed": 0, "total": 257}',
@@ -6865,8 +6868,9 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 281, "failed": 0, "total": 281}'
+    current_summary = '{"ok": true, "passed": 288, "failed": 0, "total": 288}'
     stale_summaries = [
+        '{"ok": true, "passed": 281, "failed": 0, "total": 281}',
         '{"ok": true, "passed": 262, "failed": 0, "total": 262}',
         '{"ok": true, "passed": 256, "failed": 0, "total": 256}',
         '{"ok": true, "passed": 257, "failed": 0, "total": 257}',
@@ -7595,6 +7599,283 @@ badline
     return results
 
 
+def run_stage2g_c_install_manifest_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(name: str, errors: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0 if not errors else 1,
+                "stdout": "",
+                "stderr": "",
+                "errors": errors,
+                "cmd": ["stage2g_c", name],
+            }
+        )
+
+    host_profile = {
+        "platform_system": "Linux",
+        "platform_machine": "x86_64",
+        "python_version": "3.12.3",
+        "os_release": {"ID": "bazzite", "ID_LIKE": "fedora", "VERSION_ID": "40"},
+        "distro_family": "fedora",
+        "dependency_strategy": {"native_package_manager": "rpm-ostree"},
+        "service_backends": {
+            "systemd_user_possible": True,
+            "preferred_initial_backend": "systemd-user",
+        },
+        "platform_signals": {
+            "is_atomic_or_image_based_like": True,
+            "is_steam_deck_like": True,
+        },
+    }
+    storage_profile = {
+        "candidate_summary": {
+            "home_mount": {
+                "mount_point": "/home",
+                "device": "/dev/nvme0n1p2",
+            },
+            "large_data_candidates": [
+                {"mount_point": "/run/media/deck/BOND_SD"},
+            ],
+            "space_pressure_summary": {
+                "unknown": 0,
+                "critical": 0,
+                "low": 0,
+                "adequate": 0,
+                "large_data_friendly": 1,
+            },
+        },
+        "recommendations": {
+            "preferred_large_data_base": "/run/media/deck/BOND_SD",
+            "requires_manual_review": False,
+            "role_recommendations": [
+                {"role": "data", "preferred_base": "/bond-data"},
+                {"role": "models", "preferred_base": "/bond-models"},
+            ],
+        },
+        "env_paths": {
+            "BOND_HOME": {"path": "/bond-home"},
+            "BOND_CONFIG_DIR": {"path": "/bond-config"},
+            "BOND_DATA_DIR": {"path": "/bond-data"},
+            "BOND_CACHE_DIR": {"path": "/bond-cache"},
+            "BOND_MODEL_DIR": {"path": "/bond-models"},
+            "BOND_TELEMETRY_DIR": {"path": "/bond-telemetry"},
+            "BOND_BACKUP_DIR": {"path": "/bond-backups"},
+        },
+    }
+
+    errors = []
+    manifest = ai_install_manifest.build_install_manifest(
+        host_profile=host_profile,
+        storage_profile=storage_profile,
+        bond_root="/repo/bond",
+        repo_commit="abc123",
+        python_version="3.12.3",
+        env_paths=storage_profile["env_paths"],
+        service_backend="systemd-user",
+        created_at="2026-05-14T00:00:00Z",
+    )
+    if manifest.get("kind") != ai_install_manifest.INSTALL_MANIFEST_KIND:
+        errors.append("manifest kind mismatch")
+    if manifest.get("schema_version") != ai_install_manifest.INSTALL_MANIFEST_SCHEMA_VERSION:
+        errors.append("manifest schema_version mismatch")
+    for key in [
+        "execution_authorized",
+        "install_authorized",
+        "reconfigure_authorized",
+        "write_manifest_authorized",
+    ]:
+        if manifest.get(key) is not False:
+            errors.append(f"{key} must be false")
+    if manifest.get("host", {}).get("os_family") != "fedora":
+        errors.append("bounded host summary missing os_family")
+    if manifest.get("storage", {}).get("preferred_large_data_base") != "/run/media/deck/BOND_SD":
+        errors.append("bounded storage summary missing preferred_large_data_base")
+    if manifest.get("env_paths", {}).get("BOND_DATA_DIR") != "/bond-data":
+        errors.append("env_paths summary missing BOND_DATA_DIR")
+    _append("stage2g_c_install_manifest_shape_and_boundaries", errors)
+
+    errors = []
+    host_profile_same = {
+        "service_backends": {
+            "preferred_initial_backend": "systemd-user",
+            "systemd_user_possible": True,
+        },
+        "dependency_strategy": {"native_package_manager": "rpm-ostree"},
+        "platform_signals": {
+            "is_steam_deck_like": True,
+            "is_atomic_or_image_based_like": True,
+        },
+        "os_release": {"ID_LIKE": "fedora", "ID": "bazzite"},
+        "platform_machine": "x86_64",
+        "platform_system": "Linux",
+        "distro_family": "fedora",
+    }
+    manifest_a = ai_install_manifest.build_install_manifest(host_profile=host_profile, storage_profile={})
+    manifest_b = ai_install_manifest.build_install_manifest(host_profile=host_profile_same, storage_profile={})
+    if manifest_a.get("host_fingerprint") != manifest_b.get("host_fingerprint"):
+        errors.append("host_fingerprint must remain stable across semantically identical host facts")
+    manifest_c = ai_install_manifest.build_install_manifest(
+        host_profile={**host_profile_same, "platform_machine": "aarch64"},
+        storage_profile={},
+    )
+    if manifest_a.get("host_fingerprint") == manifest_c.get("host_fingerprint"):
+        errors.append("host_fingerprint must change when architecture changes")
+    _append("stage2g_c_install_manifest_fingerprint_is_stable", errors)
+
+    errors = []
+    secret_manifest = ai_install_manifest.build_install_manifest(
+        host_profile={
+            **host_profile,
+            "hostname": "private-host",
+            "username": "secret-user",
+            "email": "hidden@example.com",
+            "token": "tok_123",
+            "password": "pw",
+            "secret": "super-secret",
+            "api_key": "api-123",
+        },
+        storage_profile=storage_profile,
+        env_paths={
+            **storage_profile["env_paths"],
+            "HOSTNAME": "private-host",
+            "SECRET": "super-secret",
+        },
+    )
+    manifest_text = json.dumps(secret_manifest, sort_keys=True)
+    for forbidden in [
+        "private-host",
+        "secret-user",
+        "hidden@example.com",
+        "tok_123",
+        "super-secret",
+        "api-123",
+        '"hostname"',
+        '"username"',
+        '"email"',
+        '"token"',
+        '"password"',
+        '"secret"',
+        '"api_key"',
+    ]:
+        if forbidden in manifest_text:
+            errors.append(f"manifest leaked forbidden identity/secret marker: {forbidden}")
+    _append("stage2g_c_install_manifest_omits_identity_and_secret_fields", errors)
+
+    errors = []
+    saved_manifest = ai_install_manifest.build_install_manifest(
+        host_profile=host_profile,
+        storage_profile=storage_profile,
+        bond_root="/repo/bond",
+        repo_commit="abc123",
+        python_version="3.12.3",
+        env_paths=storage_profile["env_paths"],
+        service_backend="systemd-user",
+    )
+    current_manifest = ai_install_manifest.build_install_manifest(
+        host_profile=host_profile,
+        storage_profile=storage_profile,
+        bond_root="/repo/bond",
+        repo_commit="abc123",
+        python_version="3.12.3",
+        env_paths=storage_profile["env_paths"],
+        service_backend="systemd-user",
+    )
+    report = ai_install_manifest.compare_install_manifest(saved_manifest, current_manifest)
+    if report.get("drift_detected") is not False:
+        errors.append("no-change compare must not detect drift")
+    if report.get("drift_count") != 0:
+        errors.append("no-change compare must have drift_count 0")
+    if report.get("drift_severity") != "none":
+        errors.append("no-change compare must have drift_severity none")
+    if report.get("recommended_next_step_kind") != "none":
+        errors.append("no-change compare must recommend none")
+    if report.get("execution_authorized") is not False:
+        errors.append("no-change compare must not authorize execution")
+    _append("stage2g_c_install_drift_no_change", errors)
+
+    errors = []
+    current_manifest = ai_install_manifest.build_install_manifest(
+        host_profile={**host_profile, "platform_machine": "aarch64"},
+        storage_profile=storage_profile,
+        bond_root="/repo/bond",
+        repo_commit="abc123",
+        python_version="3.12.3",
+        env_paths=storage_profile["env_paths"],
+        service_backend="systemd-user",
+    )
+    report = ai_install_manifest.compare_install_manifest(saved_manifest, current_manifest)
+    if report.get("drift_detected") is not True:
+        errors.append("critical host drift must be detected")
+    if report.get("drift_severity") != "critical":
+        errors.append("critical host drift must yield critical severity")
+    if report.get("requires_manual_review") is not True:
+        errors.append("critical host drift must require manual review")
+    if report.get("recommended_next_step_kind") != "review_before_reconfigure":
+        errors.append("critical host drift must recommend review_before_reconfigure")
+    for key in ["execution_authorized", "install_authorized", "reconfigure_authorized"]:
+        if report.get(key) is not False:
+            errors.append(f"{key} must be false for critical host drift")
+    _append("stage2g_c_install_drift_critical_host_change", errors)
+
+    errors = []
+    changed_env_paths = dict(storage_profile["env_paths"])
+    changed_env_paths["BOND_MODEL_DIR"] = {"path": "/bond-models-v2"}
+    report = ai_install_manifest.compare_install_manifest(
+        saved_manifest,
+        ai_install_manifest.build_install_manifest(
+            host_profile=host_profile,
+            storage_profile=storage_profile,
+            bond_root="/repo/bond",
+            repo_commit="abc123",
+            python_version="3.12.3",
+            env_paths=changed_env_paths,
+            service_backend="systemd-user",
+        ),
+    )
+    if report.get("drift_detected") is not True:
+        errors.append("env path drift must be detected")
+    drift_items = report.get("drift_items")
+    if not isinstance(drift_items, list) or not drift_items:
+        errors.append("env path drift must emit drift_items")
+    else:
+        categories = {item.get("category") for item in drift_items if isinstance(item, dict)}
+        if "env_path_drift" not in categories:
+            errors.append("env path drift item category must identify env_path_drift")
+        report_text = ai_install_manifest.format_install_drift_report(report)
+        for forbidden in ["move", "create", "delete", "migrate"]:
+            if f" {forbidden} " in f" {report_text.lower()} ":
+                errors.append(f"formatted report must not authorize data mutation wording: {forbidden}")
+    _append("stage2g_c_install_drift_env_path_change_requires_review", errors)
+
+    errors = []
+    probe_names = list_probe_names()
+    if "install_manifest_drift" not in probe_names:
+        errors.append("install_manifest_drift missing from list_probe_names")
+    probe_result = run_named_probe("install_manifest_drift")
+    if probe_result.ok is not True:
+        errors.append("install_manifest_drift probe must be ok")
+    if probe_result.probe_name != "install_manifest_drift":
+        errors.append("probe_name mismatch")
+    if probe_result.data.get("kind") != ai_install_manifest.INSTALL_DRIFT_KIND:
+        errors.append("probe data kind must be bond_install_drift_report")
+    if probe_result.data.get("recommended_next_step_kind") != "create_manifest_review":
+        errors.append("probe without saved manifest must recommend create_manifest_review")
+    if probe_result.data.get("requires_manual_review") is not True:
+        errors.append("probe without saved manifest must require manual review")
+    for key in ["execution_authorized", "install_authorized", "reconfigure_authorized"]:
+        if probe_result.data.get(key) is not False:
+            errors.append(f"probe result data {key} must be false")
+    if "install_manifest_drift" in ai_maintenance_report.MAINTENANCE_PROBE_NAMES:
+        errors.append("install_manifest_drift must not be in maintenance probe names")
+    _append("stage2g_c_install_manifest_probe_missing_saved_manifest_is_read_only", errors)
+
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -7604,6 +7885,7 @@ def main() -> None:
         AI_SCAN_SYSTEM,
         AI_PROBE_CONTRACT,
         AI_PROBES,
+        AI_INSTALL_MANIFEST,
         AI_WRAPPER,
         AI_MEMORY,
         AI_MEMORY_QUERY,
@@ -8050,6 +8332,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2g_b_storage_portability_profile_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2g_c_install_manifest_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

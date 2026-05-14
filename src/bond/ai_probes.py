@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_host_profile import build_current_host_portability_profile
+from ai_install_manifest import build_install_manifest, compare_install_manifest
 from ai_storage_profile import build_current_storage_portability_profile
 from ai_core import BOND_ROOT, CONFIG_FILE, get_memory_root, get_router_config_path, get_state_root
 from ai_probe_contract import (
@@ -32,6 +33,7 @@ AVAILABLE_PROBES = (
     "host_baseline",
     "host_portability_profile",
     "storage_portability_profile",
+    "install_manifest_drift",
     "session_baseline",
     "tool_inventory",
     "router_config_models",
@@ -91,6 +93,38 @@ def probe_storage_portability_profile() -> ProbeResult:
         supports_live_truth=True,
         data=build_current_storage_portability_profile(),
         notes="Read-only storage portability profile for future installer/updater/satellite planning; it does not authorize directory creation, cleanup, data movement, or mount mutation.",
+    )
+
+
+def probe_install_manifest_drift() -> ProbeResult:
+    host_result = probe_host_portability_profile()
+    storage_result = probe_storage_portability_profile()
+    host_profile = host_result.data if host_result.ok else {}
+    storage_profile = storage_result.data if storage_result.ok else {}
+    current_manifest = build_install_manifest(
+        host_profile=host_profile,
+        storage_profile=storage_profile,
+        bond_root=str(BOND_ROOT),
+        repo_commit=None,
+        python_version=platform.python_version(),
+        env_paths=storage_profile.get("env_paths") if isinstance(storage_profile, dict) else None,
+        service_backend=(
+            storage_profile.get("service_backend")
+            if isinstance(storage_profile, dict)
+            else None
+        ),
+        created_at=None,
+    )
+    report = compare_install_manifest(None, current_manifest)
+    return probe_ok(
+        probe_name="install_manifest_drift",
+        layer=1,
+        source_type=SOURCE_RUNTIME_PROBE,
+        certainty_class=CERTAINTY_DERIVED,
+        refresh_class=REFRESH_LOW_CHURN,
+        supports_live_truth=True,
+        data=report,
+        notes="Read-only install manifest drift probe; no saved manifest persistence exists in this stage, so default output requires manual review before any future reconfiguration.",
     )
 
 
@@ -669,6 +703,7 @@ def run_named_probe(name: str) -> ProbeResult:
         "host_baseline": probe_host_baseline,
         "host_portability_profile": probe_host_portability_profile,
         "storage_portability_profile": probe_storage_portability_profile,
+        "install_manifest_drift": probe_install_manifest_drift,
         "session_baseline": probe_session_baseline,
         "tool_inventory": probe_tool_inventory,
         "router_config_models": probe_router_config_models,
