@@ -69,6 +69,7 @@ Current implemented probe names:
 - It classifies package managers as: mutable-strategy (apt, dnf, zypper, apk, xbps, nix, brew), immutable-user-space-preferred (rpm-ostree), steam-deck-or-atomic (pacman with Steam Deck/immutable signals), or unknown-requires-manual-review.
 - It maps bounded capabilities (core_python_runtime, git_source_checkout, selftest_validation, local_llm_runtime_optional, container_user_space_optional) to package manager-specific package names.
 - It classifies capability status as: observed_available (tools already present), plan_needed (unsupported manager prevents planning), manual_review_needed (unknown manager), or optional_not_required (optional capability without tools).
+- It classifies capability status as: observed_available (tools already present), plan_needed (supported mutable manager and capability absent; human may review before any future installer stage), manual_review_needed (unsupported, unknown, immutable, Steam Deck-like, or otherwise manual-review-required manager), or optional_not_required (optional capability without tools).
 - All authorization fields are explicitly False: execution_authorized, install_authorized, upgrade_authorized, service_authorized, write_plan_authorized.
 - No commands are generated.
 - It does not call package managers.

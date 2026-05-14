@@ -35,7 +35,6 @@ _CAPABILITY_PACKAGES = {
             "xbps": ["python3"],
             "nix": ["python3"],
             "brew": ["python"],
-            "rpm-ostree": ["python3"],
         },
     },
     "git_source_checkout": {
@@ -49,7 +48,6 @@ _CAPABILITY_PACKAGES = {
             "xbps": ["git"],
             "nix": ["git"],
             "brew": ["git"],
-            "rpm-ostree": ["git"],
         },
     },
     "selftest_validation": {
@@ -63,7 +61,6 @@ _CAPABILITY_PACKAGES = {
             "xbps": ["make"],
             "nix": ["make"],
             "brew": ["make"],
-            "rpm-ostree": ["make"],
         },
         "note": "Python stdlib compile/selftest remains primary; package install not authorized.",
     },
@@ -83,7 +80,6 @@ _CAPABILITY_PACKAGES = {
             "xbps": ["podman"],
             "nix": ["podman"],
             "brew": [],
-            "rpm-ostree": ["podman"],
         },
     },
 }
@@ -138,6 +134,17 @@ def build_dependency_plan(
     plan_items = []
     pkg_manager = package_strategy.get("package_manager", "(unknown)")
 
+    # Determine if this is a manual-review strategy (immutable, steam deck, unknown, etc.)
+    is_manual_review_strategy = (
+        package_strategy.get("strategy_kind") in (
+            "immutable_host_user_space_preferred",
+            "steam_deck_or_atomic_user_space_preferred",
+            "unknown_requires_manual_review",
+        )
+        or not package_strategy.get("supported_package_manager", False)
+        or bool(package_strategy.get("requires_manual_review"))
+    )
+
     for cap in requested_capabilities:
         cap_info = _CAPABILITY_PACKAGES.get(cap, {})
         req_kind = cap_info.get("requirement_kind", "unknown")
@@ -146,7 +153,7 @@ def build_dependency_plan(
         if cap == "core_python_runtime":
             if observed_python3:
                 status = "observed_available"
-            elif package_strategy.get("supported_package_manager"):
+            elif not is_manual_review_strategy:
                 status = "plan_needed"
             else:
                 status = "manual_review_needed"
@@ -154,7 +161,7 @@ def build_dependency_plan(
         elif cap == "git_source_checkout":
             if observed_git:
                 status = "observed_available"
-            elif package_strategy.get("supported_package_manager"):
+            elif not is_manual_review_strategy:
                 status = "plan_needed"
             else:
                 status = "manual_review_needed"
@@ -162,7 +169,7 @@ def build_dependency_plan(
         elif cap == "selftest_validation":
             if observed_make:
                 status = "observed_available"
-            elif package_strategy.get("supported_package_manager"):
+            elif not is_manual_review_strategy:
                 status = "plan_needed"
             else:
                 status = "manual_review_needed"
@@ -188,7 +195,7 @@ def build_dependency_plan(
 
         # Build package names for this capability
         pkg_names_by_mgr = {}
-        if status in ("plan_needed", "observed_available"):
+        if status == "plan_needed" and not is_manual_review_strategy:
             cap_packages = cap_info.get("package_names_by_manager", {})
             if pkg_manager in cap_packages:
                 pkg_names_by_mgr = {pkg_manager: cap_packages[pkg_manager]}
@@ -219,15 +226,7 @@ def build_dependency_plan(
         plan_items.append(item)
 
     # Determine recommended next step
-    all_core_available = all(
-        item["status"] == "observed_available"
-        for item in plan_items
-        if item["capability"] in ("core_python_runtime", "git_source_checkout")
-    )
-
-    if all_core_available:
-        recommended_next = "none"
-    elif package_strategy.get("requires_manual_review") or not package_strategy.get("supported_package_manager"):
+    if any(item["status"] == "manual_review_needed" for item in plan_items):
         recommended_next = "manual_dependency_review"
     elif any(item["status"] == "plan_needed" for item in plan_items):
         recommended_next = "review_dependency_plan"
@@ -257,8 +256,8 @@ def build_dependency_plan(
         "observed_tools_summary": observed_summary,
         "plan_items": plan_items,
         "requires_manual_review": (
-            package_strategy.get("requires_manual_review")
-            or not package_strategy.get("supported_package_manager")
+            any(item["requires_manual_review"] for item in plan_items)
+            or bool(package_strategy.get("requires_manual_review"))
         ),
         "recommended_next_step_kind": recommended_next,
         "plan_notes": "Read-only plan; does not authorize installation or execution.",

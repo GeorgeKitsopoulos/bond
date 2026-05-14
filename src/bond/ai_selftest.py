@@ -6651,7 +6651,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 296, "failed": 0, "total": 296}'
+    current_summary = '{"ok": true, "passed": 300, "failed": 0, "total": 300}'
     stale_summaries = [
         '{"ok": true, "passed": 288, "failed": 0, "total": 288}',
         '{"ok": true, "passed": 281, "failed": 0, "total": 281}',
@@ -6659,6 +6659,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         '{"ok": true, "passed": 256, "failed": 0, "total": 256}',
         '{"ok": true, "passed": 257, "failed": 0, "total": 257}',
         '{"ok": true, "passed": 258, "failed": 0, "total": 258}',
+        '{"ok": true, "passed": 296, "failed": 0, "total": 296}',
     ]
     current_docs = [
         BOND_ROOT / "README.md",
@@ -6870,8 +6871,9 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 296, "failed": 0, "total": 296}'
+    current_summary = '{"ok": true, "passed": 300, "failed": 0, "total": 300}'
     stale_summaries = [
+        '{"ok": true, "passed": 296, "failed": 0, "total": 296}',
         '{"ok": true, "passed": 288, "failed": 0, "total": 288}',
         '{"ok": true, "passed": 281, "failed": 0, "total": 281}',
         '{"ok": true, "passed": 262, "failed": 0, "total": 262}',
@@ -8022,6 +8024,156 @@ def run_stage2g_d_dependency_plan_tests() -> list[dict[str, Any]]:
         errors.append(f"probe_dependency_plan raised exception: {str(exc)[:200]}")
     _append("stage2g_d_dependency_plan_probe_is_read_only", errors)
 
+    # Test 9: host_profile distro_like bazzite+pacman must resolve as Steam Deck/atomic manual review
+    errors = []
+    synthetic_profile = {
+        "package_manager": "pacman",
+        "distro_like": "bazzite fedora",
+    }
+    strategy = ai_package_manager.classify_package_manager_strategy(host_profile=synthetic_profile)
+    if strategy.get("strategy_kind") != "steam_deck_or_atomic_user_space_preferred":
+        errors.append(
+            f"bazzite distro_like via host_profile should yield "
+            f"'steam_deck_or_atomic_user_space_preferred', got {strategy.get('strategy_kind')}"
+        )
+    if strategy.get("preferred_install_surface") != "distrobox_or_user_space":
+        errors.append(
+            f"bazzite distro_like via host_profile should prefer 'distrobox_or_user_space', "
+            f"got {strategy.get('preferred_install_surface')}"
+        )
+    if not strategy.get("requires_manual_review"):
+        errors.append("bazzite distro_like via host_profile must require manual review")
+    if strategy.get("execution_authorized") is not False:
+        errors.append("execution_authorized must be False")
+    if strategy.get("install_authorized") is not False:
+        errors.append("install_authorized must be False")
+    if strategy.get("host_mutation_default_allowed") is not False:
+        errors.append("host_mutation_default_allowed must be False")
+    # Sanity: must not be normal mutable pacman strategy
+    if strategy.get("strategy_kind") == "mutable_package_manager_plan":
+        errors.append("bazzite host_profile must not resolve as mutable_package_manager_plan")
+    _append("stage2g_d_package_strategy_host_profile_distro_like_bazzite_pacman_manual_review", errors)
+
+    # Test 10: rpm-ostree dependency plan must not present host package claims for unobserved items
+    errors = []
+    rpm_ostree_strategy = ai_package_manager.classify_package_manager_strategy(
+        package_manager="rpm-ostree",
+        immutable_hint=True,
+    )
+    plan = ai_dependency_plan.build_dependency_plan(
+        package_strategy=rpm_ostree_strategy,
+        requested_capabilities=(
+            "core_python_runtime",
+            "git_source_checkout",
+            "selftest_validation",
+            "container_user_space_optional",
+        ),
+        observed_tools={},
+    )
+    for item in plan.get("plan_items", []):
+        pkg_by_mgr = item.get("package_names_by_manager", {})
+        if pkg_by_mgr:
+            errors.append(
+                f"rpm-ostree unobserved item '{item['capability']}' must not present "
+                f"host package names, got {pkg_by_mgr}"
+            )
+        if item.get("capability") in ("core_python_runtime", "git_source_checkout", "selftest_validation"):
+            if item.get("status") != "manual_review_needed":
+                errors.append(
+                    f"rpm-ostree required capability '{item['capability']}' must be "
+                    f"'manual_review_needed', got {item.get('status')}"
+                )
+    if plan.get("execution_authorized") is not False:
+        errors.append("execution_authorized must be False")
+    if plan.get("install_authorized") is not False:
+        errors.append("install_authorized must be False")
+    if plan.get("upgrade_authorized") is not False:
+        errors.append("upgrade_authorized must be False")
+    if plan.get("service_authorized") is not False:
+        errors.append("service_authorized must be False")
+    if plan.get("write_plan_authorized") is not False:
+        errors.append("write_plan_authorized must be False")
+    if plan.get("commands_generated") is not False:
+        errors.append("commands_generated must be False")
+    surf = rpm_ostree_strategy.get("preferred_install_surface", "")
+    if surf not in ("distrobox_or_user_space", "manual_review"):
+        errors.append(f"rpm-ostree preferred surface must be user-space/manual-review oriented, got {surf}")
+    _append("stage2g_d_dependency_plan_rpm_ostree_avoids_host_package_claims", errors)
+
+    # Test 11: manual_review_needed overrides core-available in next-step aggregation
+    errors = []
+    rpm_ostree_strategy2 = ai_package_manager.classify_package_manager_strategy(
+        package_manager="rpm-ostree",
+        immutable_hint=True,
+    )
+    plan2 = ai_dependency_plan.build_dependency_plan(
+        package_strategy=rpm_ostree_strategy2,
+        requested_capabilities=(
+            "core_python_runtime",
+            "git_source_checkout",
+            "selftest_validation",
+        ),
+        observed_tools={
+            "python3": {"available": True},
+            "git": {"available": True},
+        },
+    )
+    # core_python_runtime and git_source_checkout are observed; selftest_validation is not
+    selftest_item = next(
+        (i for i in plan2.get("plan_items", []) if i["capability"] == "selftest_validation"), None
+    )
+    if selftest_item is None:
+        errors.append("plan should have selftest_validation item")
+    elif selftest_item.get("status") != "manual_review_needed":
+        errors.append(
+            f"rpm-ostree unobserved selftest_validation must be 'manual_review_needed', "
+            f"got {selftest_item.get('status')}"
+        )
+    if plan2.get("recommended_next_step_kind") != "manual_dependency_review":
+        errors.append(
+            f"recommended_next_step_kind must be 'manual_dependency_review' when any item "
+            f"is manual_review_needed, got {plan2.get('recommended_next_step_kind')}"
+        )
+    if not plan2.get("requires_manual_review"):
+        errors.append("requires_manual_review must be True when manual_review_needed item exists")
+    if plan2.get("execution_authorized") is not False:
+        errors.append("execution_authorized must be False")
+    if plan2.get("install_authorized") is not False:
+        errors.append("install_authorized must be False")
+    _append("stage2g_d_dependency_plan_manual_review_overrides_core_available", errors)
+
+    # Test 12: status wording contract — manual_review_needed for unknown/unsupported managers
+    errors = []
+    unknown_strategy = ai_package_manager.classify_package_manager_strategy(
+        package_manager="some_unknown_pm"
+    )
+    unknown_plan = ai_dependency_plan.build_dependency_plan(
+        package_strategy=unknown_strategy,
+        requested_capabilities=("core_python_runtime", "git_source_checkout"),
+        observed_tools={},
+    )
+    for item in unknown_plan.get("plan_items", []):
+        if item.get("status") == "plan_needed":
+            errors.append(
+                f"unknown package manager must not produce 'plan_needed' status "
+                f"for capability '{item['capability']}'; got plan_needed"
+            )
+        if item.get("status") not in ("manual_review_needed", "observed_available", "optional_not_required"):
+            errors.append(
+                f"unknown package manager capability '{item['capability']}' has unexpected "
+                f"status '{item.get('status')}'"
+            )
+    # Verify the strategy itself is unknown_requires_manual_review
+    if unknown_strategy.get("strategy_kind") != "unknown_requires_manual_review":
+        errors.append(
+            f"unknown pm must yield 'unknown_requires_manual_review', "
+            f"got {unknown_strategy.get('strategy_kind')}"
+        )
+    # Verify stale misleading wording is not present in plan notes
+    plan_notes = unknown_plan.get("plan_notes", "")
+    if "plan_needed means unsupported" in plan_notes.lower():
+        errors.append("plan_notes must not contain stale wording 'plan_needed means unsupported'")
+    _append("stage2g_d_dependency_plan_status_wording_contract", errors)
     return results
 
 

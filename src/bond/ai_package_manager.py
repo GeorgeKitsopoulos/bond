@@ -57,7 +57,7 @@ def classify_package_manager_strategy(
     pm_lower = (pm or "").strip().lower() if pm else ""
     os_fam_lower = (os_fam or "").strip().lower() if os_fam else ""
     distro_i_lower = (distro_i or "").strip().lower() if distro_i else ""
-    distro_l_lower = (distro_like or "").strip().lower() if distro_like else ""
+    distro_l_lower = (distro_l or "").strip().lower() if distro_l else ""
 
     # Determine if Steam Deck-like
     is_steam_deck_like = (

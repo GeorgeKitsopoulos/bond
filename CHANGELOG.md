@@ -29,9 +29,18 @@ Until formal release tagging is established, this changelog should follow these 
 - Covers 8 package managers: apt, dnf, zypper, apk, xbps, nix, brew (mutable strategies); rpm-ostree (immutable user-space preferred); pacman (mutable or user-space depending on Steam Deck/immutable hints); and unknown (requires manual review).
 - Supports 5 bounded capabilities: core_python_runtime, git_source_checkout, selftest_validation, local_llm_runtime_optional, container_user_space_optional.
 - Classifies capability status as: observed_available (tool already present), plan_needed (unsupported package manager prevents automatic planning), manual_review_needed (unknown manager), optional_not_required (optional capability without tools).
+- Classifies capability status as: observed_available (tool already present), plan_needed (supported mutable manager and capability absent), manual_review_needed (unsupported, unknown, immutable, Steam Deck-like, or otherwise manual-review-required manager), optional_not_required (optional capability without tools).
 - All authorization fields (execution_authorized, install_authorized, etc.) are explicitly False; no commands are generated; no package managers are called.
 - Adds 8 selftests covering package strategy classification for apt/mutable, rpm-ostree/immutable, pacman/Steam-Deck, unknown managers, dependency plan shape, observed-tools integration, optional-LLM non-claiming, and probe read-only boundaries.
-- Final integrated selftest JSON summary: {"ok": true, "passed": 296, "failed": 0, "total": 296}.
+
+### Stage 2G-D forward-fix: harden dependency planning classification
+
+- Hardens `ai_package_manager.py` to correctly resolve `distro_like` from `host_profile` when no direct `distro_like` argument is passed; previously the host_profile-provided value was silently ignored during normalization.
+- Hardens `ai_dependency_plan.py` so that rpm-ostree, immutable, Steam Deck-like, and unknown package manager strategies do not present rpm-ostree host package names as a normal package install path; `package_names_by_manager` is empty for unobserved items under those strategies.
+- Required core capabilities (core_python_runtime, git_source_checkout, selftest_validation) now produce `manual_review_needed` status for immutable/rpm-ostree/unknown strategies unless the tool is explicitly observed available.
+- Fixes `recommended_next_step_kind` aggregation: if any plan item is `manual_review_needed` the top-level result is `manual_dependency_review`; else if any item is `plan_needed` the result is `review_dependency_plan`; else `none`. The previous logic allowed "all core tools observed" to suppress manual-review items.
+- No execution behavior added. No package managers called. No commands generated. All authorization fields remain False.
+- Adds 4 regression selftests for the above corrections; selftest baseline is now {"ok": true, "passed": 300, "failed": 0, "total": 300}.
 
 ### Stage 2G-C install manifest drift detection
 

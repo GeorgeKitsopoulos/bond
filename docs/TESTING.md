@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 296, "failed": 0, "total": 296}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 300, "failed": 0, "total": 300}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -78,6 +78,13 @@ Coverage now also includes Stage 2G-D package-manager classification and depende
 - `stage2g_d_dependency_plan_observed_tools_no_install_needed` — observed tools (python3, git) mark capabilities as already available and plan_needed false
 - `stage2g_d_dependency_plan_optional_llm_not_package_claimed` — optional local-llm-runtime capability does not claim Ollama packages for automatic installation
 - `stage2g_d_dependency_plan_probe_is_read_only` — dependency_plan probe invocation returns correct kind with all authorizations false
+
+Coverage now also includes Stage 2G-D forward-fix regression checks:
+
+- `stage2g_d_package_strategy_host_profile_distro_like_bazzite_pacman_manual_review` — host_profile-provided distro_like containing "bazzite" with pacman must resolve as Steam Deck/atomic user-space-preferred strategy with manual review required; verifies distro_like is not ignored when passed only via host_profile
+- `stage2g_d_dependency_plan_rpm_ostree_avoids_host_package_claims` — rpm-ostree/immutable strategy must not present host package names for unobserved capabilities; package_names_by_manager must be empty and required capabilities must have manual_review_needed status
+- `stage2g_d_dependency_plan_manual_review_overrides_core_available` — when core Python/git are observed but another required capability is manual_review_needed, top-level recommended_next_step_kind must be manual_dependency_review, not none
+- `stage2g_d_dependency_plan_status_wording_contract` — unknown/unsupported package managers must produce manual_review_needed status, not plan_needed; verifies correct status semantics
 
 Stage 2F-F-D tests also guard against accidental inclusion of host/session/tool/model context probes inside `ai_maintenance_report.py`; the maintenance report contract must stay limited to the three maintenance probes plus the non-executing plan output.
 Stage 2F-F-D docs hygiene coverage also guards against duplicate maintenance-planning and coverage checkpoint notes in ROADMAP.md and docs/TESTING.md, plus stale current baseline drift across README.md, ROADMAP.md, docs/STATE.md, and docs/TESTING.md.

@@ -7,7 +7,7 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 - Bond is under active development.
 - The current validated baseline is Stage 2G-D deterministic dependency planning and package-manager classification contract.
 - `src/bond/ai_package_manager.py` and `src/bond/ai_dependency_plan.py` added: pure deterministic, non-executing package manager strategy classification and dependency planning contracts.
-- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 296, "failed": 0, "total": 296} (see docs/TESTING.md for exact summary).
+- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 300, "failed": 0, "total": 300} (see docs/TESTING.md for exact summary).
 - Stage 2G-D adds a read-only package-manager classification and dependency planning layer without authorizing installation, execution, or host mutation.
 - Stage 2G-C adds a read-only install manifest and drift detection layer on top of the existing portability profiles.
 - Stage 2G-B continues the portable installer/updater/satellite track with a read-only storage portability profile.
