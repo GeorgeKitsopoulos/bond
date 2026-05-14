@@ -20,6 +20,15 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-A host portability profile
+
+- Starts the portable installer/updater/satellite track with a read-only host portability profile.
+- Adds conservative host portability detection for distro-family, package-manager/tool availability, atomic/image-based signals, Bazzite/SteamOS/Steam Deck-like signals, service-backend hints, and bounded dependency strategy.
+- Adds `host_portability_profile` as a read-only probe for future installer/updater/satellite planning.
+- Adds Stage 2G-A selftests for parser behavior, host signal detection, strategy boundaries, contract boundaries, and probe registration/scope checks.
+- This stage does not install packages, update the system, layer packages, mutate services, authorize execution, start automation, write manifests, run an updater, or broaden normal assistant answers.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 268, "failed": 0, "total": 268}.
+
 ### Stage 2F-F-E maintenance report readiness metadata
 
 - Added metadata-only readiness fields to the explicit maintenance/readiness report contract.

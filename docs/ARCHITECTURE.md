@@ -277,6 +277,24 @@ Stage 2F-F-E adds metadata-only readiness fields inside the explicit maintenance
 - It does not add privileged execution.
 - It does not broaden normal assistant answers.
 
+### Host portability profile (Stage 2G-A)
+
+- Module owner: `src/bond/ai_host_profile.py`.
+- Probe owner: `host_portability_profile` in `src/bond/ai_probes.py`.
+- Purpose: detect host portability signals for future installer/updater/satellite design.
+- Output fields include distro family, tool/package-manager availability, atomic/image-based signals, Bazzite/SteamOS/Steam Deck-like signals, dependency strategy, and service backend hints.
+- The profile is read-only and plan-first only.
+- It does not authorize execution.
+- It does not install packages.
+- It does not layer packages.
+- It does not update systems.
+- It does not mutate services.
+- It does not write manifests.
+- It does not schedule work.
+- It does not create services.
+- It does not broaden normal assistant answers.
+- Steam Deck/Bazzite handling must remain rootless/user-space-first unless a future explicit host-layering contract exists.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

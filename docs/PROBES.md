@@ -14,6 +14,7 @@ Stage 2F-D-A implements the first read-only, rootless probe foundation.
 Current implemented probe names:
 
 - `host_baseline`
+- `host_portability_profile`
 - `session_baseline`
 - `tool_inventory`
 - `router_config_models`
@@ -22,6 +23,17 @@ Current implemented probe names:
 - `package_update_status`
 - `storage_hygiene`
 - `boot_service_health`
+
+## Stage 2G-A host portability profile
+
+- `host_portability_profile` is a read-only portability profile probe for future installer/updater/satellite planning.
+- It consumes only OS release content, platform metadata, safe tool-path checks (`shutil.which`-style), and optional readable DMI/sysfs strings.
+- It detects distro-family, package-manager/tool availability, atomic/image-based signals, Bazzite/SteamOS/Steam Deck-like signals, service backend hints, and a bounded dependency strategy.
+- It does not run package-manager commands.
+- It does not authorize package installation.
+- It does not authorize host mutation.
+- It is not part of the maintenance report contract.
+- Maintenance report scope remains limited to `package_update_status`, `storage_hygiene`, and `boot_service_health`.
 
 ## Stage 2F-F-A read-only maintenance probe foundation
 

@@ -15,6 +15,7 @@ import ai_memory_rotate
 import ai_run
 import ai_capability_answer
 import ai_capability_classifier
+import ai_host_profile
 import ai_maintenance_report
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
 from ai_maintenance_report import (
@@ -120,6 +121,7 @@ from ai_probes import (
     list_probe_names,
     probe_boot_service_health,
     probe_host_baseline,
+    probe_host_portability_profile,
     probe_model_truth,
     probe_ollama_model_inventory,
     probe_package_update_status,
@@ -6645,8 +6647,9 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 262, "failed": 0, "total": 262}'
+    current_summary = '{"ok": true, "passed": 268, "failed": 0, "total": 268}'
     stale_summaries = [
+        '{"ok": true, "passed": 262, "failed": 0, "total": 262}',
         '{"ok": true, "passed": 256, "failed": 0, "total": 256}',
         '{"ok": true, "passed": 257, "failed": 0, "total": 257}',
         '{"ok": true, "passed": 258, "failed": 0, "total": 258}',
@@ -6861,8 +6864,9 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 262, "failed": 0, "total": 262}'
+    current_summary = '{"ok": true, "passed": 268, "failed": 0, "total": 268}'
     stale_summaries = [
+        '{"ok": true, "passed": 262, "failed": 0, "total": 262}',
         '{"ok": true, "passed": 256, "failed": 0, "total": 256}',
         '{"ok": true, "passed": 257, "failed": 0, "total": 257}',
         '{"ok": true, "passed": 258, "failed": 0, "total": 258}',
@@ -6880,6 +6884,260 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
                     errors.append(f"{display} contains stale current selftest summary {stale_summary}")
 
     _append("stage2f_f_e_docs_and_source_boundary", errors)
+
+    return results
+
+
+def run_stage2g_a_host_portability_profile_tests() -> list[dict]:
+    results: list[dict] = []
+
+    def _append(name: str, errors: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": "",
+                "stderr": "",
+                "errors": errors,
+                "cmd": ["stage2g_a", name],
+            }
+        )
+
+    def _tool_map(available_names: set[str]) -> dict[str, dict[str, object]]:
+        tools: dict[str, dict[str, object]] = {}
+        for name in [
+            "apt",
+            "dnf",
+            "rpm-ostree",
+            "bootc",
+            "pacman",
+            "zypper",
+            "apk",
+            "xbps-install",
+            "nix",
+            "brew",
+            "flatpak",
+            "podman",
+            "distrobox",
+            "pipx",
+            "git",
+            "ujust",
+            "systemctl",
+            "journalctl",
+        ]:
+            if name in available_names:
+                tools[name] = {"available": True, "path": f"/usr/bin/{name}"}
+            else:
+                tools[name] = {"available": False, "path": None}
+        return tools
+
+    errors: list[str] = []
+    parsed = ai_host_profile.parse_os_release_text(
+        """
+# comment line
+ID=linuxmint
+ID_LIKE="ubuntu debian"
+NAME='Linux Mint'
+PRETTY_NAME="Linux Mint 22"
+VARIANT_ID=vanessa
+MALFORMED_LINE
+=bad
+
+"""
+    )
+    if parsed.get("ID") != "linuxmint":
+        errors.append("ID parse mismatch")
+    if parsed.get("ID_LIKE") != "ubuntu debian":
+        errors.append("ID_LIKE parse mismatch")
+    if parsed.get("NAME") != "Linux Mint":
+        errors.append("NAME parse mismatch")
+    if parsed.get("PRETTY_NAME") != "Linux Mint 22":
+        errors.append("PRETTY_NAME parse mismatch")
+    if parsed.get("VARIANT_ID") != "vanessa":
+        errors.append("VARIANT_ID parse mismatch")
+    if "MALFORMED_LINE" in parsed:
+        errors.append("malformed line should be ignored")
+    if "" in parsed:
+        errors.append("empty key line should be ignored")
+    _append("stage2g_a_host_profile_os_release_parser", errors)
+
+    errors = []
+    bazzite_profile = ai_host_profile.build_host_portability_profile(
+        os_release={
+            "ID": "bazzite",
+            "ID_LIKE": "fedora",
+            "NAME": "Bazzite",
+            "VARIANT_ID": "bazzite-deck",
+        },
+        tool_map=_tool_map(
+            {
+                "rpm-ostree",
+                "bootc",
+                "flatpak",
+                "podman",
+                "distrobox",
+                "pipx",
+                "ujust",
+                "git",
+                "systemctl",
+            }
+        ),
+        hardware_text="Valve Steam Deck",
+        platform_system="Linux",
+        platform_machine="x86_64",
+        python_version="3.13.13",
+    )
+    if bazzite_profile.get("distro_family") != "fedora":
+        errors.append("bazzite distro_family must be fedora")
+    signals = bazzite_profile.get("platform_signals", {})
+    if signals.get("is_bazzite_like") is not True:
+        errors.append("is_bazzite_like must be true")
+    if signals.get("is_steam_deck_like") is not True:
+        errors.append("is_steam_deck_like must be true")
+    if signals.get("is_atomic_or_image_based_like") is not True:
+        errors.append("is_atomic_or_image_based_like must be true")
+    strategy = bazzite_profile.get("dependency_strategy", {})
+    if strategy.get("strategy") != "rootless_user_space_first":
+        errors.append("strategy must be rootless_user_space_first")
+    for key in [
+        "package_install_supported",
+        "host_mutation_supported",
+        "execution_supported",
+        "action_authorized",
+    ]:
+        if bazzite_profile.get(key) is not False:
+            errors.append(f"{key} must be false")
+    _append("stage2g_a_host_profile_detects_bazzite_deck_atomic", errors)
+
+    errors = []
+    steamos_profile = ai_host_profile.build_host_portability_profile(
+        os_release={
+            "ID": "steamos",
+            "ID_LIKE": "arch",
+            "NAME": "SteamOS",
+        },
+        tool_map=_tool_map({"pacman", "git"}),
+        platform_system="Linux",
+    )
+    if steamos_profile.get("distro_family") != "arch":
+        errors.append("steamos distro_family must be arch")
+    steamos_signals = steamos_profile.get("platform_signals", {})
+    if steamos_signals.get("is_steamos_like") is not True:
+        errors.append("is_steamos_like must be true")
+    steamos_strategy = steamos_profile.get("dependency_strategy", {})
+    if steamos_strategy.get("strategy") != "avoid_host_mutation":
+        errors.append("strategy must be avoid_host_mutation")
+    if steamos_strategy.get("avoid_blind_host_mutation") is not True:
+        errors.append("avoid_blind_host_mutation must be true")
+    if steamos_strategy.get("host_layering_requires_explicit_opt_in") is not True:
+        errors.append("host_layering_requires_explicit_opt_in must be true")
+    for key in [
+        "package_install_supported",
+        "host_mutation_supported",
+        "execution_supported",
+        "action_authorized",
+    ]:
+        if steamos_profile.get(key) is not False:
+            errors.append(f"{key} must be false")
+    _append("stage2g_a_host_profile_detects_steamos_avoid_host_mutation", errors)
+
+    errors = []
+    mint_profile = ai_host_profile.build_host_portability_profile(
+        os_release={
+            "ID": "linuxmint",
+            "ID_LIKE": "ubuntu debian",
+            "NAME": "Linux Mint",
+        },
+        tool_map=_tool_map({"apt", "git", "pipx", "systemctl"}),
+        platform_system="Linux",
+    )
+    if mint_profile.get("distro_family") != "debian":
+        errors.append("mint distro_family must be debian")
+    mint_strategy = mint_profile.get("dependency_strategy", {})
+    if mint_strategy.get("strategy") != "native_package_manager_plan_first":
+        errors.append("strategy must be native_package_manager_plan_first")
+    if mint_strategy.get("native_package_manager") != "apt":
+        errors.append("native_package_manager must be apt")
+    if mint_strategy.get("prefer_rootless_container_or_user_space") is not False:
+        errors.append("prefer_rootless_container_or_user_space must be false")
+    for key in [
+        "package_install_supported",
+        "host_mutation_supported",
+        "action_authorized",
+    ]:
+        if mint_profile.get(key) is not False:
+            errors.append(f"{key} must be false")
+    _append("stage2g_a_host_profile_detects_linux_mint_apt_native", errors)
+
+    errors = []
+    unknown_profile = ai_host_profile.build_host_portability_profile(
+        os_release={"ID": "mysteryos"},
+        tool_map=_tool_map(set()),
+        platform_system="Linux",
+    )
+    boundaries = unknown_profile.get("boundaries", [])
+    for required_boundary in [
+        "read-only host profiling only",
+        "no package installation",
+        "no system updates",
+        "no package layering",
+        "no service mutation",
+        "no privileged execution",
+        "does not authorize execution",
+        "not an installer",
+        "not an updater",
+    ]:
+        if required_boundary not in boundaries:
+            errors.append(f"missing boundary: {required_boundary}")
+    for key in [
+        "package_install_supported",
+        "host_mutation_supported",
+        "execution_supported",
+        "action_authorized",
+    ]:
+        if unknown_profile.get(key) is not False:
+            errors.append(f"{key} must be false")
+    unknown_strategy = unknown_profile.get("dependency_strategy", {})
+    if unknown_strategy.get("strategy") != "unknown_plan_first":
+        errors.append("unknown strategy must be unknown_plan_first")
+    _append("stage2g_a_host_profile_contract_boundaries", errors)
+
+    errors = []
+    names = list_probe_names()
+    if "host_portability_profile" not in names:
+        errors.append("host_portability_profile missing from list_probe_names")
+    direct_probe = probe_host_portability_profile()
+    if direct_probe.probe_name != "host_portability_profile":
+        errors.append("probe_host_portability_profile probe_name mismatch")
+    result = run_named_probe("host_portability_profile")
+    if result.ok is not True:
+        errors.append("host_portability_profile probe must be ok")
+    if result.probe_name != "host_portability_profile":
+        errors.append("run_named_probe returned wrong probe name")
+    if result.data.get("profile_kind") != "host_portability_profile":
+        errors.append("profile_kind mismatch")
+    for key in [
+        "action_authorized",
+        "execution_supported",
+        "package_install_supported",
+        "host_mutation_supported",
+    ]:
+        if result.data.get(key) is not False:
+            errors.append(f"probe result data {key} must be false")
+
+    expected_maintenance = (
+        "package_update_status",
+        "storage_hygiene",
+        "boot_service_health",
+    )
+    if ai_maintenance_report.MAINTENANCE_PROBE_NAMES != expected_maintenance:
+        errors.append(
+            "ai_maintenance_report.MAINTENANCE_PROBE_NAMES changed from expected"
+        )
+    if "host_portability_profile" in ai_maintenance_report.MAINTENANCE_PROBE_NAMES:
+        errors.append("host_portability_profile must not be in maintenance probe names")
+    _append("stage2g_a_host_profile_probe_registration_and_scope", errors)
 
     return results
 
@@ -7315,6 +7573,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2f_f_d_maintenance_report_contract_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2g_a_host_portability_profile_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

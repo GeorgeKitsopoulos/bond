@@ -16,17 +16,19 @@ This file exists to prevent drift between:
 
 ## Current Checkpoint
 
-Date: 12 May 2026 (Stage 2F-F-E current; earlier checkpoints preserved below)
+Date: 14 May 2026 (Stage 2G-A current; earlier checkpoints preserved below)
 
 Current baseline note:
 
-- Stage 2F-F-E maintenance report readiness metadata is the current repository checkpoint.
+- Stage 2G-A host portability profile is the current repository checkpoint.
 - `src/bond/ai_maintenance_report.py` added as a pure isolated seam for narrow maintenance/readiness report assembly and formatting.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 262, "failed": 0, "total": 262}.
+- Compile and integrated selftest baseline is {"ok": true, "passed": 268, "failed": 0, "total": 268}.
+- Stage 2G-A starts the portable installer/updater/satellite track with a read-only host portability profile.
+- Stage 2G-A classifies host portability signals only and does not install packages, update systems, layer packages, mutate services, authorize execution, or add automation.
 - Stage 2F-F-C non-executing maintenance planning contract is integrated and current.
 - Stage 2F-F-D adds a clean internal seam between read-only maintenance probes, non-executing maintenance planning, and assistant-facing maintenance/readiness report text.
-- Stage 2F-F-E adds metadata-only report readiness inside the explicit maintenance/readiness report and does not add scheduling, automation, dashboards, actions, service mutation, or privileged execution.
-- Privileged execution, repair/update/cleanup actions, service mutation, dashboards, automation, and broad normal-answer probe backing remain future work.
+- Stage 2F-F-E maintenance report readiness metadata remains integrated/current inside the explicit maintenance/readiness report contract.
+- Privileged execution, repair/update/cleanup actions, service mutation, dashboards, automation, broad normal-answer probe backing, finished installer, finished updater, and satellite runtime remain future work.
 - The older April 2026 Stage 2E / 61/61 checkpoint is preserved below as historical context.
 
 P0B update (source/config/deploy sanitation):

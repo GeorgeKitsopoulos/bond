@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from ai_host_profile import build_current_host_portability_profile
 from ai_core import BOND_ROOT, CONFIG_FILE, get_memory_root, get_router_config_path, get_state_root
 from ai_probe_contract import (
     CERTAINTY_AUTHORITATIVE,
@@ -28,6 +29,7 @@ from ai_probe_contract import (
 
 AVAILABLE_PROBES = (
     "host_baseline",
+    "host_portability_profile",
     "session_baseline",
     "tool_inventory",
     "router_config_models",
@@ -61,6 +63,19 @@ def probe_host_baseline() -> ProbeResult:
             "memory_root": str(get_memory_root()),
             "state_root": str(get_state_root()),
         },
+    )
+
+
+def probe_host_portability_profile() -> ProbeResult:
+    return probe_ok(
+        probe_name="host_portability_profile",
+        layer=0,
+        source_type=SOURCE_OS_API,
+        certainty_class=CERTAINTY_DERIVED,
+        refresh_class=REFRESH_LOW_CHURN,
+        supports_live_truth=True,
+        data=build_current_host_portability_profile(),
+        notes="Read-only host portability profile for future installer/updater/satellite planning; it does not authorize host mutation.",
     )
 
 
@@ -637,6 +652,7 @@ def run_named_probe(name: str) -> ProbeResult:
 
     dispatch = {
         "host_baseline": probe_host_baseline,
+        "host_portability_profile": probe_host_portability_profile,
         "session_baseline": probe_session_baseline,
         "tool_inventory": probe_tool_inventory,
         "router_config_models": probe_router_config_models,

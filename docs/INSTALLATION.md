@@ -158,6 +158,22 @@ Future OS/package update handling must follow this order:
 
 Bond must not silently run `apt upgrade`, `snap refresh`, `flatpak update`, package removal, service restart, or cleanup commands from a scheduled report or GUI surface.
 
+## Host portability profiling prerequisite (Stage 2G-A)
+
+Future installer/updater work must start with read-only host profiling.
+
+In Stage 2G-A, host profiling can classify Debian/Mint/Ubuntu-like, Fedora/Bazzite/Fedora Atomic-like, SteamOS/Arch-like, openSUSE-like, Alpine-like, Void-like, Nix-like, macOS-like, and unknown systems from safe signals.
+
+Bazzite/Steam Deck/SteamOS-like systems must default to rootless/user-space/container-first planning and avoid blind host mutation.
+
+This is not a working installer, updater, package installer, or satellite runtime.
+
+Any future install/update flow must remain:
+
+detect -> plan -> show -> explicitly authorize -> execute -> verify -> report
+
+Execution is not added in this stage.
+
 ## Uninstall direction
 
 Uninstall must eventually become explicit.
