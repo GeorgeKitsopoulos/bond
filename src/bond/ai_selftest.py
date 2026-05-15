@@ -10835,8 +10835,8 @@ def run_stage2g_f_f_user_install_review_tests() -> list[dict[str, Any]]:
         "docs/ARCHITECTURE.md": ["Stage 2G-F-F", "ai_user_install_review.py", "user_install_review_report"],
         "docs/INSTALLATION.md": ["Stage 2G-F-F", "review packet"],
         "docs/PROBES.md": ["user_install_review_report"],
-        "docs/STATE.md": ["Stage 2G-F-F", '{"ok": true, "passed": 378, "failed": 0, "total": 378}'],
-        "docs/TESTING.md": ["Stage 2G-F-F", '{"ok": true, "passed": 378, "failed": 0, "total": 378}'],
+        "docs/STATE.md": ["Stage 2G-F-F", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
+        "docs/TESTING.md": ["Stage 2G-F-F", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
     }
     for relative_path, needles in docs_needles.items():
         text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
@@ -11215,8 +11215,8 @@ def run_stage2g_f_g_user_install_write_preflight_tests() -> list[dict[str, Any]]
         "docs/ARCHITECTURE.md": ["Stage 2G-F-G", "ai_user_install_write_preflight.py", "user_install_write_preflight"],
         "docs/INSTALLATION.md": ["Stage 2G-F-G", "write-preflight"],
         "docs/PROBES.md": ["user_install_write_preflight"],
-        "docs/STATE.md": ["Stage 2G-F-G", '{"ok": true, "passed": 378, "failed": 0, "total": 378}'],
-        "docs/TESTING.md": ["Stage 2G-F-G", '{"ok": true, "passed": 378, "failed": 0, "total": 378}'],
+        "docs/STATE.md": ["Stage 2G-F-G", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
+        "docs/TESTING.md": ["Stage 2G-F-G", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
     }
     for relative_path, needles in docs_needles.items():
         text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
@@ -11562,13 +11562,13 @@ def run_stage2g_f_h_user_install_approval_validation_tests() -> list[dict[str, A
 
     errors = []
     docs_needles = {
-        "README.md": ["Stage 2G-F-H", "378", "user-space install approval-validation"],
+        "README.md": ["Stage 2G-F-H", "387", "user-space install approval-validation"],
         "ROADMAP.md": ["Stage 2G-F-H", "approval-validation"],
         "docs/ARCHITECTURE.md": ["Stage 2G-F-H", "ai_user_install_approval_validation.py", "user_install_approval_validation"],
         "docs/INSTALLATION.md": ["Stage 2G-F-H", "approval-validation"],
         "docs/PROBES.md": ["user_install_approval_validation"],
-        "docs/STATE.md": ["Stage 2G-F-H", '{"ok": true, "passed": 378, "failed": 0, "total": 378}'],
-        "docs/TESTING.md": ["Stage 2G-F-H", '{"ok": true, "passed": 378, "failed": 0, "total": 378}'],
+        "docs/STATE.md": ["Stage 2G-F-H", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
+        "docs/TESTING.md": ["Stage 2G-F-H", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
     }
     for relative_path, needles in docs_needles.items():
         text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
