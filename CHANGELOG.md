@@ -20,6 +20,16 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-F-I disabled user-space install write-executor skeleton
+
+- Adds `ai_user_install_write_executor.py`.
+- Adds `user_install_write_executor` probe.
+- Defines a deterministic disabled/default-deny user-space install write-executor skeleton.
+- Composes the Stage 2G-F-H approval-validation output into `executor_disabled_packet` and `executor_json_preview` outputs.
+- Does not collect approval, validate approval as true, authorize execution, authorize writes, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
+- Adds 9 selftests.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 387, "failed": 0, "total": 387}.
+
 ### Stage 2G-F-H user-space install approval-validation contract
 
 - Adds `ai_user_install_approval_validation.py`.

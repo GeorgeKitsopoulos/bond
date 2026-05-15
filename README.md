@@ -5,7 +5,8 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 ## Current status
 
 - Bond is under active development.
-- The current validated baseline is Stage 2G-F-H user-space install approval-validation contract.
+- The current validated baseline is Stage 2G-F-I disabled user-space install write-executor skeleton.
+- `src/bond/ai_user_install_write_executor.py` added: pure deterministic, non-executing disabled/default-deny user-space install write-executor skeleton that composes approval-validation inputs into deterministic `executor_disabled_packet` and `executor_json_preview` outputs.
 - `src/bond/ai_user_install_approval_validation.py` added: pure deterministic, non-executing user-space install approval-validation contract that composes write-preflight inputs into deterministic `approval_challenge` and `approval_challenge_json_preview` outputs.
 - `src/bond/ai_user_install_approval.py` added: pure deterministic, non-executing user-space install approval-envelope planning contract that composes transaction/preflight planning inputs into deterministic `approval_candidate` and `approval_json_preview` outputs.
 - `src/bond/ai_user_install_execution_gate.py` added: pure deterministic, non-executing user-space install execution-gate/readiness decision contract that consumes approval-envelope inputs into deterministic `gate_decision` and `gate_json_preview` outputs.
@@ -15,7 +16,8 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 - `src/bond/ai_user_install_manifest.py` added: pure deterministic, non-executing user-space install manifest payload planning contract that derives sanitized `manifest_candidate` and deterministic `manifest_json_preview` from explicit planning inputs.
 - `src/bond/ai_user_install_plan.py` remains integrated: pure deterministic, non-executing user-space install write-set planning contract composing explicit installer/storage/manifest path inputs.
 - `src/bond/ai_installer_plan.py` added: pure deterministic, non-executing installer/reconfigure planning contract composing Stage 2G read-only facts.
-- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 378, "failed": 0, "total": 378} (see docs/TESTING.md for exact summary).
+- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 387, "failed": 0, "total": 387} (see docs/TESTING.md for exact summary).
+- Stage 2G-F-I adds a deterministic disabled/default-deny user-space install write-executor skeleton; it does not collect approval, validate approval as true, authorize execution, authorize writes, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
 - Stage 2G-F-H adds a deterministic non-executing user-space install approval-validation contract/challenge; it does not collect approval, validate approval as true, authorize execution, authorize writes, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
 - Stage 2G-F-G adds a deterministic non-executing user-space install write-preflight packet; it does not validate approval, authorize execution, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
 - Stage 2G-F-F adds a deterministic non-executing user-space install review/report packet; it does not validate approval, authorize execution, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.

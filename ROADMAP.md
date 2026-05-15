@@ -268,7 +268,7 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest latest run summary is {"ok": true, "passed": 378, "failed": 0, "total": 378}.
+- integrated selftest latest run summary is {"ok": true, "passed": 387, "failed": 0, "total": 387}.
 - coverage includes routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, telemetry-derived guardrail regressions, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, and the C5 follow-up strict-timeout cleanup checks.
 - coverage also includes Stage 2F-D probe foundation/cleanup checks, Stage 2F-D-B bounded model-truth checks, Stage 2F-D-C model-truth fallback checks, Stage 2F-D-D bounded context-capability answer checks, Stage 2F-E-A classifier-boundary checks, events bucket, and core memory flows.
 - coverage now also includes Stage 2F-E-E selftest accounting integrity checks.
@@ -290,6 +290,7 @@ Current checkpoint note:
 - coverage now also includes Stage 2G-F-F user-space install review/report checks for shape/boundaries, ready-packet status mapping, deterministic review JSON preview, missing-input blocking, manual-review propagation, upstream-authorization rejection, non-executing formatting, read-only probe shape, and docs/source boundary enforcement.
 - coverage now also includes Stage 2G-F-G user-space install write-preflight checks for shape/boundaries, ready-execution-locked status mapping, lexical path-safety behavior, missing-input blocking, manual-review propagation, upstream-authorization rejection, non-executing formatting, read-only probe shape, and docs/source boundary enforcement.
 - coverage now also includes Stage 2G-F-H user-space install approval-validation checks for shape/boundaries, ready-execution-locked status mapping, deterministic approval-challenge digest/JSON preview behavior, missing-input blocking, authorization-attempt rejection, matching-record locked status, non-executing formatting, read-only probe shape, and docs/source boundary enforcement.
+- coverage now also includes Stage 2G-F-I user-space install write-executor checks for shape/boundaries, disabled-execution-locked status mapping, deterministic packet digest/JSON preview behavior, missing-input blocking, upstream-authorization rejection, refused-operations-only behavior, non-executing formatting, read-only probe shape, and docs/source boundary enforcement.
 - integrated selftest baseline now includes confirmation-token flow coverage (token creation, invalid/expired/consumed handling, confirmed dry-run, and non-reuse)
 - Stage 2E improves parser honesty and preflight failure behavior; Stage 2F-A/2F-B/2F-C add static registry truth, read-only capability answers, and telemetry-driven deterministic guardrail hardening, but do not expand executor authorization
 - this does not imply full behavioral coverage or assistant maturity
@@ -322,12 +323,14 @@ Current sequence implementation boundary:
 - Stage 2G-F-F continues item 6 by adding a non-executing user-space install review/report packet after the execution gate.
 - Stage 2G-F-G continues item 6 by adding a non-executing user-space install write-preflight packet after the review/report packet.
 - Stage 2G-F-H continues item 6 by adding a non-executing user-space install approval-validation contract after the write-preflight packet.
+- Stage 2G-F-I continues item 6 by adding a disabled/default-deny write-executor skeleton after the approval-validation contract.
 - Stage 2G-F-C does not complete the user-space installer and does not create/write anything.
 - Stage 2G-F-D does not complete the user-space installer, does not grant approval, and does not create/write anything.
 - Stage 2G-F-E does not complete the user-space installer, does not validate approval, does not authorize execution, and does not create/write anything.
 - Stage 2G-F-F does not complete the user-space installer, does not validate approval, does not authorize execution, and remains a non-executing review/report-only layer.
 - Stage 2G-F-G does not complete the user-space installer, does not validate approval, does not authorize execution, does not authorize writes, and remains a non-executing write-preflight-only layer.
 - Stage 2G-F-H does not complete the user-space installer, does not collect approval, does not validate approval, does not authorize execution or writes, and remains a non-executing approval-validation-contract-only layer.
+- Stage 2G-F-I does not complete the user-space installer, remains disabled/default-deny, does not collect approval, does not validate approval, does not authorize execution or writes, and does not perform real installer writes.
 
 ### M7 - Service layer
 

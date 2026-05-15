@@ -16,11 +16,12 @@ This file exists to prevent drift between:
 
 ## Current Checkpoint
 
-Date: (Stage 2G-F-H current)
+Date: (Stage 2G-F-I current)
 
 Current baseline note:
 
-- Stage 2G-F-H user-space install approval-validation contract is the current repository checkpoint.
+- Stage 2G-F-I disabled user-space install write-executor skeleton is the current repository checkpoint.
+- `src/bond/ai_user_install_write_executor.py` and `user_install_write_executor` probe are integrated as deterministic, non-executing disabled/default-deny write-executor planning surfaces.
 - `src/bond/ai_user_install_approval_validation.py` and `user_install_approval_validation` probe are integrated as deterministic, non-executing approval-validation planning surfaces.
 - `src/bond/ai_user_install_write_preflight.py` and `user_install_write_preflight` probe are integrated as deterministic, non-executing write-preflight planning surfaces.
 - `src/bond/ai_user_install_review.py` and `user_install_review_report` probe are integrated as deterministic, non-executing review/report planning surfaces.
@@ -30,7 +31,8 @@ Current baseline note:
 - `src/bond/ai_user_install_manifest.py` and `user_install_manifest_plan` probe are integrated as deterministic, non-executing manifest payload planning surfaces.
 - `src/bond/ai_user_install_plan.py` and `user_install_plan` probe are integrated as deterministic, non-executing write-set planning surfaces.
 - `src/bond/ai_installer_plan.py` added as a pure deterministic, non-executing contract for installer/reconfigure planning.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 378, "failed": 0, "total": 378} (Stage 2G-F-H applied on top of Stage 2G-F-G).
+- Compile and integrated selftest baseline is {"ok": true, "passed": 387, "failed": 0, "total": 387} (Stage 2G-F-I applied on top of Stage 2G-F-H).
+- Stage 2G-F-I adds a deterministic disabled/default-deny write-executor skeleton (`executor_disabled_packet` and `executor_json_preview`) with all authorization fields fixed False, `performed_operations` fixed empty, and `refused_operations` as a denied-operation summary only; it does not collect approval, validate approval, authorize execution, authorize writes, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
 - Stage 2G-F-H adds a deterministic approval-validation contract (`approval_challenge` and `approval_challenge_json_preview`) with all authorization fields fixed False, can compare a future approval-record shape, and does not collect approval, validate approval, authorize execution, authorize writes, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
 - Stage 2G-F-G adds a deterministic write-preflight contract (`write_preflight_packet` and `write_preflight_json_preview`) with all authorization fields fixed False, lexical path checks only, and does not validate approval, authorize execution, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
 - Stage 2G-F-F adds a deterministic review/report contract (`human_review_packet` and `review_json_preview`) with all authorization fields fixed False and does not validate approval, authorize execution, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.

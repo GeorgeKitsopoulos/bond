@@ -126,6 +126,12 @@ Future write-capable user-space installer work must have an approval-validation 
 
 This stage does not collect approval, does not validate approval, and does not authorize writes.
 
+## Disabled write-executor prerequisite (Stage 2G-F-I)
+
+Future write-capable user-space installer work must pass through this executor seam, but this stage keeps the seam disabled/default-deny.
+
+This stage does not collect approval, does not validate approval, does not authorize writes, and does not perform writes.
+
 Updates must be repository-driven.
 
 This section describes updating Bond itself. It is separate from future OS/package update advisory features.

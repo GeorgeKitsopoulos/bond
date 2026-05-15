@@ -235,6 +235,27 @@ Current implemented probe names:
 - It is not part of the maintenance report contract.
 - Maintenance report scope remains unchanged and does not include this probe.
 
+### Stage 2G-F-I disabled user-space install write-executor skeleton
+
+- `user_install_write_executor` composes existing `user_install_approval_validation` output into a deterministic disabled/default-deny user-space install write-executor packet.
+- Layer: 3.
+- Source: `SOURCE_RUNTIME_PROBE`.
+- Certainty: `CERTAINTY_DERIVED`.
+- Refresh: `REFRESH_MEDIUM_CHURN`.
+- It derives deterministic `executor_disabled_packet` and `executor_json_preview` outputs for future user-space install executor review.
+- It does not collect approval.
+- It does not validate approval.
+- It does not authorize execution.
+- It does not authorize writes.
+- It does not create directories.
+- It does not write manifests.
+- It does not run commands.
+- It does not mutate services.
+- It does not install packages.
+- It does not move storage.
+- It is not part of the maintenance report contract.
+- Maintenance report scope remains unchanged and does not include this probe.
+
 ## Stage 2F-F-A read-only maintenance probe foundation
 
 - `package_update_status` inspects local apt upgradable-package cache only.

@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 378, "failed": 0, "total": 378}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 387, "failed": 0, "total": 387}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -174,6 +174,18 @@ Coverage now also includes Stage 2G-F-H user-space install approval-validation c
 - `stage2g_f_h_user_install_approval_validation_format_is_non_executing` — formatted report includes explicit non-executing approval-validation markers
 - `stage2g_f_h_user_install_approval_validation_probe_is_read_only` — `run_named_probe("user_install_approval_validation")` returns the expected read-only contract with all authorization fields False
 - `stage2g_f_h_user_install_approval_validation_docs_and_source_boundary` — docs mention Stage 2G-F-H and `ai_user_install_approval_validation.py` stays free of forbidden execution/write/system tokens
+
+Coverage now also includes Stage 2G-F-I user-space install write-executor checks:
+
+- `stage2g_f_i_user_install_write_executor_shape_and_boundaries` — write-executor report/packet shape, disabled invariants, and all authorization fields fixed False
+- `stage2g_f_i_user_install_write_executor_disabled_execution_locked` — `approval_validation_ready_execution_locked` maps to `disabled_execution_locked` while execution remains locked
+- `stage2g_f_i_user_install_write_executor_packet_digest_deterministic` — repeated builds produce identical `approval_validation_digest`, `executor_packet_digest`, and `executor_json_preview`
+- `stage2g_f_i_user_install_write_executor_blocks_missing_approval_validation` — missing/invalid approval-validation input blocks safely with no execution or write authorization
+- `stage2g_f_i_user_install_write_executor_rejects_upstream_authorization` — injected upstream authorization attempts are rejected while all output authorization fields remain False
+- `stage2g_f_i_user_install_write_executor_refuses_operations_without_performing` — denied operation summaries are produced while `performed_operations` stays empty
+- `stage2g_f_i_user_install_write_executor_format_is_non_executing` — formatted report includes explicit non-executing disabled-executor markers
+- `stage2g_f_i_user_install_write_executor_probe_is_read_only` — `run_named_probe("user_install_write_executor")` returns the expected read-only disabled/default-deny contract
+- `stage2g_f_i_user_install_write_executor_docs_and_source_boundary` — docs mention Stage 2G-F-I and `ai_user_install_write_executor.py` stays free of forbidden execution/write/system tokens
 - `stage2g_f_c_user_install_transaction_format_is_non_executing`
 - `stage2g_f_c_user_install_transaction_probe_is_read_only`
 

@@ -49,6 +49,11 @@ from ai_user_install_approval_validation import (
     build_user_install_approval_validation,
     format_user_install_approval_validation,
 )
+from ai_user_install_write_executor import (
+    AUTHORIZATION_FIELDS as USER_INSTALL_WRITE_EXECUTOR_AUTHORIZATION_FIELDS,
+    build_user_install_write_executor,
+    format_user_install_write_executor,
+)
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
 from ai_maintenance_report import (
     build_maintenance_readiness_report,
@@ -187,6 +192,7 @@ AI_INSTALL_MANIFEST = SRC_BOND / "ai_install_manifest.py"
 AI_USER_INSTALL_REVIEW = SRC_BOND / "ai_user_install_review.py"
 AI_USER_INSTALL_WRITE_PREFLIGHT = SRC_BOND / "ai_user_install_write_preflight.py"
 AI_USER_INSTALL_APPROVAL_VALIDATION = SRC_BOND / "ai_user_install_approval_validation.py"
+AI_USER_INSTALL_WRITE_EXECUTOR = SRC_BOND / "ai_user_install_write_executor.py"
 AI_MEMORY = SRC_BOND / "ai_memory.py"
 AI_MEMORY_QUERY = SRC_BOND / "ai_memory_query.py"
 AI_MEMORY_REFLECT = SRC_BOND / "ai_memory_reflect.py"
@@ -6692,7 +6698,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 378, "failed": 0, "total": 378}'
+    current_summary = '{"ok": true, "passed": 387, "failed": 0, "total": 387}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -6914,7 +6920,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 378, "failed": 0, "total": 378}'
+    current_summary = '{"ok": true, "passed": 387, "failed": 0, "total": 387}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -11613,6 +11619,356 @@ def run_stage2g_f_h_user_install_approval_validation_tests() -> list[dict[str, A
     return results
 
 
+def run_stage2g_f_i_user_install_write_executor_tests() -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+
+    def append_result(name: str, errors: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": "",
+                "stderr": "",
+                "errors": errors,
+                "cmd": ["stage2g_f_i", name],
+            }
+        )
+
+    auth_false = {field: False for field in USER_INSTALL_WRITE_EXECUTOR_AUTHORIZATION_FIELDS}
+
+    def build_approval_validation_payload(
+        *,
+        approval_validation_status: str = "approval_validation_ready_execution_locked",
+        with_operations: bool = True,
+    ) -> dict[str, Any]:
+        expected_values: dict[str, Any] = {
+            "transaction_digest": "a" * 64,
+            "write_preflight_digest": "b" * 64,
+            "approval_envelope_digest": "c" * 64,
+            "approved_operation_count": 2,
+        }
+        if with_operations:
+            expected_values["candidate_write_set"] = {
+                "all_candidate_targets": [
+                    {
+                        "target_role": "manifest_write_candidate",
+                        "path": "/home/example/Bond/manifest.json",
+                    },
+                    {
+                        "target_role": "config:directory_path",
+                        "path": "/home/example/.config/bond",
+                    },
+                ]
+            }
+            expected_values["path_safety_checks"] = [
+                {
+                    "target_role": "manifest_write_candidate",
+                    "path": "/home/example/Bond/manifest.json",
+                    "path_status": "safe_candidate",
+                }
+            ]
+
+        approval_challenge = {
+            "kind": "bond_user_space_install_approval_challenge",
+            "schema_version": 1,
+            "expected_values": expected_values,
+            "candidate_write_set": expected_values.get("candidate_write_set", {}),
+            "path_safety_checks": expected_values.get("path_safety_checks", []),
+            "execution_lock": {
+                "execution_allowed": False,
+                "execution_authorized": False,
+                "write_authorized": False,
+                "write_manifest_authorized": False,
+                "filesystem_write_authorized": False,
+                "approval_granted": False,
+                "approval_validated": False,
+            },
+        }
+
+        return {
+            "kind": "bond_user_space_install_approval_validation",
+            "schema_version": 1,
+            **auth_false,
+            "requested_mode": "doctor_approval_validation",
+            "approval_validation_status": approval_validation_status,
+            "approval_record_status": "missing",
+            "recommended_next_step_kind": "review_approval_challenge_execution_locked",
+            "requires_manual_review": False,
+            "blocked_reasons": [],
+            "review_reasons": [],
+            "denial_reasons": [],
+            "manifest_path": "/home/example/Bond/manifest.json",
+            "transaction_digest": "a" * 64,
+            "approval_envelope_digest": "c" * 64,
+            "write_preflight_digest": "b" * 64,
+            "approved_operation_count": 2,
+            "approval_challenge": approval_challenge,
+            "approval_challenge_json_preview": json.dumps(
+                approval_challenge,
+                sort_keys=True,
+                indent=2,
+                ensure_ascii=False,
+            ),
+            "input_summaries": {
+                "candidate_write_set": expected_values.get("candidate_write_set", {}),
+                "path_safety_checks": expected_values.get("path_safety_checks", []),
+            },
+        }
+
+    errors: list[str] = []
+    report = build_user_install_write_executor(
+        user_install_approval_validation=build_approval_validation_payload(),
+        requested_mode="doctor_executor",
+    )
+    if report.get("kind") != "bond_user_space_install_write_executor":
+        errors.append(f"executor kind mismatch: {report.get('kind')}")
+    if report.get("schema_version") != 1:
+        errors.append(f"executor schema_version mismatch: {report.get('schema_version')}")
+    if report.get("executor_enabled") is not False:
+        errors.append("executor_enabled must be False")
+    if report.get("dry_run_only") is not True:
+        errors.append("dry_run_only must be True")
+    if report.get("would_write") is not False:
+        errors.append("would_write must be False")
+    if not isinstance(report.get("refused_operations"), list):
+        errors.append("refused_operations must be a list")
+    if report.get("performed_operations") != []:
+        errors.append("performed_operations must be []")
+    packet = report.get("executor_disabled_packet") if isinstance(report.get("executor_disabled_packet"), dict) else {}
+    if packet.get("kind") != "bond_user_space_install_write_executor_disabled_packet":
+        errors.append(f"packet kind mismatch: {packet.get('kind')}")
+    if packet.get("operation_summary", {}).get("performed_operation_count") != 0:
+        errors.append("performed_operation_count must be 0")
+    if packet.get("performed_operations") != []:
+        errors.append("packet performed_operations must be []")
+    for field in auth_false:
+        if report.get(field) is not False:
+            errors.append(f"report {field} must be False")
+    append_result("stage2g_f_i_user_install_write_executor_shape_and_boundaries", errors)
+
+    errors = []
+    ready = build_user_install_write_executor(
+        user_install_approval_validation=build_approval_validation_payload(
+            approval_validation_status="approval_validation_ready_execution_locked"
+        ),
+        requested_mode="fresh_install_executor",
+    )
+    if ready.get("requested_mode") != "fresh_install_executor":
+        errors.append(f"requested_mode mismatch: {ready.get('requested_mode')}")
+    if ready.get("executor_status") != "disabled_execution_locked":
+        errors.append(f"executor_status mismatch: {ready.get('executor_status')}")
+    if ready.get("recommended_next_step_kind") != "review_disabled_executor_packet":
+        errors.append("recommended_next_step_kind mismatch")
+    if ready.get("executor_enabled") is not False or ready.get("dry_run_only") is not True or ready.get("would_write") is not False:
+        errors.append("disabled invariants must hold")
+    for field in auth_false:
+        if ready.get(field) is not False:
+            errors.append(f"ready report {field} must be False")
+    append_result("stage2g_f_i_user_install_write_executor_disabled_execution_locked", errors)
+
+    errors = []
+    report_a = build_user_install_write_executor(
+        user_install_approval_validation=build_approval_validation_payload(),
+        requested_mode="doctor_executor",
+    )
+    report_b = build_user_install_write_executor(
+        user_install_approval_validation=build_approval_validation_payload(),
+        requested_mode="doctor_executor",
+    )
+    if report_a.get("approval_validation_digest") != report_b.get("approval_validation_digest"):
+        errors.append("approval_validation_digest must be deterministic")
+    if report_a.get("executor_packet_digest") != report_b.get("executor_packet_digest"):
+        errors.append("executor_packet_digest must be deterministic")
+    if report_a.get("executor_json_preview") != report_b.get("executor_json_preview"):
+        errors.append("executor_json_preview must be deterministic")
+    append_result("stage2g_f_i_user_install_write_executor_packet_digest_deterministic", errors)
+
+    errors = []
+    blocked = build_user_install_write_executor(
+        user_install_approval_validation=None,
+        requested_mode="doctor_executor",
+    )
+    if blocked.get("executor_status") != "blocked_missing_inputs":
+        errors.append(f"executor_status mismatch: {blocked.get('executor_status')}")
+    if blocked.get("recommended_next_step_kind") != "collect_missing_executor_inputs":
+        errors.append("recommended_next_step_kind mismatch")
+    if "user_install_approval_validation is missing or invalid" not in blocked.get("blocked_reasons", []):
+        errors.append("blocked_reasons must include invalid approval-validation marker")
+    if blocked.get("performed_operations") != []:
+        errors.append("performed_operations must be []")
+    if blocked.get("refused_operations") != []:
+        errors.append("refused_operations must be [] for missing input case")
+    for field in auth_false:
+        if blocked.get(field) is not False:
+            errors.append(f"blocked report {field} must remain False")
+    append_result("stage2g_f_i_user_install_write_executor_blocks_missing_approval_validation", errors)
+
+    errors = []
+    authorizing_input = build_approval_validation_payload()
+    authorizing_input["write_authorized"] = True
+    authorizing_input["execution_allowed"] = True
+    authorizing_input["approval_validated"] = True
+    challenge = authorizing_input.get("approval_challenge")
+    if isinstance(challenge, dict):
+        challenge["execution_allowed"] = True
+    rejected = build_user_install_write_executor(
+        user_install_approval_validation=authorizing_input,
+        requested_mode="doctor_executor",
+    )
+    if rejected.get("executor_status") != "unsupported_manual_review":
+        errors.append(f"executor_status mismatch: {rejected.get('executor_status')}")
+    if (
+        "upstream approval validation attempted to authorize execution, approval, commands, or writes"
+        not in rejected.get("denial_reasons", [])
+    ):
+        errors.append("denial_reasons must include upstream authorization marker")
+    for field in auth_false:
+        if rejected.get(field) is not False:
+            errors.append(f"rejected report {field} must remain False")
+    append_result("stage2g_f_i_user_install_write_executor_rejects_upstream_authorization", errors)
+
+    errors = []
+    no_op_input = build_approval_validation_payload(with_operations=False)
+    no_op_input["manifest_path"] = "/home/example/Bond/fallback-manifest.json"
+    no_op_input["approval_challenge"] = {
+        "kind": "bond_user_space_install_approval_challenge",
+        "schema_version": 1,
+        "expected_values": {},
+    }
+    no_op_input["input_summaries"] = {}
+    refused_report = build_user_install_write_executor(
+        user_install_approval_validation=no_op_input,
+        requested_mode="doctor_executor",
+    )
+    refused_operations = refused_report.get("refused_operations") if isinstance(refused_report.get("refused_operations"), list) else []
+    if not refused_operations:
+        errors.append("refused_operations must not be empty when manifest_path exists")
+    if refused_report.get("performed_operations") != []:
+        errors.append("performed_operations must always be []")
+    for operation in refused_operations:
+        if not isinstance(operation, dict):
+            errors.append("each refused operation must be a dict")
+            continue
+        for key in ("operation_kind", "target", "refusal_reason"):
+            if key not in operation:
+                errors.append(f"refused operation missing key: {key}")
+    append_result("stage2g_f_i_user_install_write_executor_refuses_operations_without_performing", errors)
+
+    errors = []
+    formatted = format_user_install_write_executor(report)
+    for marker in (
+        "User-space install write executor",
+        "Executor status:",
+        "Executor enabled: false",
+        "Dry run only: true",
+        "Would write: false",
+        "Recommended next step:",
+        "Manifest path:",
+        "Transaction digest:",
+        "Approval envelope digest:",
+        "Write preflight digest:",
+        "Approval validation digest:",
+        "Execution allowed: false",
+        "Execution authorized: false",
+        "Write authorized: false",
+        "Write manifest authorized: false",
+        "Filesystem write authorized: false",
+        "Approval granted: false",
+        "Approval validated: false",
+        "Performed operations: 0",
+        "Refused operations:",
+        "Executor JSON preview:",
+        "No approval was validated, and no user-space install, directory creation, manifest write, package operation, service mutation, storage move, command generation, or command execution was performed.",
+    ):
+        if marker not in formatted:
+            errors.append(f"formatted output missing marker: {marker}")
+    append_result("stage2g_f_i_user_install_write_executor_format_is_non_executing", errors)
+
+    errors = []
+    try:
+        probe_result = run_named_probe("user_install_write_executor")
+        if probe_result.ok is not True:
+            errors.append("user_install_write_executor probe must return ok=True")
+        if probe_result.probe_name != "user_install_write_executor":
+            errors.append(f"probe_name mismatch: {probe_result.probe_name}")
+        probe_data = probe_result.data if isinstance(probe_result.data, dict) else {}
+        if probe_data.get("kind") != "bond_user_space_install_write_executor":
+            errors.append(f"probe data kind mismatch: {probe_data.get('kind')}")
+        if probe_data.get("executor_enabled") is not False:
+            errors.append("probe executor_enabled must be False")
+        if probe_data.get("dry_run_only") is not True:
+            errors.append("probe dry_run_only must be True")
+        if probe_data.get("would_write") is not False:
+            errors.append("probe would_write must be False")
+        if probe_data.get("performed_operations") != []:
+            errors.append("probe performed_operations must be []")
+        for field in auth_false:
+            if probe_data.get(field) is not False:
+                errors.append(f"probe {field} must be False")
+    except Exception as exc:
+        errors.append(f"run_named_probe user_install_write_executor raised unexpectedly: {exc}")
+    append_result("stage2g_f_i_user_install_write_executor_probe_is_read_only", errors)
+
+    errors = []
+    docs_needles = {
+        "README.md": ["Stage 2G-F-I", "387", "disabled/default-deny user-space install write-executor"],
+        "ROADMAP.md": ["Stage 2G-F-I", "disabled/default-deny write-executor"],
+        "docs/ARCHITECTURE.md": ["Stage 2G-F-I", "ai_user_install_write_executor.py", "user_install_write_executor"],
+        "docs/INSTALLATION.md": ["Stage 2G-F-I", "Disabled write-executor"],
+        "docs/PROBES.md": ["user_install_write_executor"],
+        "docs/STATE.md": ["Stage 2G-F-I", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
+        "docs/TESTING.md": ["Stage 2G-F-I", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
+    }
+    for relative_path, needles in docs_needles.items():
+        text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
+        for needle in needles:
+            if needle not in text:
+                errors.append(f"missing docs marker in {relative_path}: {needle}")
+
+    source_text = AI_USER_INSTALL_WRITE_EXECUTOR.read_text(encoding="utf-8")
+    forbidden_tokens = [
+        "subprocess",
+        "import os",
+        "from os",
+        "pathlib",
+        "Path(",
+        "Popen",
+        "check_call",
+        "check_output",
+        "open(",
+        ".mkdir(",
+        ".write_text(",
+        ".write_bytes(",
+        "shutil.",
+        "socket.",
+        "requests.",
+        "urllib.",
+        "sudo ",
+        "apt install",
+        "apt upgrade",
+        "dnf install",
+        "rpm-ostree install",
+        "pacman -S",
+        "zypper install",
+        "apk add",
+        "xbps-install",
+        "nix-env",
+        "systemctl",
+        "flatpak install",
+        "podman ",
+        "docker ",
+    ]
+    hits = [token for token in forbidden_tokens if token in source_text]
+    if hits:
+        errors.append(
+            "forbidden execution/write/system token(s) in ai_user_install_write_executor.py: " + ", ".join(hits)
+        )
+    append_result("stage2g_f_i_user_install_write_executor_docs_and_source_boundary", errors)
+
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -11626,6 +11982,7 @@ def main() -> None:
         AI_USER_INSTALL_REVIEW,
         AI_USER_INSTALL_WRITE_PREFLIGHT,
         AI_USER_INSTALL_APPROVAL_VALIDATION,
+        AI_USER_INSTALL_WRITE_EXECUTOR,
         AI_WRAPPER,
         AI_MEMORY,
         AI_MEMORY_QUERY,
@@ -12216,6 +12573,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2g_f_h_user_install_approval_validation_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2g_f_i_user_install_write_executor_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

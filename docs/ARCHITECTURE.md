@@ -510,6 +510,28 @@ Stage 2F-F-E adds metadata-only readiness fields inside the explicit maintenance
 - It does not generate commands.
 - It does not broaden normal assistant answers.
 
+### Disabled user-space install write-executor skeleton (Stage 2G-F-I)
+
+- Module owner: `src/bond/ai_user_install_write_executor.py`.
+- Probe owner: `user_install_write_executor` in `src/bond/ai_probes.py`.
+- Purpose: compose approval-validation output into a deterministic `executor_disabled_packet` and `executor_json_preview`.
+- It is pure deterministic and non-executing.
+- It keeps all authorization fields explicitly False.
+- `performed_operations` is always empty.
+- `refused_operations` records what remains denied while execution stays locked.
+- It creates the future executor seam without enabling execution.
+- It does not collect approval.
+- It does not validate approval as true.
+- It does not authorize execution.
+- It does not authorize writes.
+- It does not create directories.
+- It does not write manifests.
+- It does not install packages.
+- It does not mutate services.
+- It does not move storage.
+- It does not generate commands.
+- It does not broaden normal assistant answers.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:
