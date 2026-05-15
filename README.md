@@ -9,7 +9,8 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 - `src/bond/ai_user_install_manifest.py` added: pure deterministic, non-executing user-space install manifest payload planning contract that derives sanitized `manifest_candidate` and deterministic `manifest_json_preview` from explicit planning inputs.
 - `src/bond/ai_user_install_plan.py` remains integrated: pure deterministic, non-executing user-space install write-set planning contract composing explicit installer/storage/manifest path inputs.
 - `src/bond/ai_installer_plan.py` added: pure deterministic, non-executing installer/reconfigure planning contract composing Stage 2G read-only facts.
-- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 325, "failed": 0, "total": 325} (see docs/TESTING.md for exact summary).
+- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 327, "failed": 0, "total": 327} (see docs/TESTING.md for exact summary).
+- Stage 2G-F-B1 preserves factual package-manager identity in manifest previews while keeping command generation and execution unauthorized.
 - Stage 2G-F-B defines a deterministic sanitized user-space install manifest payload preview only (`manifest_candidate` and `manifest_json_preview`); it does not create directories, does not write manifests, does not install packages, does not mutate services, does not move storage, does not generate commands, and does not authorize execution.
 - Stage 2G-F-A defines a non-executing user-space write-set only and remains intact beneath Stage 2G-F-B.
 - Stage 2G-E adds a read-only installer planning layer without authorizing installation, reconfiguration, service changes, manifest writes, or storage mutation.

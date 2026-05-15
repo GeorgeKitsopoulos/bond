@@ -6658,7 +6658,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 325, "failed": 0, "total": 325}'
+    current_summary = '{"ok": true, "passed": 327, "failed": 0, "total": 327}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -6880,7 +6880,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 325, "failed": 0, "total": 325}'
+    current_summary = '{"ok": true, "passed": 327, "failed": 0, "total": 327}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -8769,11 +8769,15 @@ def run_stage2g_f_a_user_install_plan_tests() -> list[dict[str, Any]]:
     if "No user-space install, directory creation, manifest write, package operation, service mutation, storage move, or command execution was performed." not in formatted:
         errors.append("formatted output missing final disclaimer")
     for forbidden in (
-        "sudo ",
+        "sudo rpm-ostree",
+        "rpm-ostree install",
+        "rpm-ostree override",
+        "rpm-ostree rebase",
+        "rpm-ostree upgrade",
+        "rpm-ostree deploy",
         "apt install",
         "dnf install",
         "pacman -S",
-        "rpm-ostree",
         "flatpak install",
         "mkdir ",
         "touch ",
@@ -9225,11 +9229,15 @@ def run_stage2g_f_b_user_install_manifest_tests() -> list[dict[str, Any]]:
     if "No user-space install, directory creation, manifest write, package operation, service mutation, storage move, or command execution was performed." not in formatted:
         errors.append("formatted output missing final disclaimer")
     for forbidden in (
-        "sudo ",
+        "sudo rpm-ostree",
+        "rpm-ostree install",
+        "rpm-ostree override",
+        "rpm-ostree rebase",
+        "rpm-ostree upgrade",
+        "rpm-ostree deploy",
         "apt install",
         "dnf install",
         "pacman -S",
-        "rpm-ostree",
         "flatpak install",
         "mkdir ",
         "touch ",
@@ -9269,6 +9277,156 @@ def run_stage2g_f_b_user_install_manifest_tests() -> list[dict[str, Any]]:
     except Exception as exc:
         errors.append(f"probe_user_install_manifest_plan raised unexpectedly: {exc}")
     _append("stage2g_f_b_user_install_manifest_probe_is_read_only", errors)
+
+    return results
+
+
+def run_stage2g_f_b1_user_install_manifest_forward_fix_tests() -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+
+    def _append(name: str, errors: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": "",
+                "stderr": "",
+                "errors": errors,
+            }
+        )
+
+    auth_false = {
+        "execution_authorized": False,
+        "install_authorized": False,
+        "package_install_authorized": False,
+        "upgrade_authorized": False,
+        "reconfigure_authorized": False,
+        "service_authorized": False,
+        "storage_move_authorized": False,
+        "write_authorized": False,
+        "write_manifest_authorized": False,
+        "commands_generated": False,
+    }
+
+    user_install_plan = {
+        "kind": "bond_user_space_install_write_set_plan",
+        "schema_version": 1,
+        **auth_false,
+        "requested_mode": "doctor_review",
+        "plan_status": "ready_for_user_review",
+        "recommended_next_step_kind": "review_user_install_write_set",
+        "requires_manual_review": False,
+        "blocked_reasons": [],
+        "review_reasons": [],
+        "target_layout": {
+            "config": "/home/tester/.config/bond",
+            "data": "/run/media/tester/DeckData/Bond/data",
+            "cache": "/run/media/tester/DeckData/Bond/cache",
+            "models": "/run/media/tester/DeckData/Bond/models",
+            "telemetry": "/run/media/tester/DeckData/Bond/telemetry",
+            "logs": "/run/media/tester/DeckData/Bond/logs",
+            "backups": "/run/media/tester/DeckData/Bond/backups",
+            "manifest_path": "/home/tester/.config/bond/install-manifest.json",
+        },
+        "write_set": [
+            {
+                "operation_kind": "create_directory_candidate",
+                "role": "config",
+                "path": "/home/tester/.config/bond",
+                "status": "planned_not_authorized",
+                "execution_authorized": False,
+                "write_authorized": False,
+                "command": None,
+            },
+            {
+                "operation_kind": "write_manifest_candidate",
+                "role": "manifest",
+                "path": "/home/tester/.config/bond/install-manifest.json",
+                "status": "planned_not_authorized",
+                "execution_authorized": False,
+                "write_authorized": False,
+                "command": None,
+            },
+        ],
+    }
+
+    host_profile = {
+        "package_manager": "rpm-ostree",
+        "architecture": "x86_64",
+        "os_family": "linux",
+    }
+
+    # 1. stage2g_f_b1_user_install_manifest_preserves_package_manager_fact
+    errors: list[str] = []
+    plan = build_user_install_manifest_payload_plan(
+        user_install_plan=user_install_plan,
+        host_profile=host_profile,
+        requested_mode="doctor_review",
+    )
+    candidate = plan.get("manifest_candidate") if isinstance(plan.get("manifest_candidate"), dict) else {}
+    source_summaries = candidate.get("source_summaries") if isinstance(candidate.get("source_summaries"), dict) else {}
+    host_summary = source_summaries.get("host_profile") if isinstance(source_summaries.get("host_profile"), dict) else {}
+    if host_summary.get("package_manager") != "rpm-ostree":
+        errors.append(
+            "manifest candidate host_profile.package_manager must preserve 'rpm-ostree', "
+            f"got {host_summary.get('package_manager')!r}"
+        )
+    preview = plan.get("manifest_json_preview") if isinstance(plan.get("manifest_json_preview"), str) else ""
+    if '"package_manager": "rpm-ostree"' not in preview:
+        errors.append("manifest_json_preview missing factual rpm-ostree value")
+    if "rpm_ostree" in str(plan):
+        errors.append("corrupted rpm_ostree value must not appear")
+    for field in (
+        "execution_authorized",
+        "install_authorized",
+        "package_install_authorized",
+        "upgrade_authorized",
+        "reconfigure_authorized",
+        "service_authorized",
+        "storage_move_authorized",
+        "write_authorized",
+        "write_manifest_authorized",
+        "commands_generated",
+    ):
+        if plan.get(field) is not False:
+            errors.append(f"{field} must remain False, got {plan.get(field)}")
+    _append("stage2g_f_b1_user_install_manifest_preserves_package_manager_fact", errors)
+
+    # 2. stage2g_f_b1_user_install_manifest_command_guard_allows_factual_package_manager
+    errors = []
+    plan = build_user_install_manifest_payload_plan(
+        user_install_plan=user_install_plan,
+        host_profile=host_profile,
+        requested_mode="doctor_review",
+    )
+    formatted = format_user_install_manifest_payload_plan(plan)
+    if "rpm-ostree" not in formatted:
+        errors.append("formatted output should include factual rpm-ostree JSON data")
+    for forbidden in (
+        "sudo rpm-ostree",
+        "rpm-ostree install",
+        "rpm-ostree override",
+        "rpm-ostree rebase",
+        "rpm-ostree upgrade",
+        "rpm-ostree deploy",
+        "apt install",
+        "dnf install",
+        "pacman -S",
+        "flatpak install",
+        "mkdir ",
+        "touch ",
+        "systemctl",
+    ):
+        if forbidden in formatted:
+            errors.append(f"formatted output contains forbidden command phrase: {forbidden}")
+    if "Execution authorized: false" not in formatted:
+        errors.append("formatted output missing execution boundary")
+    if "Manifest write authorized: false" not in formatted:
+        errors.append("formatted output missing manifest write boundary")
+    if "No user-space install, directory creation, manifest write, package operation, service mutation, storage move, or command execution was performed." not in formatted:
+        errors.append("formatted output missing final disclaimer")
+    _append("stage2g_f_b1_user_install_manifest_command_guard_allows_factual_package_manager", errors)
 
     return results
 
@@ -9789,6 +9947,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2g_f_b_user_install_manifest_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2g_f_b1_user_install_manifest_forward_fix_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

@@ -141,9 +141,6 @@ def _build_source_summaries(
         if isinstance(dependency.get("package_strategy"), dict)
         else {}
     )
-    package_manager = _safe_string(host.get("package_manager"))
-    if isinstance(package_manager, str):
-        package_manager = "_".join(package_manager.split("-"))
 
     return {
         "host_profile": {
@@ -151,7 +148,7 @@ def _build_source_summaries(
             "os_family": _safe_scalar(host.get("os_family")),
             "distro_id": _safe_scalar(host.get("distro_id")),
             "distro_like": _safe_scalar(host.get("distro_like")),
-            "package_manager": _safe_scalar(package_manager),
+            "package_manager": _safe_scalar(host.get("package_manager")),
             "immutable_hint": _safe_scalar(host.get("immutable_hint")),
             "steam_deck_hint": _safe_scalar(host.get("steam_deck_hint")),
         },

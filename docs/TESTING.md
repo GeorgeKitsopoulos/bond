@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 325, "failed": 0, "total": 325}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 327, "failed": 0, "total": 327}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -122,6 +122,13 @@ Coverage now also includes Stage 2G-F-B user-space install manifest payload cont
 - `stage2g_f_b_user_install_manifest_rejects_authorized_upstream_write_set`
 - `stage2g_f_b_user_install_manifest_format_is_non_executing`
 - `stage2g_f_b_user_install_manifest_probe_is_read_only`
+
+Coverage now also includes Stage 2G-F-B1 forward-fix checks:
+
+- `stage2g_f_b1_user_install_manifest_preserves_package_manager_fact`
+- `stage2g_f_b1_user_install_manifest_command_guard_allows_factual_package_manager`
+
+These checks ensure package-manager facts such as `rpm-ostree` are preserved in manifest payload previews and that no-command guards distinguish factual package-manager names from executable command phrases.
 
 These tests cover shape/boundaries, deterministic manifest candidate and JSON preview, sensitive field omission, missing upstream plan blocking, upstream manual-review propagation, rejection of unsafe upstream authorization, non-executing format output, and read-only probe shape.
 

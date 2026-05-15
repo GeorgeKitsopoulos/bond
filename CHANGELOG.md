@@ -20,6 +20,14 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-F-B1 manifest package-manager fact preservation
+
+- Preserves factual host `package_manager` values such as `rpm-ostree` in `manifest_candidate` and `manifest_json_preview`.
+- Narrows no-command tests so factual package-manager names are allowed as data but executable command phrases remain forbidden.
+- Adds 2 selftests.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 327, "failed": 0, "total": 327}.
+- No installer execution, directory creation, manifest write, package operation, service mutation, storage move, command generation, or command execution was added.
+
 ### Stage 2G-F-B user-space install manifest payload contract
 
 - Adds `ai_user_install_manifest.py` as a pure deterministic, non-executing user-space install manifest payload planning contract.

@@ -268,7 +268,7 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest latest run summary is {"ok": true, "passed": 325, "failed": 0, "total": 325}.
+- integrated selftest latest run summary is {"ok": true, "passed": 327, "failed": 0, "total": 327}.
 - coverage includes routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, telemetry-derived guardrail regressions, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, and the C5 follow-up strict-timeout cleanup checks.
 - coverage also includes Stage 2F-D probe foundation/cleanup checks, Stage 2F-D-B bounded model-truth checks, Stage 2F-D-C model-truth fallback checks, Stage 2F-D-D bounded context-capability answer checks, Stage 2F-E-A classifier-boundary checks, events bucket, and core memory flows.
 - coverage now also includes Stage 2F-E-E selftest accounting integrity checks.
@@ -283,6 +283,7 @@ Current checkpoint note:
 - coverage now also includes Stage 2G-E read-only installer planning contract checks, missing-inputs blocking, dependency and drift manual-review propagation, sensitive field exclusion, non-executing format output, and read-only probe shape checks.
 - coverage now also includes Stage 2G-F-A user-space install write-set contract checks for shape/boundaries, role-path resolution, env-path override precedence, upstream blocking/manual-review propagation, non-user-space rejection, non-executing formatting, and read-only probe shape.
 - coverage now also includes Stage 2G-F-B user-space install manifest payload contract checks for shape/boundaries, deterministic manifest candidate/JSON preview, sensitive-field omission, missing-upstream-plan blocking, upstream manual-review propagation, unsafe upstream-authorization rejection, non-executing formatting, and read-only probe shape.
+- coverage now also includes Stage 2G-F-B1 package-manager fact preservation checks for manifest previews and narrowed no-command format guards.
 - integrated selftest baseline now includes confirmation-token flow coverage (token creation, invalid/expired/consumed handling, confirmed dry-run, and non-reuse)
 - Stage 2E improves parser honesty and preflight failure behavior; Stage 2F-A/2F-B/2F-C add static registry truth, read-only capability answers, and telemetry-driven deterministic guardrail hardening, but do not expand executor authorization
 - this does not imply full behavioral coverage or assistant maturity
