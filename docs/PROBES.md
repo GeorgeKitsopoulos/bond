@@ -30,6 +30,7 @@ Current implemented probe names:
 - `user_install_plan`
 - `user_install_manifest_plan`
 - `user_install_transaction_plan`
+- `user_install_approval_plan`
 
 ## Stage 2G-A host portability profile
 
@@ -141,6 +142,21 @@ Current implemented probe names:
 - It does not move storage.
 - It is not part of the maintenance report contract.
 - Maintenance report scope remains unchanged and remains limited to `package_update_status`, `storage_hygiene`, and `boot_service_health`.
+
+### Stage 2G-F-D user-space install approval-envelope planning
+
+- `user_install_approval_plan` composes existing `user_install_transaction_plan` into a read-only approval-envelope preview.
+- It derives deterministic `approval_candidate` and `approval_json_preview` outputs for future user-space install transaction review.
+- It computes `transaction_digest` from `transaction_json_preview`.
+- It does not grant approval.
+- It does not create directories.
+- It does not write manifests.
+- It does not run commands.
+- It does not mutate services.
+- It does not install packages.
+- It does not move storage.
+- It is not part of the maintenance report contract.
+- Maintenance report scope remains unchanged and does not include this probe.
 
 ## Stage 2F-F-A read-only maintenance probe foundation
 

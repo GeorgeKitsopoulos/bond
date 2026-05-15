@@ -28,6 +28,10 @@ from ai_user_install_transaction import (
     build_user_install_transaction_plan,
     format_user_install_transaction_plan,
 )
+from ai_user_install_approval import (
+    build_user_install_approval_plan,
+    format_user_install_approval_plan,
+)
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
 from ai_maintenance_report import (
     build_maintenance_readiness_report,
@@ -144,6 +148,7 @@ from ai_probes import (
     probe_user_install_plan,
     probe_user_install_manifest_plan,
     probe_user_install_transaction_plan,
+    probe_user_install_approval_plan,
     run_all_probes,
     run_named_probe,
 )
@@ -6663,7 +6668,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 335, "failed": 0, "total": 335}'
+    current_summary = '{"ok": true, "passed": 343, "failed": 0, "total": 343}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -6885,7 +6890,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 335, "failed": 0, "total": 335}'
+    current_summary = '{"ok": true, "passed": 343, "failed": 0, "total": 343}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -9788,6 +9793,373 @@ def run_stage2g_f_c_user_install_transaction_tests() -> list[dict[str, Any]]:
     return results
 
 
+def run_stage2g_f_d_user_install_approval_tests() -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+
+    def _append(name: str, errors: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": "",
+                "stderr": "",
+                "errors": errors,
+            }
+        )
+
+    auth_false = {
+        "execution_authorized": False,
+        "install_authorized": False,
+        "package_install_authorized": False,
+        "upgrade_authorized": False,
+        "reconfigure_authorized": False,
+        "service_authorized": False,
+        "storage_move_authorized": False,
+        "write_authorized": False,
+        "write_manifest_authorized": False,
+        "commands_generated": False,
+        "approval_granted": False,
+    }
+
+    manifest_path = "/home/tester/.config/bond/install-manifest.json"
+    transaction_candidate = {
+        "kind": "bond_user_install_transaction",
+        "schema_version": 1,
+        "authorization": dict(auth_false),
+        "manifest_path": manifest_path,
+        "operations": [
+            {
+                "operation_id": "000_preflight_review",
+                "operation_kind": "preflight_review_candidate",
+                "role": "preflight",
+                "path": None,
+                "status": "planned_not_authorized",
+                "source": "transaction_preflight",
+                "execution_authorized": False,
+                "write_authorized": False,
+                "command": None,
+                "requires_explicit_future_authorization": True,
+                "verify_after_operation": True,
+            },
+            {
+                "operation_id": "001_config_create_directory_candidate",
+                "operation_kind": "create_directory_candidate",
+                "role": "config",
+                "path": "/home/tester/.config/bond",
+                "status": "planned_not_authorized",
+                "source": "user_install_plan.write_set",
+                "execution_authorized": False,
+                "write_authorized": False,
+                "command": None,
+                "requires_explicit_future_authorization": True,
+                "verify_after_operation": True,
+            },
+            {
+                "operation_id": "002_manifest_write_manifest_candidate",
+                "operation_kind": "write_manifest_candidate",
+                "role": "manifest",
+                "path": "/home/tester/.config/bond/install-manifest.json",
+                "status": "planned_not_authorized",
+                "source": "user_install_plan.write_set",
+                "execution_authorized": False,
+                "write_authorized": False,
+                "command": None,
+                "requires_explicit_future_authorization": True,
+                "verify_after_operation": True,
+            },
+            {
+                "operation_id": "999_post_install_verification",
+                "operation_kind": "post_install_verification_candidate",
+                "role": "verification",
+                "path": None,
+                "status": "planned_not_authorized",
+                "source": "transaction_verification",
+                "execution_authorized": False,
+                "write_authorized": False,
+                "command": None,
+                "requires_explicit_future_authorization": True,
+                "verify_after_operation": True,
+            },
+        ],
+    }
+    transaction_json_preview = json.dumps(
+        transaction_candidate,
+        sort_keys=True,
+        indent=2,
+        ensure_ascii=False,
+    )
+
+    transaction_plan = {
+        "kind": "bond_user_install_transaction_plan",
+        "schema_version": 1,
+        **auth_false,
+        "requested_mode": "doctor_review",
+        "plan_status": "ready_for_user_review",
+        "recommended_next_step_kind": "review_user_install_transaction_plan",
+        "requires_manual_review": False,
+        "blocked_reasons": [],
+        "review_reasons": [],
+        "manifest_path": manifest_path,
+        "transaction_candidate": transaction_candidate,
+        "transaction_json_preview": transaction_json_preview,
+    }
+
+    # 1. stage2g_f_d_user_install_approval_shape_and_boundaries
+    errors: list[str] = []
+    plan = build_user_install_approval_plan(
+        user_install_transaction_plan=transaction_plan,
+        requested_mode="doctor_review",
+    )
+    if plan.get("kind") != "bond_user_install_approval_plan":
+        errors.append(f"plan kind mismatch: {plan.get('kind')}")
+    if plan.get("schema_version") != 1:
+        errors.append(f"plan schema_version mismatch: {plan.get('schema_version')}")
+
+    candidate = plan.get("approval_candidate")
+    if not isinstance(candidate, dict):
+        errors.append("approval_candidate must be a dict")
+        candidate = {}
+    if candidate.get("kind") != "bond_user_install_approval_candidate":
+        errors.append(f"approval candidate kind mismatch: {candidate.get('kind')}")
+    if candidate.get("schema_version") != 1:
+        errors.append(f"approval candidate schema_version mismatch: {candidate.get('schema_version')}")
+
+    for field in auth_false:
+        if plan.get(field) is not False:
+            errors.append(f"plan {field} must be False")
+        if candidate.get("authorization", {}).get(field) is not False:
+            errors.append(f"approval candidate authorization {field} must be False")
+
+    requirements = candidate.get("approval_requirements")
+    if not isinstance(requirements, dict):
+        errors.append("approval_requirements must be a dict")
+    else:
+        if requirements.get("explicit_future_approval_required") is not True:
+            errors.append("explicit_future_approval_required must be True")
+        if requirements.get("approval_granted") is not False:
+            errors.append("approval_requirements.approval_granted must be False")
+
+    reviewed_operations = candidate.get("reviewed_operations")
+    if not isinstance(reviewed_operations, list) or not reviewed_operations:
+        errors.append("reviewed_operations must exist")
+    else:
+        for item in reviewed_operations:
+            if not isinstance(item, dict):
+                errors.append("reviewed operation must be a dict")
+                continue
+            for forbidden_key in ("command", "execution_authorized", "write_authorized"):
+                if forbidden_key in item:
+                    errors.append(f"reviewed operation leaked forbidden key: {forbidden_key}")
+
+    _append("stage2g_f_d_user_install_approval_shape_and_boundaries", errors)
+
+    # 2. stage2g_f_d_user_install_approval_digest_is_deterministic
+    errors = []
+    plan_a = build_user_install_approval_plan(
+        user_install_transaction_plan=transaction_plan,
+        requested_mode="doctor_review",
+    )
+    plan_b = build_user_install_approval_plan(
+        user_install_transaction_plan=transaction_plan,
+        requested_mode="doctor_review",
+    )
+    digest_a = plan_a.get("transaction_digest")
+    digest_b = plan_b.get("transaction_digest")
+    if digest_a != digest_b:
+        errors.append("transaction_digest must be deterministic")
+    if plan_a.get("approval_json_preview") != plan_b.get("approval_json_preview"):
+        errors.append("approval_json_preview must be deterministic")
+    if not isinstance(digest_a, str) or len(digest_a) != 64 or any(ch not in "0123456789abcdef" for ch in digest_a):
+        errors.append(f"transaction_digest must be 64 lowercase hex chars, got {digest_a!r}")
+
+    req = plan_a.get("approval_candidate", {}).get("approval_requirements", {})
+    if req.get("approval_must_match_transaction_digest") != digest_a:
+        errors.append("approval digest requirement mismatch")
+
+    changed_transaction_plan = json.loads(json.dumps(transaction_plan))
+    changed_transaction_plan["transaction_json_preview"] = changed_transaction_plan["transaction_json_preview"] + "\n "
+    changed = build_user_install_approval_plan(
+        user_install_transaction_plan=changed_transaction_plan,
+        requested_mode="doctor_review",
+    )
+    if changed.get("transaction_digest") == digest_a:
+        errors.append("transaction_digest must change when transaction_json_preview changes")
+    _append("stage2g_f_d_user_install_approval_digest_is_deterministic", errors)
+
+    # 3. stage2g_f_d_user_install_approval_omits_commands_and_sensitive_fields
+    errors = []
+    sensitive_transaction = json.loads(json.dumps(transaction_plan))
+    sensitive_transaction["hostname"] = "SHOULD_NOT_LEAK"
+    sensitive_transaction["username"] = "SHOULD_NOT_LEAK"
+    sensitive_transaction["token"] = "SHOULD_NOT_LEAK"
+    sensitive_transaction["password"] = "SHOULD_NOT_LEAK"
+    sensitive_transaction["secret"] = "SHOULD_NOT_LEAK"
+    sensitive_transaction["email"] = "SHOULD_NOT_LEAK"
+    sensitive_transaction["transaction_candidate"]["operations"][0]["hostname"] = "SHOULD_NOT_LEAK"
+    sensitive_transaction["transaction_candidate"]["operations"][0]["token"] = "SHOULD_NOT_LEAK"
+
+    sensitive_plan = build_user_install_approval_plan(
+        user_install_transaction_plan=sensitive_transaction,
+        requested_mode="doctor_review",
+    )
+    candidate = sensitive_plan.get("approval_candidate")
+    preview = sensitive_plan.get("approval_json_preview")
+    if not isinstance(candidate, dict):
+        errors.append("approval_candidate must remain a dict")
+        candidate = {}
+    if not isinstance(preview, str):
+        errors.append("approval_json_preview must remain a string")
+        preview = ""
+    for needle in (
+        "SHOULD_NOT_LEAK",
+        "hostname",
+        "username",
+        "token",
+        "password",
+        "secret",
+        "email",
+    ):
+        if needle in preview:
+            errors.append(f"approval_json_preview leaked sensitive marker: {needle}")
+        if needle in str(candidate):
+            errors.append(f"approval_candidate leaked sensitive marker: {needle}")
+
+    reviewed = candidate.get("reviewed_operations")
+    if isinstance(reviewed, list):
+        for item in reviewed:
+            if isinstance(item, dict) and "command" in item:
+                errors.append("reviewed_operations must not include command")
+
+    _append("stage2g_f_d_user_install_approval_omits_commands_and_sensitive_fields", errors)
+
+    # 4. stage2g_f_d_user_install_approval_blocks_missing_transaction_plan
+    errors = []
+    blocked = build_user_install_approval_plan(
+        user_install_transaction_plan=None,
+        requested_mode="doctor_review",
+    )
+    if blocked.get("plan_status") != "blocked_missing_inputs":
+        errors.append(f"plan_status mismatch: {blocked.get('plan_status')}")
+    if blocked.get("recommended_next_step_kind") != "collect_missing_user_install_approval_inputs":
+        errors.append("recommended_next_step_kind mismatch")
+    if blocked.get("approval_granted") is not False:
+        errors.append("approval_granted must be False")
+    for field in auth_false:
+        if blocked.get(field) is not False:
+            errors.append(f"{field} must remain False")
+    _append("stage2g_f_d_user_install_approval_blocks_missing_transaction_plan", errors)
+
+    # 5. stage2g_f_d_user_install_approval_requires_manifest_path_alignment
+    errors = []
+    mismatched = json.loads(json.dumps(transaction_plan))
+    mismatched["manifest_path"] = "/home/tester/.config/bond/other.json"
+    plan_mismatch = build_user_install_approval_plan(
+        user_install_transaction_plan=mismatched,
+        requested_mode="doctor_review",
+    )
+    if plan_mismatch.get("plan_status") != "unsupported_manual_review":
+        errors.append(f"plan_status mismatch: {plan_mismatch.get('plan_status')}")
+    if plan_mismatch.get("recommended_next_step_kind") != "manual_platform_review":
+        errors.append("recommended_next_step_kind must be manual_platform_review")
+    reasons = plan_mismatch.get("review_reasons")
+    if not isinstance(reasons, list) or not any("manifest path mismatch" in str(reason) for reason in reasons):
+        errors.append("review_reasons must mention manifest path mismatch")
+    if plan_mismatch.get("approval_granted") is not False:
+        errors.append("approval_granted must remain False")
+    _append("stage2g_f_d_user_install_approval_requires_manifest_path_alignment", errors)
+
+    # 6. stage2g_f_d_user_install_approval_rejects_upstream_authorization_or_commands
+    errors = []
+    top_authorized = json.loads(json.dumps(transaction_plan))
+    top_authorized["execution_authorized"] = True
+    rejected_top = build_user_install_approval_plan(
+        user_install_transaction_plan=top_authorized,
+        requested_mode="doctor_review",
+    )
+    if rejected_top.get("plan_status") != "unsupported_manual_review":
+        errors.append("top-level execution_authorized must cause unsupported_manual_review")
+
+    candidate_authorized = json.loads(json.dumps(transaction_plan))
+    candidate_authorized["transaction_candidate"]["authorization"]["write_authorized"] = True
+    rejected_candidate = build_user_install_approval_plan(
+        user_install_transaction_plan=candidate_authorized,
+        requested_mode="doctor_review",
+    )
+    if rejected_candidate.get("plan_status") != "unsupported_manual_review":
+        errors.append("candidate authorization write_authorized must cause unsupported_manual_review")
+
+    command_plan = json.loads(json.dumps(transaction_plan))
+    command_plan["transaction_candidate"]["operations"][1]["command"] = "mkdir /tmp/nope"
+    rejected_command = build_user_install_approval_plan(
+        user_install_transaction_plan=command_plan,
+        requested_mode="doctor_review",
+    )
+    if rejected_command.get("plan_status") != "unsupported_manual_review":
+        errors.append("operation command must cause unsupported_manual_review")
+
+    for payload in (rejected_top, rejected_candidate, rejected_command):
+        for field in auth_false:
+            if payload.get(field) is not False:
+                errors.append(f"{field} must remain False")
+    _append("stage2g_f_d_user_install_approval_rejects_upstream_authorization_or_commands", errors)
+
+    # 7. stage2g_f_d_user_install_approval_format_is_non_executing
+    errors = []
+    formatted = format_user_install_approval_plan(plan)
+    for marker in (
+        "User-space install approval envelope report",
+        "Execution authorized: false",
+        "Write authorized: false",
+        "Approval granted: false",
+        "Reviewed operations:",
+        "Approval JSON preview:",
+        "No approval was granted, and no user-space install, directory creation, manifest write, package operation, service mutation, storage move, or command execution was performed.",
+    ):
+        if marker not in formatted:
+            errors.append(f"formatted output missing marker: {marker}")
+    for forbidden in (
+        "sudo ",
+        "apt install",
+        "dnf install",
+        "pacman -S",
+        "rpm-ostree install",
+        "rpm-ostree override",
+        "rpm-ostree rebase",
+        "rpm-ostree upgrade",
+        "flatpak install",
+        "mkdir ",
+        "touch ",
+        "systemctl",
+    ):
+        if forbidden in formatted:
+            errors.append(f"formatted output contains forbidden command phrase: {forbidden}")
+    _append("stage2g_f_d_user_install_approval_format_is_non_executing", errors)
+
+    # 8. stage2g_f_d_user_install_approval_probe_is_read_only
+    errors = []
+    try:
+        probe_result = probe_user_install_approval_plan()
+        if probe_result.probe_name != "user_install_approval_plan":
+            errors.append(f"probe_name mismatch: {probe_result.probe_name}")
+        probe_data = probe_result.data if isinstance(probe_result.data, dict) else {}
+        if probe_data.get("kind") != "bond_user_install_approval_plan":
+            errors.append(f"probe data kind mismatch: {probe_data.get('kind')}")
+        probe_candidate = probe_data.get("approval_candidate")
+        if not isinstance(probe_candidate, dict) or probe_candidate.get("kind") != "bond_user_install_approval_candidate":
+            errors.append("approval_candidate missing or wrong kind")
+        for field in auth_false:
+            if probe_data.get(field) is not False:
+                errors.append(f"probe {field} must be False")
+        if probe_result.probe_name == "maintenance_report":
+            errors.append("probe must not have probe_name 'maintenance_report'")
+    except Exception as exc:
+        errors.append(f"probe_user_install_approval_plan raised unexpectedly: {exc}")
+    _append("stage2g_f_d_user_install_approval_probe_is_read_only", errors)
+
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -10328,6 +10700,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2g_f_c_user_install_transaction_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2g_f_d_user_install_approval_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

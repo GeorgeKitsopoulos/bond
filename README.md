@@ -5,12 +5,15 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 ## Current status
 
 - Bond is under active development.
-- The current validated baseline is Stage 2G-F-C user-space install transaction/preflight plan.
+- The current validated baseline is Stage 2G-F-D user-space install approval envelope contract.
+- `src/bond/ai_user_install_approval.py` added: pure deterministic, non-executing user-space install approval-envelope planning contract that composes transaction/preflight planning inputs into deterministic `approval_candidate` and `approval_json_preview` outputs.
 - `src/bond/ai_user_install_transaction.py` added: pure deterministic, non-executing user-space install transaction/preflight planning contract that composes upstream write-set and manifest payload plans into ordered `transaction_candidate` and `transaction_json_preview` outputs.
 - `src/bond/ai_user_install_manifest.py` added: pure deterministic, non-executing user-space install manifest payload planning contract that derives sanitized `manifest_candidate` and deterministic `manifest_json_preview` from explicit planning inputs.
 - `src/bond/ai_user_install_plan.py` remains integrated: pure deterministic, non-executing user-space install write-set planning contract composing explicit installer/storage/manifest path inputs.
 - `src/bond/ai_installer_plan.py` added: pure deterministic, non-executing installer/reconfigure planning contract composing Stage 2G read-only facts.
-- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 335, "failed": 0, "total": 335} (see docs/TESTING.md for exact summary).
+- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 343, "failed": 0, "total": 343} (see docs/TESTING.md for exact summary).
+- Stage 2G-F-D defines a deterministic user-space install approval envelope preview only (`approval_candidate` and `approval_json_preview`); it does not grant approval, does not create directories, does not write manifests, does not install packages, does not mutate services, does not move storage, does not generate commands, and does not authorize execution.
+- approval_granted remains False in Stage 2G-F-D.
 - Stage 2G-F-C defines an ordered user-space install transaction/preflight preview only (`transaction_candidate` and `transaction_json_preview`); it does not create directories, does not write manifests, does not install packages, does not mutate services, does not move storage, does not generate commands, and does not authorize execution.
 - Stage 2G-F-B1 preserves factual package-manager identity in manifest previews while keeping command generation and execution unauthorized.
 - Stage 2G-F-B defines a deterministic sanitized user-space install manifest payload preview only (`manifest_candidate` and `manifest_json_preview`); it does not create directories, does not write manifests, does not install packages, does not mutate services, does not move storage, does not generate commands, and does not authorize execution.

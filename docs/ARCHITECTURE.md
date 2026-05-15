@@ -414,6 +414,25 @@ Stage 2F-F-E adds metadata-only readiness fields inside the explicit maintenance
 - All authorization fields are explicitly False.
 - It does not broaden normal assistant answers.
 
+### User-space install approval-envelope planning (Stage 2G-F-D)
+
+- Module owner: `src/bond/ai_user_install_approval.py`.
+- Probe owner: `user_install_approval_plan` in `src/bond/ai_probes.py`.
+- Purpose: derive a deterministic `approval_candidate` and `approval_json_preview` from a transaction/preflight plan.
+- It computes `transaction_digest` from `transaction_json_preview`.
+- It defines future approval requirements without granting approval.
+- It is pure deterministic and non-executing.
+- It does not inspect live system state.
+- It does not create directories.
+- It does not write manifests.
+- It does not install packages.
+- It does not mutate services.
+- It does not move storage.
+- It does not generate executable commands.
+- It does not grant approval.
+- All authorization fields are explicitly False.
+- It does not broaden normal assistant answers.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

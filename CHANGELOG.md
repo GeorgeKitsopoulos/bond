@@ -20,6 +20,20 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-F-D user-space install approval envelope contract
+
+- Adds `ai_user_install_approval.py`.
+- Adds `user_install_approval_plan` probe.
+- Defines `approval_candidate` and `approval_json_preview` for future user-space install transaction review.
+- Computes deterministic `transaction_digest` from `transaction_json_preview`.
+- Defines approval requirements that must match transaction digest, manifest path, and operation count.
+- `approval_granted` remains False.
+- All authorization fields remain False.
+- No commands generated.
+- No approval granted, directory creation, manifest write, package operation, service mutation, storage move, or command execution.
+- Adds 8 selftests.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 343, "failed": 0, "total": 343}.
+
 ### Stage 2G-F-C user-space install transaction/preflight plan
 
 - Adds `ai_user_install_transaction.py`.

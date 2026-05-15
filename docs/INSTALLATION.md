@@ -308,6 +308,30 @@ Manifest write is not added in this stage.
 
 Directory creation is not added in this stage.
 
+## User-space approval-envelope prerequisite (Stage 2G-F-D)
+
+Future user-space installer work must define an approval envelope before any write-capable operation exists.
+
+Stage 2G-F-D defines `approval_candidate` and `approval_json_preview` only.
+
+It can preview transaction digest, manifest path, operation count, and exact future approval requirements.
+
+`approval_granted` remains False.
+
+It still performs no write.
+
+It still follows:
+
+classify -> plan -> show -> explicitly authorize -> execute -> verify -> report
+
+Execution is not added in this stage.
+
+Manifest write is not added in this stage.
+
+Directory creation is not added in this stage.
+
+Approval execution is not added in this stage.
+
 ## Uninstall direction
 
 Uninstall must eventually become explicit.

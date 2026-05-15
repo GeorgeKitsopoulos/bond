@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 335, "failed": 0, "total": 335}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 343, "failed": 0, "total": 343}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -140,6 +140,19 @@ Coverage now also includes Stage 2G-F-C user-space install transaction/preflight
 - `stage2g_f_c_user_install_transaction_rejects_upstream_authorization_or_commands`
 - `stage2g_f_c_user_install_transaction_format_is_non_executing`
 - `stage2g_f_c_user_install_transaction_probe_is_read_only`
+
+Coverage now also includes Stage 2G-F-D user-space install approval-envelope planning checks:
+
+- `stage2g_f_d_user_install_approval_shape_and_boundaries`
+- `stage2g_f_d_user_install_approval_digest_is_deterministic`
+- `stage2g_f_d_user_install_approval_omits_commands_and_sensitive_fields`
+- `stage2g_f_d_user_install_approval_blocks_missing_transaction_plan`
+- `stage2g_f_d_user_install_approval_requires_manifest_path_alignment`
+- `stage2g_f_d_user_install_approval_rejects_upstream_authorization_or_commands`
+- `stage2g_f_d_user_install_approval_format_is_non_executing`
+- `stage2g_f_d_user_install_approval_probe_is_read_only`
+
+These checks cover approval-envelope shape/boundaries, deterministic transaction-digest behavior, sensitive-field omission, missing-transaction-plan blocking, manifest-path alignment enforcement, rejection of upstream authorization/command leakage, non-executing formatting, and read-only probe shape.
 
 These checks cover transaction shape/boundaries, deterministic operation ordering, manifest path alignment, missing-upstream-plan blocking, upstream manual-review propagation, rejection of unsafe upstream authorization/commands, non-executing format output, and read-only probe shape.
 
