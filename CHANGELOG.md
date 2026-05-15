@@ -20,6 +20,17 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-F-B user-space install manifest payload contract
+
+- Adds `ai_user_install_manifest.py` as a pure deterministic, non-executing user-space install manifest payload planning contract.
+- Adds `user_install_manifest_plan` as a read-only probe that composes user-space write-set and read-only profile facts into a bounded manifest payload review plan.
+- Defines sanitized `manifest_candidate` and deterministic `manifest_json_preview` for future user-space installer review.
+- All authorization fields remain explicitly False.
+- No commands are generated.
+- No directory creation, manifest write, package operation, service mutation, storage move, or command execution is performed.
+- Adds 8 selftests for Stage 2G-F-B contract coverage.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 325, "failed": 0, "total": 325}.
+
 ### Stage 2G-F-A user-space install write-set contract
 
 - Adds `ai_user_install_plan.py` as a pure deterministic, non-executing user-space install write-set planning contract.

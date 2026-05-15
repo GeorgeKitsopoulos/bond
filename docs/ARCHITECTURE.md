@@ -380,6 +380,23 @@ Stage 2F-F-E adds metadata-only readiness fields inside the explicit maintenance
 - All authorization fields are explicitly False.
 - It does not broaden normal assistant answers.
 
+### User-space install manifest payload planning (Stage 2G-F-B)
+
+- Module owner: `src/bond/ai_user_install_manifest.py`.
+- Probe owner: `user_install_manifest_plan` in `src/bond/ai_probes.py`.
+- Purpose: derive deterministic sanitized `manifest_candidate` and `manifest_json_preview` from existing user install write-set and profile facts.
+- The module is pure deterministic and non-executing.
+- It does not inspect live system state.
+- It does not create directories.
+- It does not write manifests.
+- It does not install packages.
+- It does not mutate services.
+- It does not move storage.
+- It does not generate executable commands.
+- All authorization fields are explicitly False.
+- It does not broaden normal assistant answers.
+- It excludes identity and secret-like fields from the manifest payload preview.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

@@ -270,6 +270,24 @@ classify -> plan -> show -> explicitly authorize -> execute -> verify -> report
 
 Execution is not added in this stage.
 
+## User-space manifest payload prerequisite (Stage 2G-F-B)
+
+Future user-space installer work must define the manifest payload before any write-capable manifest operation exists.
+
+Stage 2G-F-B defines `manifest_candidate` and `manifest_json_preview` only.
+
+It can preview the future install manifest path and deterministic JSON content.
+
+It still performs no write.
+
+It still follows:
+
+classify -> plan -> show -> explicitly authorize -> execute -> verify -> report
+
+Execution is not added in this stage.
+
+Manifest write is not added in this stage.
+
 ## Uninstall direction
 
 Uninstall must eventually become explicit.

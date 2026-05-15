@@ -20,6 +20,10 @@ import ai_host_profile
 import ai_install_manifest
 import ai_storage_profile
 import ai_maintenance_report
+from ai_user_install_manifest import (
+    build_user_install_manifest_payload_plan,
+    format_user_install_manifest_payload_plan,
+)
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
 from ai_maintenance_report import (
     build_maintenance_readiness_report,
@@ -134,6 +138,7 @@ from ai_probes import (
     probe_storage_hygiene,
     probe_tool_inventory,
     probe_user_install_plan,
+    probe_user_install_manifest_plan,
     run_all_probes,
     run_named_probe,
 )
@@ -6653,7 +6658,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 317, "failed": 0, "total": 317}'
+    current_summary = '{"ok": true, "passed": 325, "failed": 0, "total": 325}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -6875,7 +6880,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 317, "failed": 0, "total": 317}'
+    current_summary = '{"ok": true, "passed": 325, "failed": 0, "total": 325}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -8809,6 +8814,465 @@ def run_stage2g_f_a_user_install_plan_tests() -> list[dict[str, Any]]:
     return results
 
 
+def run_stage2g_f_b_user_install_manifest_tests() -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+
+    def _append(name: str, errors: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": "",
+                "stderr": "",
+                "errors": errors,
+            }
+        )
+
+    user_install_plan = {
+        "kind": "bond_user_space_install_write_set_plan",
+        "schema_version": 1,
+        "execution_authorized": False,
+        "install_authorized": False,
+        "package_install_authorized": False,
+        "upgrade_authorized": False,
+        "reconfigure_authorized": False,
+        "service_authorized": False,
+        "storage_move_authorized": False,
+        "write_authorized": False,
+        "write_manifest_authorized": False,
+        "commands_generated": False,
+        "requested_mode": "doctor_review",
+        "plan_status": "ready_for_user_review",
+        "recommended_next_step_kind": "review_user_install_write_set",
+        "requires_manual_review": False,
+        "blocked_reasons": [],
+        "review_reasons": [],
+        "target_layout": {
+            "config": "/home/tester/.config/bond",
+            "data": "/run/media/tester/DeckData/Bond/data",
+            "cache": "/run/media/tester/DeckData/Bond/cache",
+            "models": "/run/media/tester/DeckData/Bond/models",
+            "telemetry": "/run/media/tester/DeckData/Bond/telemetry",
+            "logs": "/run/media/tester/DeckData/Bond/logs",
+            "backups": "/run/media/tester/DeckData/Bond/backups",
+            "manifest_path": "/home/tester/.config/bond/install-manifest.json",
+        },
+        "write_set": [
+            {
+                "operation_kind": "create_directory_candidate",
+                "role": "config",
+                "path": "/home/tester/.config/bond",
+                "status": "planned_not_authorized",
+                "execution_authorized": False,
+                "write_authorized": False,
+                "command": None,
+            },
+            {
+                "operation_kind": "create_directory_candidate",
+                "role": "data",
+                "path": "/run/media/tester/DeckData/Bond/data",
+                "status": "planned_not_authorized",
+                "execution_authorized": False,
+                "write_authorized": False,
+                "command": None,
+            },
+            {
+                "operation_kind": "create_directory_candidate",
+                "role": "cache",
+                "path": "/run/media/tester/DeckData/Bond/cache",
+                "status": "planned_not_authorized",
+                "execution_authorized": False,
+                "write_authorized": False,
+                "command": None,
+            },
+            {
+                "operation_kind": "create_directory_candidate",
+                "role": "models",
+                "path": "/run/media/tester/DeckData/Bond/models",
+                "status": "planned_not_authorized",
+                "execution_authorized": False,
+                "write_authorized": False,
+                "command": None,
+            },
+            {
+                "operation_kind": "create_directory_candidate",
+                "role": "telemetry",
+                "path": "/run/media/tester/DeckData/Bond/telemetry",
+                "status": "planned_not_authorized",
+                "execution_authorized": False,
+                "write_authorized": False,
+                "command": None,
+            },
+            {
+                "operation_kind": "create_directory_candidate",
+                "role": "logs",
+                "path": "/run/media/tester/DeckData/Bond/logs",
+                "status": "planned_not_authorized",
+                "execution_authorized": False,
+                "write_authorized": False,
+                "command": None,
+            },
+            {
+                "operation_kind": "create_directory_candidate",
+                "role": "backups",
+                "path": "/run/media/tester/DeckData/Bond/backups",
+                "status": "planned_not_authorized",
+                "execution_authorized": False,
+                "write_authorized": False,
+                "command": None,
+            },
+            {
+                "operation_kind": "write_manifest_candidate",
+                "role": "manifest",
+                "path": "/home/tester/.config/bond/install-manifest.json",
+                "status": "planned_not_authorized",
+                "execution_authorized": False,
+                "write_authorized": False,
+                "command": None,
+            },
+        ],
+    }
+
+    host_profile = {
+        "architecture": "x86_64",
+        "os_family": "linux",
+        "distro_id": "bazzite",
+        "distro_like": "fedora",
+        "package_manager": "rpm-ostree",
+        "immutable_hint": True,
+        "steam_deck_hint": True,
+        "hostname": "SHOULD_NOT_LEAK",
+        "username": "SHOULD_NOT_LEAK",
+        "token": "SHOULD_NOT_LEAK",
+    }
+
+    storage_profile = {
+        "profile_kind": "storage_portability_profile",
+        "preferred_large_data_base": "/run/media/tester/DeckData",
+        "preferred_config_base": "/home/tester",
+        "requires_manual_review": False,
+        "storage_pressure": "normal",
+        "home_mount_point": "/home",
+        "recommendations": {
+            "strategy": "external_large_data_preferred",
+            "requires_manual_review": False,
+            "reason": "external storage has more room",
+            "secret": "SHOULD_NOT_LEAK",
+        },
+    }
+
+    dependency_plan = {
+        "kind": "dependency_plan",
+        "schema_version": 1,
+        "recommended_next_step_kind": "review_dependency_plan",
+        "requires_manual_review": False,
+        "package_strategy": {
+            "strategy_kind": "container_user_space_optional",
+            "preferred_install_surface": "user_space",
+            "requires_manual_review": False,
+            "supported_package_manager": True,
+            "password": "SHOULD_NOT_LEAK",
+        },
+        "plan_items": [
+            {"status": "satisfied"},
+            {"status": "planned_not_authorized"},
+            {"status": "planned_not_authorized"},
+        ],
+    }
+
+    install_drift_report = {
+        "kind": "install_manifest_drift",
+        "schema_version": 1,
+        "drift_severity": "none",
+        "recommended_next_step_kind": "no_reconfigure_needed",
+        "requires_manual_review": False,
+        "email": "SHOULD_NOT_LEAK",
+    }
+
+    # 1. stage2g_f_b_user_install_manifest_shape_and_boundaries
+    errors: list[str] = []
+    plan = build_user_install_manifest_payload_plan(
+        user_install_plan=user_install_plan,
+        host_profile=host_profile,
+        storage_profile=storage_profile,
+        dependency_plan=dependency_plan,
+        install_drift_report=install_drift_report,
+        requested_mode="doctor_review",
+    )
+    if plan.get("kind") != "bond_user_install_manifest_payload_plan":
+        errors.append(f"kind mismatch: {plan.get('kind')}")
+    if plan.get("schema_version") != 1:
+        errors.append(f"schema_version mismatch: {plan.get('schema_version')}")
+    for field in (
+        "execution_authorized",
+        "install_authorized",
+        "package_install_authorized",
+        "upgrade_authorized",
+        "reconfigure_authorized",
+        "service_authorized",
+        "storage_move_authorized",
+        "write_authorized",
+        "write_manifest_authorized",
+    ):
+        if plan.get(field) is not False:
+            errors.append(f"{field} must be False, got {plan.get(field)}")
+    if plan.get("commands_generated") is not False:
+        errors.append("commands_generated must be False")
+    candidate = plan.get("manifest_candidate") if isinstance(plan.get("manifest_candidate"), dict) else {}
+    if candidate.get("kind") != "bond_user_install_manifest":
+        errors.append(f"manifest_candidate kind mismatch: {candidate.get('kind')}")
+    if candidate.get("schema_version") != 1:
+        errors.append(f"manifest_candidate schema_version mismatch: {candidate.get('schema_version')}")
+    if plan.get("manifest_path") != "/home/tester/.config/bond/install-manifest.json":
+        errors.append(f"manifest_path mismatch: {plan.get('manifest_path')}")
+    preview = plan.get("manifest_json_preview")
+    if not isinstance(preview, str):
+        errors.append("manifest_json_preview must be a string")
+    write_summary = candidate.get("write_set_summary")
+    if isinstance(write_summary, list):
+        for item in write_summary:
+            if isinstance(item, dict):
+                if "command" in item:
+                    errors.append("write_set_summary item must not contain command")
+                if "execution_authorized" in item:
+                    errors.append("write_set_summary item must not contain execution_authorized")
+                if "write_authorized" in item:
+                    errors.append("write_set_summary item must not contain write_authorized")
+    else:
+        errors.append("manifest_candidate.write_set_summary must be a list")
+    _append("stage2g_f_b_user_install_manifest_shape_and_boundaries", errors)
+
+    # 2. stage2g_f_b_user_install_manifest_candidate_is_deterministic
+    errors = []
+    plan_one = build_user_install_manifest_payload_plan(
+        user_install_plan=user_install_plan,
+        host_profile=host_profile,
+        storage_profile=storage_profile,
+        dependency_plan=dependency_plan,
+        install_drift_report=install_drift_report,
+        requested_mode="doctor_review",
+    )
+    plan_two = build_user_install_manifest_payload_plan(
+        user_install_plan=user_install_plan,
+        host_profile=host_profile,
+        storage_profile=storage_profile,
+        dependency_plan=dependency_plan,
+        install_drift_report=install_drift_report,
+        requested_mode="doctor_review",
+    )
+    preview_one = plan_one.get("manifest_json_preview")
+    preview_two = plan_two.get("manifest_json_preview")
+    if preview_one != preview_two:
+        errors.append("manifest_json_preview must be deterministic across identical inputs")
+    if isinstance(preview_one, str):
+        if '"kind": "bond_user_install_manifest"' not in preview_one:
+            errors.append("manifest_json_preview missing manifest kind")
+        if '"manifest_path": "/home/tester/.config/bond/install-manifest.json"' not in preview_one:
+            errors.append("manifest_json_preview missing manifest path")
+    else:
+        errors.append("manifest_json_preview must be a string")
+    candidate_one = plan_one.get("manifest_candidate") if isinstance(plan_one.get("manifest_candidate"), dict) else {}
+    paths_one = candidate_one.get("paths") if isinstance(candidate_one.get("paths"), dict) else {}
+    if paths_one.get("models") != "/run/media/tester/DeckData/Bond/models":
+        errors.append(f"models path mismatch: {paths_one.get('models')}")
+    _append("stage2g_f_b_user_install_manifest_candidate_is_deterministic", errors)
+
+    # 3. stage2g_f_b_user_install_manifest_omits_sensitive_fields
+    errors = []
+    plan = build_user_install_manifest_payload_plan(
+        user_install_plan=user_install_plan,
+        host_profile=host_profile,
+        storage_profile=storage_profile,
+        dependency_plan=dependency_plan,
+        install_drift_report=install_drift_report,
+        requested_mode="doctor_review",
+    )
+    preview = plan.get("manifest_json_preview") if isinstance(plan.get("manifest_json_preview"), str) else ""
+    candidate_blob = str(plan.get("manifest_candidate"))
+    for needle in (
+        "SHOULD_NOT_LEAK",
+        "hostname",
+        "username",
+        "token",
+        "password",
+        "secret",
+        "email",
+    ):
+        if needle in preview:
+            errors.append(f"manifest_json_preview leaked sensitive marker: {needle}")
+        if needle in candidate_blob:
+            errors.append(f"manifest_candidate leaked sensitive marker: {needle}")
+    _append("stage2g_f_b_user_install_manifest_omits_sensitive_fields", errors)
+
+    # 4. stage2g_f_b_user_install_manifest_blocks_missing_user_install_plan
+    errors = []
+    blocked_plan = build_user_install_manifest_payload_plan(
+        user_install_plan=None,
+        host_profile=host_profile,
+        storage_profile=storage_profile,
+        dependency_plan=dependency_plan,
+        install_drift_report=install_drift_report,
+        requested_mode="doctor_review",
+    )
+    if blocked_plan.get("plan_status") != "blocked_missing_inputs":
+        errors.append(f"plan_status mismatch: {blocked_plan.get('plan_status')}")
+    if blocked_plan.get("recommended_next_step_kind") != "collect_missing_user_install_manifest_inputs":
+        errors.append(
+            "recommended_next_step_kind mismatch: "
+            f"{blocked_plan.get('recommended_next_step_kind')}"
+        )
+    if blocked_plan.get("write_manifest_authorized") is not False:
+        errors.append("write_manifest_authorized must remain False")
+    _append("stage2g_f_b_user_install_manifest_blocks_missing_user_install_plan", errors)
+
+    # 5. stage2g_f_b_user_install_manifest_propagates_manual_review
+    errors = []
+    manual_upstream = dict(user_install_plan)
+    manual_upstream["plan_status"] = "manual_review_required"
+    manual_upstream["requires_manual_review"] = True
+    manual_plan = build_user_install_manifest_payload_plan(
+        user_install_plan=manual_upstream,
+        host_profile=host_profile,
+        storage_profile=storage_profile,
+        dependency_plan=dependency_plan,
+        install_drift_report=install_drift_report,
+        requested_mode="doctor_review",
+    )
+    if manual_plan.get("plan_status") != "manual_review_required":
+        errors.append(f"plan_status mismatch: {manual_plan.get('plan_status')}")
+    if manual_plan.get("recommended_next_step_kind") != "manual_user_install_manifest_review":
+        errors.append(
+            "recommended_next_step_kind mismatch: "
+            f"{manual_plan.get('recommended_next_step_kind')}"
+        )
+    if manual_plan.get("requires_manual_review") is not True:
+        errors.append("requires_manual_review must be True")
+    _append("stage2g_f_b_user_install_manifest_propagates_manual_review", errors)
+
+    # 6. stage2g_f_b_user_install_manifest_rejects_authorized_upstream_write_set
+    errors = []
+    write_authorized_upstream = json.loads(json.dumps(user_install_plan))
+    if isinstance(write_authorized_upstream.get("write_set"), list) and write_authorized_upstream["write_set"]:
+        write_authorized_upstream["write_set"][0]["write_authorized"] = True
+    rejected_plan = build_user_install_manifest_payload_plan(
+        user_install_plan=write_authorized_upstream,
+        host_profile=host_profile,
+        storage_profile=storage_profile,
+        dependency_plan=dependency_plan,
+        install_drift_report=install_drift_report,
+        requested_mode="doctor_review",
+    )
+    if rejected_plan.get("plan_status") != "unsupported_manual_review":
+        errors.append(f"plan_status mismatch: {rejected_plan.get('plan_status')}")
+    if rejected_plan.get("recommended_next_step_kind") != "manual_platform_review":
+        errors.append(
+            f"recommended_next_step_kind mismatch: {rejected_plan.get('recommended_next_step_kind')}"
+        )
+    review_reasons = rejected_plan.get("review_reasons", [])
+    if not any("authorize writes" in str(reason) for reason in review_reasons):
+        errors.append("review_reasons must mention attempted to authorize writes")
+    for field in (
+        "execution_authorized",
+        "install_authorized",
+        "package_install_authorized",
+        "upgrade_authorized",
+        "reconfigure_authorized",
+        "service_authorized",
+        "storage_move_authorized",
+        "write_authorized",
+        "write_manifest_authorized",
+    ):
+        if rejected_plan.get(field) is not False:
+            errors.append(f"{field} must remain False, got {rejected_plan.get(field)}")
+
+    command_upstream = json.loads(json.dumps(user_install_plan))
+    if isinstance(command_upstream.get("write_set"), list) and command_upstream["write_set"]:
+        command_upstream["write_set"][0]["command"] = "mkdir /tmp/nope"
+    command_rejected = build_user_install_manifest_payload_plan(
+        user_install_plan=command_upstream,
+        host_profile=host_profile,
+        storage_profile=storage_profile,
+        dependency_plan=dependency_plan,
+        install_drift_report=install_drift_report,
+        requested_mode="doctor_review",
+    )
+    if command_rejected.get("plan_status") != "unsupported_manual_review":
+        errors.append(
+            f"command path plan_status mismatch: {command_rejected.get('plan_status')}"
+        )
+    _append("stage2g_f_b_user_install_manifest_rejects_authorized_upstream_write_set", errors)
+
+    # 7. stage2g_f_b_user_install_manifest_format_is_non_executing
+    errors = []
+    plan = build_user_install_manifest_payload_plan(
+        user_install_plan=user_install_plan,
+        host_profile=host_profile,
+        storage_profile=storage_profile,
+        dependency_plan=dependency_plan,
+        install_drift_report=install_drift_report,
+        requested_mode="doctor_review",
+    )
+    formatted = format_user_install_manifest_payload_plan(plan)
+    if "User-space install manifest payload report" not in formatted:
+        errors.append("formatted output missing title")
+    if "Execution authorized: false" not in formatted:
+        errors.append("formatted output missing execution boundary")
+    if "Manifest write authorized: false" not in formatted:
+        errors.append("formatted output missing manifest write boundary")
+    if "Manifest JSON preview:" not in formatted:
+        errors.append("formatted output missing preview heading")
+    if "No user-space install, directory creation, manifest write, package operation, service mutation, storage move, or command execution was performed." not in formatted:
+        errors.append("formatted output missing final disclaimer")
+    for forbidden in (
+        "sudo ",
+        "apt install",
+        "dnf install",
+        "pacman -S",
+        "rpm-ostree",
+        "flatpak install",
+        "mkdir ",
+        "touch ",
+        "systemctl",
+    ):
+        if forbidden in formatted:
+            errors.append(f"formatted output contains forbidden string: {forbidden}")
+    _append("stage2g_f_b_user_install_manifest_format_is_non_executing", errors)
+
+    # 8. stage2g_f_b_user_install_manifest_probe_is_read_only
+    errors = []
+    try:
+        probe_result = probe_user_install_manifest_plan()
+        if probe_result.probe_name != "user_install_manifest_plan":
+            errors.append(f"probe_name mismatch: {probe_result.probe_name}")
+        probe_data = probe_result.data if isinstance(probe_result.data, dict) else {}
+        if probe_data.get("kind") != "bond_user_install_manifest_payload_plan":
+            errors.append(f"probe data kind mismatch: {probe_data.get('kind')}")
+        candidate = probe_data.get("manifest_candidate") if isinstance(probe_data.get("manifest_candidate"), dict) else {}
+        if candidate.get("kind") != "bond_user_install_manifest":
+            errors.append(f"manifest_candidate kind mismatch: {candidate.get('kind')}")
+        for field in (
+            "execution_authorized",
+            "install_authorized",
+            "package_install_authorized",
+            "upgrade_authorized",
+            "reconfigure_authorized",
+            "service_authorized",
+            "storage_move_authorized",
+            "write_authorized",
+            "write_manifest_authorized",
+        ):
+            if probe_data.get(field) is not False:
+                errors.append(f"probe {field} must be False, got {probe_data.get(field)}")
+        if probe_result.probe_name == "maintenance_report":
+            errors.append("probe must not have probe_name 'maintenance_report'")
+    except Exception as exc:
+        errors.append(f"probe_user_install_manifest_plan raised unexpectedly: {exc}")
+    _append("stage2g_f_b_user_install_manifest_probe_is_read_only", errors)
+
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -9313,6 +9777,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2g_f_a_user_install_plan_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2g_f_b_user_install_manifest_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

@@ -16,16 +16,17 @@ This file exists to prevent drift between:
 
 ## Current Checkpoint
 
-Date: (Stage 2G-F-A current)
+Date: (Stage 2G-F-B current)
 
 Current baseline note:
 
-- Stage 2G-F-A user-space install write-set contract is the current repository checkpoint.
+- Stage 2G-F-B user-space install manifest payload contract is the current repository checkpoint.
+- `src/bond/ai_user_install_manifest.py` and `user_install_manifest_plan` probe are integrated as deterministic, non-executing manifest payload planning surfaces.
 - `src/bond/ai_user_install_plan.py` and `user_install_plan` probe are integrated as deterministic, non-executing write-set planning surfaces.
 - `src/bond/ai_installer_plan.py` added as a pure deterministic, non-executing contract for installer/reconfigure planning.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 317, "failed": 0, "total": 317} (Stage 2G-F-A applied).
-- Stage 2G-F-A adds a non-executing user-space write-set contract and does not create directories, write manifests, install packages, mutate services, move storage, or authorize execution.
-- Portable installer/updater/satellite item 6 is only begun in Stage 2G-F-A and is not complete.
+- Compile and integrated selftest baseline is {"ok": true, "passed": 325, "failed": 0, "total": 325} (Stage 2G-F-B applied).
+- Stage 2G-F-B adds a deterministic sanitized manifest payload planning contract (`manifest_candidate` and `manifest_json_preview`) and does not create directories, write manifests, install packages, mutate services, move storage, generate commands, or authorize execution.
+- Portable installer/updater/satellite item 6 remains only in planning/contract form and is not complete.
 - Stage 2G-E adds a read-only installer planning contract composing Stage 2G profile, drift, and dependency facts into a bounded plan without authorizing execution, installation, reconfiguration, service changes, manifest writes, or storage mutation.
 - Stage 2G-E does not authorize installation, reconfiguration, service changes, manifest writes, storage mutations, or execution of any kind.
 - Stage 2G-D deterministic dependency planning and package-manager classification contract remains integrated/current.

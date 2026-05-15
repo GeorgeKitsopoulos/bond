@@ -5,11 +5,13 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 ## Current status
 
 - Bond is under active development.
-- The current validated baseline is Stage 2G-F-A user-space install write-set contract.
-- `src/bond/ai_user_install_plan.py` added: pure deterministic, non-executing user-space install write-set planning contract composing explicit installer/storage/manifest path inputs.
+- The current validated baseline is Stage 2G-F-B user-space install manifest payload contract.
+- `src/bond/ai_user_install_manifest.py` added: pure deterministic, non-executing user-space install manifest payload planning contract that derives sanitized `manifest_candidate` and deterministic `manifest_json_preview` from explicit planning inputs.
+- `src/bond/ai_user_install_plan.py` remains integrated: pure deterministic, non-executing user-space install write-set planning contract composing explicit installer/storage/manifest path inputs.
 - `src/bond/ai_installer_plan.py` added: pure deterministic, non-executing installer/reconfigure planning contract composing Stage 2G read-only facts.
-- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 317, "failed": 0, "total": 317} (see docs/TESTING.md for exact summary).
-- Stage 2G-F-A defines a non-executing user-space write-set only; it does not create directories, write manifests, install packages, mutate services, move storage, or authorize execution.
+- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 325, "failed": 0, "total": 325} (see docs/TESTING.md for exact summary).
+- Stage 2G-F-B defines a deterministic sanitized user-space install manifest payload preview only (`manifest_candidate` and `manifest_json_preview`); it does not create directories, does not write manifests, does not install packages, does not mutate services, does not move storage, does not generate commands, and does not authorize execution.
+- Stage 2G-F-A defines a non-executing user-space write-set only and remains intact beneath Stage 2G-F-B.
 - Stage 2G-E adds a read-only installer planning layer without authorizing installation, reconfiguration, service changes, manifest writes, or storage mutation.
 - Stage 2G-D adds a read-only package-manager classification and dependency planning layer without authorizing installation, execution, or host mutation.
 - Stage 2G-C adds a read-only install manifest and drift detection layer on top of the existing portability profiles.

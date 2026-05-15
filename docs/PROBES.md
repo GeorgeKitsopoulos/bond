@@ -28,6 +28,7 @@ Current implemented probe names:
 - `dependency_plan`
 - `installer_plan`
 - `user_install_plan`
+- `user_install_manifest_plan`
 
 ## Stage 2G-A host portability profile
 
@@ -105,6 +106,19 @@ Current implemented probe names:
 
 - `user_install_plan` is a read-only user-space install write-set planning probe for future installer/updater/satellite planning.
 - It composes existing read-only installer/storage facts into a deterministic user-space write-set plan.
+- It does not create directories.
+- It does not write manifests.
+- It does not run commands.
+- It does not mutate services.
+- It does not install packages.
+- It does not move storage.
+- It is not part of the maintenance report contract.
+- Maintenance report scope remains unchanged and remains limited to `package_update_status`, `storage_hygiene`, and `boot_service_health`.
+
+### Stage 2G-F-B user-space install manifest payload planning
+
+- `user_install_manifest_plan` is a read-only user-space install manifest payload planning probe for future installer/updater/satellite planning.
+- It composes existing `user_install_plan` and read-only profile facts into a sanitized manifest payload preview (`manifest_candidate` and `manifest_json_preview`).
 - It does not create directories.
 - It does not write manifests.
 - It does not run commands.

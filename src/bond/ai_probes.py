@@ -16,6 +16,7 @@ from ai_package_manager import classify_package_manager_strategy
 from ai_dependency_plan import build_dependency_plan
 from ai_installer_plan import build_installer_plan
 from ai_user_install_plan import build_user_space_install_plan
+from ai_user_install_manifest import build_user_install_manifest_payload_plan
 from ai_core import BOND_ROOT, CONFIG_FILE, get_memory_root, get_router_config_path, get_state_root
 from ai_probe_contract import (
     CERTAINTY_AUTHORITATIVE,
@@ -49,6 +50,7 @@ AVAILABLE_PROBES = (
     "dependency_plan",
     "installer_plan",
     "user_install_plan",
+    "user_install_manifest_plan",
 )
 
 
@@ -770,6 +772,7 @@ def run_named_probe(name: str) -> ProbeResult:
         "dependency_plan": probe_dependency_plan,
         "installer_plan": probe_installer_plan,
         "user_install_plan": probe_user_install_plan,
+        "user_install_manifest_plan": probe_user_install_manifest_plan,
     }
     func = dispatch.get(name)
     if func is None:
@@ -877,6 +880,56 @@ def probe_user_install_plan() -> ProbeResult:
     except Exception as exc:
         return probe_error(
             probe_name="user_install_plan",
+            layer=3,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_UNKNOWN,
+            refresh_class=REFRESH_MEDIUM_CHURN,
+            supports_live_truth=False,
+            data={},
+            error=standard_error("computation_failed", str(exc)[:400]),
+        )
+
+
+def probe_user_install_manifest_plan() -> ProbeResult:
+    """Read-only user-space install manifest payload planning probe."""
+    try:
+        user_install_result = probe_user_install_plan()
+        host_result = probe_host_portability_profile()
+        storage_result = probe_storage_portability_profile()
+        drift_result = probe_install_manifest_drift()
+        dependency_result = probe_dependency_plan()
+
+        user_install_plan = user_install_result.data if user_install_result.ok else {}
+        host_profile = host_result.data if host_result.ok else {}
+        storage_profile = storage_result.data if storage_result.ok else {}
+        install_drift_report = drift_result.data if drift_result.ok else {}
+        dependency_plan = dependency_result.data if dependency_result.ok else {}
+
+        plan = build_user_install_manifest_payload_plan(
+            user_install_plan=user_install_plan,
+            host_profile=host_profile,
+            storage_profile=storage_profile,
+            dependency_plan=dependency_plan,
+            install_drift_report=install_drift_report,
+            requested_mode="doctor_review",
+        )
+
+        return probe_ok(
+            probe_name="user_install_manifest_plan",
+            layer=3,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_DERIVED,
+            refresh_class=REFRESH_MEDIUM_CHURN,
+            supports_live_truth=True,
+            data=plan,
+            notes=(
+                "Read-only user-space install manifest payload probe; it does not create directories, "
+                "write manifests, run commands, mutate services, install packages, or move storage."
+            ),
+        )
+    except Exception as exc:
+        return probe_error(
+            probe_name="user_install_manifest_plan",
             layer=3,
             source_type=SOURCE_RUNTIME_PROBE,
             certainty_class=CERTAINTY_UNKNOWN,

@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 317, "failed": 0, "total": 317}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 325, "failed": 0, "total": 325}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -111,6 +111,19 @@ Coverage now also includes Stage 2G-F-A user-space install write-set contract ch
 - `stage2g_f_a_user_install_plan_rejects_non_user_space_targets`
 - `stage2g_f_a_user_install_plan_format_is_non_executing`
 - `stage2g_f_a_user_install_plan_probe_is_read_only`
+
+Coverage now also includes Stage 2G-F-B user-space install manifest payload contract checks:
+
+- `stage2g_f_b_user_install_manifest_shape_and_boundaries`
+- `stage2g_f_b_user_install_manifest_candidate_is_deterministic`
+- `stage2g_f_b_user_install_manifest_omits_sensitive_fields`
+- `stage2g_f_b_user_install_manifest_blocks_missing_user_install_plan`
+- `stage2g_f_b_user_install_manifest_propagates_manual_review`
+- `stage2g_f_b_user_install_manifest_rejects_authorized_upstream_write_set`
+- `stage2g_f_b_user_install_manifest_format_is_non_executing`
+- `stage2g_f_b_user_install_manifest_probe_is_read_only`
+
+These tests cover shape/boundaries, deterministic manifest candidate and JSON preview, sensitive field omission, missing upstream plan blocking, upstream manual-review propagation, rejection of unsafe upstream authorization, non-executing format output, and read-only probe shape.
 
 These tests cover shape and boundaries, role path resolution, env override behavior, missing upstream installer plan blocking, upstream manual review propagation, non-user-space rejection, non-executing formatting, and read-only probe shape.
 
