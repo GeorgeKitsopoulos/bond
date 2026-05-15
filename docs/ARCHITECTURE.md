@@ -397,6 +397,23 @@ Stage 2F-F-E adds metadata-only readiness fields inside the explicit maintenance
 - It does not broaden normal assistant answers.
 - It excludes identity and secret-like fields from the manifest payload preview.
 
+### User-space install transaction/preflight planning (Stage 2G-F-C)
+
+- Module owner: `src/bond/ai_user_install_transaction.py`.
+- Probe owner: `user_install_transaction_plan` in `src/bond/ai_probes.py`.
+- Purpose: compose the write-set and manifest payload plans into an ordered transaction/preflight preview.
+- It validates manifest path and write-set-summary consistency between upstream plans.
+- It is pure deterministic and non-executing.
+- It does not inspect live system state.
+- It does not create directories.
+- It does not write manifests.
+- It does not install packages.
+- It does not mutate services.
+- It does not move storage.
+- It does not generate executable commands.
+- All authorization fields are explicitly False.
+- It does not broaden normal assistant answers.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

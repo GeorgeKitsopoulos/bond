@@ -17,6 +17,7 @@ from ai_dependency_plan import build_dependency_plan
 from ai_installer_plan import build_installer_plan
 from ai_user_install_plan import build_user_space_install_plan
 from ai_user_install_manifest import build_user_install_manifest_payload_plan
+from ai_user_install_transaction import build_user_install_transaction_plan
 from ai_core import BOND_ROOT, CONFIG_FILE, get_memory_root, get_router_config_path, get_state_root
 from ai_probe_contract import (
     CERTAINTY_AUTHORITATIVE,
@@ -51,6 +52,7 @@ AVAILABLE_PROBES = (
     "installer_plan",
     "user_install_plan",
     "user_install_manifest_plan",
+    "user_install_transaction_plan",
 )
 
 
@@ -773,6 +775,7 @@ def run_named_probe(name: str) -> ProbeResult:
         "installer_plan": probe_installer_plan,
         "user_install_plan": probe_user_install_plan,
         "user_install_manifest_plan": probe_user_install_manifest_plan,
+        "user_install_transaction_plan": probe_user_install_transaction_plan,
     }
     func = dispatch.get(name)
     if func is None:
@@ -930,6 +933,49 @@ def probe_user_install_manifest_plan() -> ProbeResult:
     except Exception as exc:
         return probe_error(
             probe_name="user_install_manifest_plan",
+            layer=3,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_UNKNOWN,
+            refresh_class=REFRESH_MEDIUM_CHURN,
+            supports_live_truth=False,
+            data={},
+            error=standard_error("computation_failed", str(exc)[:400]),
+        )
+
+
+def probe_user_install_transaction_plan() -> ProbeResult:
+    """Read-only user-space install transaction/preflight planning probe."""
+    try:
+        user_install_result = probe_user_install_plan()
+        user_install_manifest_result = probe_user_install_manifest_plan()
+
+        user_install_plan = user_install_result.data if user_install_result.ok else {}
+        user_install_manifest_plan = (
+            user_install_manifest_result.data if user_install_manifest_result.ok else {}
+        )
+
+        plan = build_user_install_transaction_plan(
+            user_install_plan=user_install_plan,
+            user_install_manifest_plan=user_install_manifest_plan,
+            requested_mode="doctor_review",
+        )
+
+        return probe_ok(
+            probe_name="user_install_transaction_plan",
+            layer=3,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_DERIVED,
+            refresh_class=REFRESH_MEDIUM_CHURN,
+            supports_live_truth=True,
+            data=plan,
+            notes=(
+                "Read-only user-space install transaction/preflight probe; it does not create directories, "
+                "write manifests, run commands, mutate services, install packages, or move storage."
+            ),
+        )
+    except Exception as exc:
+        return probe_error(
+            probe_name="user_install_transaction_plan",
             layer=3,
             source_type=SOURCE_RUNTIME_PROBE,
             certainty_class=CERTAINTY_UNKNOWN,

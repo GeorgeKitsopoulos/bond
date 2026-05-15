@@ -288,6 +288,26 @@ Execution is not added in this stage.
 
 Manifest write is not added in this stage.
 
+## User-space transaction/preflight prerequisite (Stage 2G-F-C)
+
+Future user-space installer work must define transaction order and preflight checks before any write-capable operation exists.
+
+Stage 2G-F-C defines `transaction_candidate` and `transaction_json_preview` only.
+
+It can preview preflight, directory candidates, manifest write candidate, and post-install verification candidate.
+
+It still performs no write.
+
+It still follows:
+
+classify -> plan -> show -> explicitly authorize -> execute -> verify -> report
+
+Execution is not added in this stage.
+
+Manifest write is not added in this stage.
+
+Directory creation is not added in this stage.
+
 ## Uninstall direction
 
 Uninstall must eventually become explicit.

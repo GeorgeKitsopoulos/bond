@@ -20,6 +20,19 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-F-C user-space install transaction/preflight plan
+
+- Adds `ai_user_install_transaction.py`.
+- Adds `user_install_transaction_plan` probe.
+- Composes `user_install_plan` and `user_install_manifest_plan` into a deterministic `transaction_candidate` and `transaction_json_preview`.
+- Defines ordered future operation candidates for preflight, directory candidates, manifest write candidate, and post-install verification.
+- Validates manifest-path and write-set-summary consistency between upstream plans.
+- All authorization fields remain False.
+- No commands generated.
+- No directory creation, manifest write, package operation, service mutation, storage move, or command execution.
+- Adds 8 selftests.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 335, "failed": 0, "total": 335}.
+
 ### Stage 2G-F-B1 manifest package-manager fact preservation
 
 - Preserves factual host `package_manager` values such as `rpm-ostree` in `manifest_candidate` and `manifest_json_preview`.

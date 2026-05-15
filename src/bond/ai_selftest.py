@@ -24,6 +24,10 @@ from ai_user_install_manifest import (
     build_user_install_manifest_payload_plan,
     format_user_install_manifest_payload_plan,
 )
+from ai_user_install_transaction import (
+    build_user_install_transaction_plan,
+    format_user_install_transaction_plan,
+)
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
 from ai_maintenance_report import (
     build_maintenance_readiness_report,
@@ -139,6 +143,7 @@ from ai_probes import (
     probe_tool_inventory,
     probe_user_install_plan,
     probe_user_install_manifest_plan,
+    probe_user_install_transaction_plan,
     run_all_probes,
     run_named_probe,
 )
@@ -6658,7 +6663,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 327, "failed": 0, "total": 327}'
+    current_summary = '{"ok": true, "passed": 335, "failed": 0, "total": 335}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -6880,7 +6885,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 327, "failed": 0, "total": 327}'
+    current_summary = '{"ok": true, "passed": 335, "failed": 0, "total": 335}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -9431,6 +9436,358 @@ def run_stage2g_f_b1_user_install_manifest_forward_fix_tests() -> list[dict[str,
     return results
 
 
+def run_stage2g_f_c_user_install_transaction_tests() -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+
+    def _append(name: str, errors: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": "",
+                "stderr": "",
+                "errors": errors,
+            }
+        )
+
+    auth_false = {
+        "execution_authorized": False,
+        "install_authorized": False,
+        "package_install_authorized": False,
+        "upgrade_authorized": False,
+        "reconfigure_authorized": False,
+        "service_authorized": False,
+        "storage_move_authorized": False,
+        "write_authorized": False,
+        "write_manifest_authorized": False,
+        "commands_generated": False,
+    }
+
+    target_layout = {
+        "config": "/home/tester/.config/bond",
+        "data": "/run/media/tester/DeckData/Bond/data",
+        "cache": "/run/media/tester/DeckData/Bond/cache",
+        "models": "/run/media/tester/DeckData/Bond/models",
+        "telemetry": "/run/media/tester/DeckData/Bond/telemetry",
+        "logs": "/run/media/tester/DeckData/Bond/logs",
+        "backups": "/run/media/tester/DeckData/Bond/backups",
+        "manifest_path": "/home/tester/.config/bond/install-manifest.json",
+    }
+
+    write_set: list[dict[str, Any]] = []
+    for role in ["config", "data", "cache", "models", "telemetry", "logs", "backups"]:
+        write_set.append(
+            {
+                "operation_kind": "create_directory_candidate",
+                "role": role,
+                "path": target_layout[role],
+                "status": "planned_not_authorized",
+                "execution_authorized": False,
+                "write_authorized": False,
+                "command": None,
+                "reason": "Candidate operation only; no execution is authorized.",
+            }
+        )
+    write_set.append(
+        {
+            "operation_kind": "write_manifest_candidate",
+            "role": "manifest",
+            "path": target_layout["manifest_path"],
+            "status": "planned_not_authorized",
+            "execution_authorized": False,
+            "write_authorized": False,
+            "command": None,
+            "reason": "Candidate operation only; no execution is authorized.",
+        }
+    )
+
+    user_install_plan = {
+        "kind": "bond_user_space_install_write_set_plan",
+        "schema_version": 1,
+        **auth_false,
+        "requested_mode": "doctor_review",
+        "plan_status": "ready_for_user_review",
+        "recommended_next_step_kind": "review_user_install_write_set",
+        "requires_manual_review": False,
+        "blocked_reasons": [],
+        "review_reasons": [],
+        "target_layout": dict(target_layout),
+        "write_set": write_set,
+    }
+
+    summary = [
+        {
+            "operation_kind": item["operation_kind"],
+            "role": item["role"],
+            "path": item["path"],
+            "status": item["status"],
+        }
+        for item in write_set
+    ]
+
+    user_install_manifest_plan = {
+        "kind": "bond_user_install_manifest_payload_plan",
+        "schema_version": 1,
+        **auth_false,
+        "requested_mode": "doctor_review",
+        "plan_status": "ready_for_user_review",
+        "recommended_next_step_kind": "review_user_install_manifest_payload",
+        "requires_manual_review": False,
+        "blocked_reasons": [],
+        "review_reasons": [],
+        "manifest_path": target_layout["manifest_path"],
+        "manifest_candidate": {
+            "kind": "bond_user_install_manifest",
+            "schema_version": 1,
+            "authorization": dict(auth_false),
+            "paths": dict(target_layout),
+            "write_set_summary": summary,
+        },
+        "manifest_json_preview": "{}",
+    }
+
+    # 1. stage2g_f_c_user_install_transaction_shape_and_boundaries
+    errors: list[str] = []
+    plan = build_user_install_transaction_plan(
+        user_install_plan=user_install_plan,
+        user_install_manifest_plan=user_install_manifest_plan,
+        requested_mode="doctor_review",
+    )
+    if plan.get("kind") != "bond_user_install_transaction_plan":
+        errors.append(f"plan kind mismatch: {plan.get('kind')}")
+    if plan.get("schema_version") != 1:
+        errors.append(f"plan schema_version mismatch: {plan.get('schema_version')}")
+    candidate = plan.get("transaction_candidate") if isinstance(plan.get("transaction_candidate"), dict) else {}
+    if candidate.get("kind") != "bond_user_install_transaction":
+        errors.append(f"transaction kind mismatch: {candidate.get('kind')}")
+    if candidate.get("schema_version") != 1:
+        errors.append(f"transaction schema_version mismatch: {candidate.get('schema_version')}")
+    for field in auth_false:
+        if plan.get(field) is not False:
+            errors.append(f"plan {field} must be False, got {plan.get(field)}")
+        if candidate.get("authorization", {}).get(field) is not False:
+            errors.append(f"candidate authorization {field} must be False")
+    if plan.get("commands_generated") is not False:
+        errors.append("commands_generated must be False")
+    operations = candidate.get("operations") if isinstance(candidate.get("operations"), list) else []
+    if not operations:
+        errors.append("operations must exist")
+    for item in operations:
+        if not isinstance(item, dict):
+            errors.append("operation item must be dict")
+            continue
+        if item.get("execution_authorized") is not False:
+            errors.append("operation execution_authorized must be False")
+        if item.get("write_authorized") is not False:
+            errors.append("operation write_authorized must be False")
+        if item.get("command") is not None:
+            errors.append("operation command must be None")
+        if item.get("requires_explicit_future_authorization") is not True:
+            errors.append("operation requires_explicit_future_authorization must be True")
+    _append("stage2g_f_c_user_install_transaction_shape_and_boundaries", errors)
+
+    # 2. stage2g_f_c_user_install_transaction_operation_order_is_deterministic
+    errors = []
+    plan_a = build_user_install_transaction_plan(
+        user_install_plan=user_install_plan,
+        user_install_manifest_plan=user_install_manifest_plan,
+        requested_mode="doctor_review",
+    )
+    plan_b = build_user_install_transaction_plan(
+        user_install_plan=user_install_plan,
+        user_install_manifest_plan=user_install_manifest_plan,
+        requested_mode="doctor_review",
+    )
+    if plan_a.get("transaction_json_preview") != plan_b.get("transaction_json_preview"):
+        errors.append("transaction_json_preview must be deterministic")
+    expected_order = [
+        "000_preflight_review",
+        "001_config_create_directory_candidate",
+        "002_data_create_directory_candidate",
+        "003_cache_create_directory_candidate",
+        "004_models_create_directory_candidate",
+        "005_telemetry_create_directory_candidate",
+        "006_logs_create_directory_candidate",
+        "007_backups_create_directory_candidate",
+        "008_manifest_write_manifest_candidate",
+        "999_post_install_verification",
+    ]
+    ops = plan_a.get("transaction_candidate", {}).get("operations")
+    actual_order = [item.get("operation_id") for item in ops] if isinstance(ops, list) else []
+    if actual_order != expected_order:
+        errors.append(f"operation order mismatch: {actual_order!r}")
+    preview = plan_a.get("transaction_json_preview") if isinstance(plan_a.get("transaction_json_preview"), str) else ""
+    if '"kind": "bond_user_install_transaction"' not in preview:
+        errors.append("transaction_json_preview missing transaction kind")
+    _append("stage2g_f_c_user_install_transaction_operation_order_is_deterministic", errors)
+
+    # 3. stage2g_f_c_user_install_transaction_requires_manifest_path_alignment
+    errors = []
+    mismatched_manifest_plan = json.loads(json.dumps(user_install_manifest_plan))
+    mismatched_manifest_plan["manifest_path"] = "/home/tester/.config/bond/other.json"
+    mismatch_plan = build_user_install_transaction_plan(
+        user_install_plan=user_install_plan,
+        user_install_manifest_plan=mismatched_manifest_plan,
+        requested_mode="doctor_review",
+    )
+    if mismatch_plan.get("plan_status") != "unsupported_manual_review":
+        errors.append(f"plan_status mismatch: {mismatch_plan.get('plan_status')}")
+    if mismatch_plan.get("recommended_next_step_kind") != "manual_platform_review":
+        errors.append(
+            "recommended_next_step_kind must be manual_platform_review"
+        )
+    reasons = mismatch_plan.get("review_reasons") if isinstance(mismatch_plan.get("review_reasons"), list) else []
+    if not any("manifest path mismatch" in str(reason) for reason in reasons):
+        errors.append("review_reasons must mention manifest path mismatch")
+    for field in auth_false:
+        if mismatch_plan.get(field) is not False:
+            errors.append(f"{field} must remain False, got {mismatch_plan.get(field)}")
+    _append("stage2g_f_c_user_install_transaction_requires_manifest_path_alignment", errors)
+
+    # 4. stage2g_f_c_user_install_transaction_blocks_missing_upstream_plans
+    errors = []
+    missing_user_plan = build_user_install_transaction_plan(
+        user_install_plan=None,
+        user_install_manifest_plan=user_install_manifest_plan,
+        requested_mode="doctor_review",
+    )
+    if missing_user_plan.get("plan_status") != "blocked_missing_inputs":
+        errors.append(f"missing user_install_plan status mismatch: {missing_user_plan.get('plan_status')}")
+    if missing_user_plan.get("recommended_next_step_kind") != "collect_missing_user_install_transaction_inputs":
+        errors.append("missing user_install_plan next step mismatch")
+
+    missing_manifest_plan = build_user_install_transaction_plan(
+        user_install_plan=user_install_plan,
+        user_install_manifest_plan=None,
+        requested_mode="doctor_review",
+    )
+    if missing_manifest_plan.get("plan_status") != "blocked_missing_inputs":
+        errors.append(f"missing user_install_manifest_plan status mismatch: {missing_manifest_plan.get('plan_status')}")
+    if missing_manifest_plan.get("recommended_next_step_kind") != "collect_missing_user_install_transaction_inputs":
+        errors.append("missing user_install_manifest_plan next step mismatch")
+
+    for payload in (missing_user_plan, missing_manifest_plan):
+        for field in auth_false:
+            if payload.get(field) is not False:
+                errors.append(f"{field} must remain False, got {payload.get(field)}")
+    _append("stage2g_f_c_user_install_transaction_blocks_missing_upstream_plans", errors)
+
+    # 5. stage2g_f_c_user_install_transaction_propagates_manual_review
+    errors = []
+    manual_plan = json.loads(json.dumps(user_install_plan))
+    manual_plan["plan_status"] = "manual_review_required"
+    manual_plan["requires_manual_review"] = True
+    propagated = build_user_install_transaction_plan(
+        user_install_plan=manual_plan,
+        user_install_manifest_plan=user_install_manifest_plan,
+        requested_mode="doctor_review",
+    )
+    if propagated.get("plan_status") != "manual_review_required":
+        errors.append(f"plan_status mismatch: {propagated.get('plan_status')}")
+    if propagated.get("recommended_next_step_kind") != "manual_user_install_transaction_review":
+        errors.append("recommended_next_step_kind mismatch")
+    if propagated.get("requires_manual_review") is not True:
+        errors.append("requires_manual_review must be True")
+    first_op = propagated.get("transaction_candidate", {}).get("operations", [{}])[0]
+    if not isinstance(first_op, dict) or first_op.get("status") != "manual_review_needed":
+        errors.append("preflight operation status must be manual_review_needed")
+    _append("stage2g_f_c_user_install_transaction_propagates_manual_review", errors)
+
+    # 6. stage2g_f_c_user_install_transaction_rejects_upstream_authorization_or_commands
+    errors = []
+    top_write_authorized = json.loads(json.dumps(user_install_plan))
+    top_write_authorized["write_authorized"] = True
+    rejected_top = build_user_install_transaction_plan(
+        user_install_plan=top_write_authorized,
+        user_install_manifest_plan=user_install_manifest_plan,
+        requested_mode="doctor_review",
+    )
+    if rejected_top.get("plan_status") != "unsupported_manual_review":
+        errors.append("top-level write_authorized must cause unsupported_manual_review")
+
+    write_set_command = json.loads(json.dumps(user_install_plan))
+    if isinstance(write_set_command.get("write_set"), list) and write_set_command["write_set"]:
+        write_set_command["write_set"][0]["command"] = "mkdir /tmp/nope"
+    rejected_command = build_user_install_transaction_plan(
+        user_install_plan=write_set_command,
+        user_install_manifest_plan=user_install_manifest_plan,
+        requested_mode="doctor_review",
+    )
+    if rejected_command.get("plan_status") != "unsupported_manual_review":
+        errors.append("write_set command must cause unsupported_manual_review")
+
+    manifest_auth = json.loads(json.dumps(user_install_manifest_plan))
+    manifest_auth["manifest_candidate"]["authorization"]["execution_authorized"] = True
+    rejected_manifest_auth = build_user_install_transaction_plan(
+        user_install_plan=user_install_plan,
+        user_install_manifest_plan=manifest_auth,
+        requested_mode="doctor_review",
+    )
+    if rejected_manifest_auth.get("plan_status") != "unsupported_manual_review":
+        errors.append("manifest authorization execution_authorized must cause unsupported_manual_review")
+
+    for payload in (rejected_top, rejected_command, rejected_manifest_auth):
+        for field in auth_false:
+            if payload.get(field) is not False:
+                errors.append(f"{field} must remain False, got {payload.get(field)}")
+    _append("stage2g_f_c_user_install_transaction_rejects_upstream_authorization_or_commands", errors)
+
+    # 7. stage2g_f_c_user_install_transaction_format_is_non_executing
+    errors = []
+    formatted = format_user_install_transaction_plan(plan)
+    for marker in (
+        "User-space install transaction/preflight report",
+        "Execution authorized: false",
+        "Write authorized: false",
+        "Transaction operations:",
+        "Transaction JSON preview:",
+        "No user-space install, directory creation, manifest write, package operation, service mutation, storage move, or command execution was performed.",
+    ):
+        if marker not in formatted:
+            errors.append(f"formatted output missing marker: {marker}")
+    for forbidden in (
+        "sudo ",
+        "apt install",
+        "dnf install",
+        "pacman -S",
+        "rpm-ostree install",
+        "rpm-ostree override",
+        "rpm-ostree rebase",
+        "rpm-ostree upgrade",
+        "flatpak install",
+        "mkdir ",
+        "touch ",
+        "systemctl",
+    ):
+        if forbidden in formatted:
+            errors.append(f"formatted output contains forbidden command phrase: {forbidden}")
+    _append("stage2g_f_c_user_install_transaction_format_is_non_executing", errors)
+
+    # 8. stage2g_f_c_user_install_transaction_probe_is_read_only
+    errors = []
+    try:
+        probe_result = probe_user_install_transaction_plan()
+        if probe_result.probe_name != "user_install_transaction_plan":
+            errors.append(f"probe_name mismatch: {probe_result.probe_name}")
+        probe_data = probe_result.data if isinstance(probe_result.data, dict) else {}
+        if probe_data.get("kind") != "bond_user_install_transaction_plan":
+            errors.append(f"probe data kind mismatch: {probe_data.get('kind')}")
+        transaction = probe_data.get("transaction_candidate")
+        if not isinstance(transaction, dict) or transaction.get("kind") != "bond_user_install_transaction":
+            errors.append("transaction_candidate missing or wrong kind")
+        for field in auth_false:
+            if probe_data.get(field) is not False:
+                errors.append(f"probe {field} must be False, got {probe_data.get(field)}")
+        if probe_result.probe_name == "maintenance_report":
+            errors.append("probe must not have probe_name 'maintenance_report'")
+    except Exception as exc:
+        errors.append(f"probe_user_install_transaction_plan raised unexpectedly: {exc}")
+    _append("stage2g_f_c_user_install_transaction_probe_is_read_only", errors)
+
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -9959,6 +10316,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2g_f_b1_user_install_manifest_forward_fix_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2g_f_c_user_install_transaction_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

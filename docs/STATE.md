@@ -16,15 +16,17 @@ This file exists to prevent drift between:
 
 ## Current Checkpoint
 
-Date: (Stage 2G-F-B current)
+Date: (Stage 2G-F-C current)
 
 Current baseline note:
 
-- Stage 2G-F-B user-space install manifest payload contract is the current repository checkpoint.
+- Stage 2G-F-C user-space install transaction/preflight contract is the current repository checkpoint.
+- `src/bond/ai_user_install_transaction.py` and `user_install_transaction_plan` probe are integrated as deterministic, non-executing transaction/preflight planning surfaces.
 - `src/bond/ai_user_install_manifest.py` and `user_install_manifest_plan` probe are integrated as deterministic, non-executing manifest payload planning surfaces.
 - `src/bond/ai_user_install_plan.py` and `user_install_plan` probe are integrated as deterministic, non-executing write-set planning surfaces.
 - `src/bond/ai_installer_plan.py` added as a pure deterministic, non-executing contract for installer/reconfigure planning.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 327, "failed": 0, "total": 327} (Stage 2G-F-B applied with Stage 2G-F-B1 forward-fix).
+- Compile and integrated selftest baseline is {"ok": true, "passed": 335, "failed": 0, "total": 335} (Stage 2G-F-C applied on top of Stage 2G-F-B1).
+- Stage 2G-F-C adds an ordered deterministic transaction/preflight planning contract (`transaction_candidate` and `transaction_json_preview`) and does not create directories, write manifests, install packages, mutate services, move storage, generate commands, or authorize execution.
 - Stage 2G-F-B1 forward-fix preserves factual package-manager identity in manifest payload previews while keeping command generation and execution unauthorized.
 - Stage 2G-F-B adds a deterministic sanitized manifest payload planning contract (`manifest_candidate` and `manifest_json_preview`) and does not create directories, write manifests, install packages, mutate services, move storage, generate commands, or authorize execution.
 - Portable installer/updater/satellite item 6 remains only in planning/contract form and is not complete.
