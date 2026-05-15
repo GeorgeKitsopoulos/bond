@@ -20,6 +20,16 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-F-F user-space install review/report contract
+
+- Adds `ai_user_install_review.py`.
+- Adds `user_install_review_report` probe.
+- Defines a deterministic non-executing human-facing user-space install review/report packet.
+- Composes the Stage 2G-F-E execution gate into `human_review_packet` and `review_json_preview` outputs.
+- Does not validate approval, authorize execution, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
+- Adds 9 selftests.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 360, "failed": 0, "total": 360}.
+
 ### Stage 2G-F-E user-space install execution-gate/readiness decision
 
 - Adds `ai_user_install_execution_gate.py`.

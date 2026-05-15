@@ -268,7 +268,7 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest latest run summary is {"ok": true, "passed": 351, "failed": 0, "total": 351}.
+- integrated selftest latest run summary is {"ok": true, "passed": 360, "failed": 0, "total": 360}.
 - coverage includes routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, telemetry-derived guardrail regressions, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, and the C5 follow-up strict-timeout cleanup checks.
 - coverage also includes Stage 2F-D probe foundation/cleanup checks, Stage 2F-D-B bounded model-truth checks, Stage 2F-D-C model-truth fallback checks, Stage 2F-D-D bounded context-capability answer checks, Stage 2F-E-A classifier-boundary checks, events bucket, and core memory flows.
 - coverage now also includes Stage 2F-E-E selftest accounting integrity checks.
@@ -287,6 +287,7 @@ Current checkpoint note:
 - coverage now also includes Stage 2G-F-C user-space install transaction/preflight planning checks for shape/boundaries, deterministic operation order, manifest-path and write-set-summary consistency, missing-input blocking, upstream manual-review propagation, upstream-authorization/command rejection, non-executing formatting, and read-only probe shape.
 - coverage now also includes Stage 2G-F-D user-space install approval-envelope planning checks for shape/boundaries, deterministic digest behavior, sensitive-field omission, missing transaction-plan blocking, manifest-path alignment, upstream-authorization/command rejection, non-executing formatting, and read-only probe shape.
 - coverage now also includes Stage 2G-F-E user-space install execution-gate/readiness decision checks for shape/boundaries, deterministic approval-envelope digest, always-deny execution behavior, missing-plan blocking, manifest/digest alignment, upstream-authorization/command rejection, non-executing formatting, and read-only probe shape.
+- coverage now also includes Stage 2G-F-F user-space install review/report checks for shape/boundaries, ready-packet status mapping, deterministic review JSON preview, missing-input blocking, manual-review propagation, upstream-authorization rejection, non-executing formatting, read-only probe shape, and docs/source boundary enforcement.
 - integrated selftest baseline now includes confirmation-token flow coverage (token creation, invalid/expired/consumed handling, confirmed dry-run, and non-reuse)
 - Stage 2E improves parser honesty and preflight failure behavior; Stage 2F-A/2F-B/2F-C add static registry truth, read-only capability answers, and telemetry-driven deterministic guardrail hardening, but do not expand executor authorization
 - this does not imply full behavioral coverage or assistant maturity
@@ -316,9 +317,11 @@ Current sequence implementation boundary:
 - Stage 2G-F-C continues item 6 by adding a non-executing user-space install transaction/preflight contract.
 - Stage 2G-F-D continues item 6 by adding a non-executing user-space install approval-envelope contract.
 - Stage 2G-F-E continues item 6 by adding a non-executing user-space install execution-gate/readiness contract.
+- Stage 2G-F-F continues item 6 by adding a non-executing user-space install review/report packet after the execution gate.
 - Stage 2G-F-C does not complete the user-space installer and does not create/write anything.
 - Stage 2G-F-D does not complete the user-space installer, does not grant approval, and does not create/write anything.
 - Stage 2G-F-E does not complete the user-space installer, does not validate approval, does not authorize execution, and does not create/write anything.
+- Stage 2G-F-F does not complete the user-space installer, does not validate approval, does not authorize execution, and remains a non-executing review/report-only layer.
 
 ### M7 - Service layer
 

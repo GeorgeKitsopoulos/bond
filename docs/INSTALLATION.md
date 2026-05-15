@@ -108,6 +108,12 @@ Explicit Stage 1 rejections:
 
 ## Update direction
 
+## User-space install review packet prerequisite (Stage 2G-F-F)
+
+Future write-capable user-space installer work must have a human-facing review packet before any approval mechanism or write-capable operation exists.
+
+This stage does not collect approval and does not authorize execution.
+
 Updates must be repository-driven.
 
 This section describes updating Bond itself. It is separate from future OS/package update advisory features.

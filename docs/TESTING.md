@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 351, "failed": 0, "total": 351}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 360, "failed": 0, "total": 360}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -138,6 +138,18 @@ Coverage now also includes Stage 2G-F-C user-space install transaction/preflight
 - `stage2g_f_c_user_install_transaction_blocks_missing_upstream_plans`
 - `stage2g_f_c_user_install_transaction_propagates_manual_review`
 - `stage2g_f_c_user_install_transaction_rejects_upstream_authorization_or_commands`
+
+Coverage now also includes Stage 2G-F-F user-space install review/report checks:
+
+- `stage2g_f_f_user_install_review_report_shape_and_boundaries` — review/report shape, human-review packet boundaries, deterministic JSON preview, and all authorization fields fixed False
+- `stage2g_f_f_user_install_review_report_ready_packet` — normal execution-locked gate maps to ready-for-human-review packet with execution still locked
+- `stage2g_f_f_user_install_review_report_json_preview_is_deterministic` — repeated report builds produce identical `review_json_preview`
+- `stage2g_f_f_user_install_review_report_blocks_missing_execution_gate` — missing or invalid execution-gate input blocks safely with no execution authorization
+- `stage2g_f_f_user_install_review_report_propagates_manual_review` — `manual_review_required` status propagates from gate-shaped input
+- `stage2g_f_f_user_install_review_report_rejects_upstream_authorization` — injected upstream authorization is downgraded to manual/unsupported review while all authorization fields remain False
+- `stage2g_f_f_user_install_review_report_format_is_non_executing` — formatted report includes explicit non-execution markers and no execution phrases
+- `stage2g_f_f_user_install_review_report_probe_is_read_only` — `run_named_probe("user_install_review_report")` returns the expected read-only contract with all authorization fields False
+- `stage2g_f_f_user_install_review_report_docs_and_source_boundary` — docs mention Stage 2G-F-F and `ai_user_install_review.py` stays free of forbidden execution/write/system tokens
 - `stage2g_f_c_user_install_transaction_format_is_non_executing`
 - `stage2g_f_c_user_install_transaction_probe_is_read_only`
 

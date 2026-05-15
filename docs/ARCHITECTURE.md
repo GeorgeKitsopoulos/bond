@@ -455,6 +455,23 @@ Stage 2F-F-E adds metadata-only readiness fields inside the explicit maintenance
 - All authorization fields are explicitly False.
 - It does not broaden normal assistant answers.
 
+### User-space install review/report planning (Stage 2G-F-F)
+
+- Module owner: `src/bond/ai_user_install_review.py`.
+- Probe owner: `user_install_review_report` in `src/bond/ai_probes.py`.
+- Purpose: compose the execution gate into a deterministic `human_review_packet` and `review_json_preview`.
+- It is pure deterministic and non-executing.
+- It keeps all authorization fields explicitly False.
+- It does not validate approval.
+- It does not authorize execution.
+- It does not create directories.
+- It does not write manifests.
+- It does not install packages.
+- It does not mutate services.
+- It does not move storage.
+- It does not generate commands.
+- It does not broaden normal assistant answers.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

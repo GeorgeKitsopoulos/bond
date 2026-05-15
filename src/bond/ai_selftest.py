@@ -36,6 +36,10 @@ from ai_user_install_execution_gate import (
     build_user_install_execution_gate,
     format_user_install_execution_gate,
 )
+from ai_user_install_review import (
+    build_user_install_review_report,
+    format_user_install_review_report,
+)
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
 from ai_maintenance_report import (
     build_maintenance_readiness_report,
@@ -154,6 +158,7 @@ from ai_probes import (
     probe_user_install_transaction_plan,
     probe_user_install_approval_plan,
     probe_user_install_execution_gate,
+    probe_user_install_review_report,
     run_all_probes,
     run_named_probe,
 )
@@ -168,6 +173,7 @@ AI_SCAN_SYSTEM = SRC_BOND / "ai_scan_system.py"
 AI_PROBE_CONTRACT = SRC_BOND / "ai_probe_contract.py"
 AI_PROBES = SRC_BOND / "ai_probes.py"
 AI_INSTALL_MANIFEST = SRC_BOND / "ai_install_manifest.py"
+AI_USER_INSTALL_REVIEW = SRC_BOND / "ai_user_install_review.py"
 AI_MEMORY = SRC_BOND / "ai_memory.py"
 AI_MEMORY_QUERY = SRC_BOND / "ai_memory_query.py"
 AI_MEMORY_REFLECT = SRC_BOND / "ai_memory_reflect.py"
@@ -6673,7 +6679,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 351, "failed": 0, "total": 351}'
+    current_summary = '{"ok": true, "passed": 360, "failed": 0, "total": 360}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -6895,7 +6901,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 351, "failed": 0, "total": 351}'
+    current_summary = '{"ok": true, "passed": 360, "failed": 0, "total": 360}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -10525,6 +10531,338 @@ def run_stage2g_f_e_user_install_execution_gate_tests() -> list[dict[str, Any]]:
     return results
 
 
+def run_stage2g_f_f_user_install_review_tests() -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+
+    def append_result(name: str, errors: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": "",
+                "stderr": "",
+                "errors": errors,
+                "cmd": ["stage2g_f_f", name],
+            }
+        )
+
+    auth_false = {
+        "execution_authorized": False,
+        "execution_allowed": False,
+        "install_authorized": False,
+        "package_install_authorized": False,
+        "upgrade_authorized": False,
+        "reconfigure_authorized": False,
+        "service_authorized": False,
+        "storage_move_authorized": False,
+        "write_authorized": False,
+        "write_manifest_authorized": False,
+        "commands_generated": False,
+        "approval_granted": False,
+        "approval_validated": False,
+    }
+
+    manifest_path = "/home/tester/.config/bond/install-manifest.json"
+    transaction_digest = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+    approval_candidate = {
+        "kind": "bond_user_install_approval_candidate",
+        "schema_version": 1,
+        "authorization": dict(auth_false),
+        "manifest_path": manifest_path,
+        "transaction_digest": transaction_digest,
+        "approval_requirements": {
+            "explicit_future_approval_required": True,
+            "approval_granted": False,
+            "approval_must_match_transaction_digest": transaction_digest,
+            "approval_must_match_manifest_path": manifest_path,
+            "approval_must_match_operation_count": 3,
+            "approval_must_be_collected_after_review": True,
+            "approval_is_not_collected_in_this_stage": True,
+            "approval_does_not_authorize_execution_in_this_stage": True,
+        },
+        "reviewed_operations": [
+            {
+                "operation_id": "000_preflight_review",
+                "operation_kind": "preflight_review_candidate",
+                "role": "preflight",
+                "path": None,
+                "status": "planned_not_authorized",
+                "source": "transaction_preflight",
+                "requires_explicit_future_authorization": True,
+                "verify_after_operation": True,
+            },
+            {
+                "operation_id": "001_config_create_directory_candidate",
+                "operation_kind": "create_directory_candidate",
+                "role": "config",
+                "path": "/home/tester/.config/bond",
+                "status": "planned_not_authorized",
+                "source": "user_install_plan.write_set",
+                "requires_explicit_future_authorization": True,
+                "verify_after_operation": True,
+            },
+            {
+                "operation_id": "999_post_install_verification",
+                "operation_kind": "post_install_verification_candidate",
+                "role": "verification",
+                "path": None,
+                "status": "planned_not_authorized",
+                "source": "transaction_verification",
+                "requires_explicit_future_authorization": True,
+                "verify_after_operation": True,
+            },
+        ],
+    }
+    approval_json_preview = json.dumps(approval_candidate, sort_keys=True, indent=2, ensure_ascii=False)
+
+    approval_plan = {
+        "kind": "bond_user_install_approval_plan",
+        "schema_version": 1,
+        **auth_false,
+        "requested_mode": "doctor_review",
+        "plan_status": "ready_for_user_review",
+        "recommended_next_step_kind": "review_user_install_approval_envelope",
+        "requires_manual_review": False,
+        "blocked_reasons": [],
+        "review_reasons": [],
+        "manifest_path": manifest_path,
+        "transaction_digest": transaction_digest,
+        "approval_candidate": approval_candidate,
+        "approval_json_preview": approval_json_preview,
+    }
+
+    execution_gate = build_user_install_execution_gate(
+        user_install_approval_plan=approval_plan,
+        requested_mode="doctor_review",
+    )
+
+    # 1. stage2g_f_f_user_install_review_report_shape_and_boundaries
+    errors: list[str] = []
+    report = build_user_install_review_report(
+        user_install_execution_gate=execution_gate,
+        requested_mode="doctor_review",
+    )
+    if report.get("kind") != "bond_user_space_install_review_report":
+        errors.append(f"report kind mismatch: {report.get('kind')}")
+    if report.get("schema_version") != 1:
+        errors.append(f"report schema_version mismatch: {report.get('schema_version')}")
+    packet = report.get("human_review_packet")
+    if not isinstance(packet, dict):
+        errors.append("human_review_packet must be a dict")
+        packet = {}
+    if packet.get("kind") != "bond_user_space_install_human_review_packet":
+        errors.append(f"human_review_packet kind mismatch: {packet.get('kind')}")
+    if report.get("reviewed_operation_count") != 3:
+        errors.append(f"reviewed_operation_count mismatch: {report.get('reviewed_operation_count')}")
+    if packet.get("operation_summary", {}).get("reviewed_operation_count") != 3:
+        errors.append("human review packet reviewed operation count mismatch")
+    for field in auth_false:
+        if report.get(field) is not False:
+            errors.append(f"report {field} must be False")
+    execution_lock = packet.get("execution_lock") if isinstance(packet.get("execution_lock"), dict) else {}
+    for field in ("execution_allowed", "execution_authorized", "approval_granted", "approval_validated"):
+        if execution_lock.get(field) is not False:
+            errors.append(f"execution_lock {field} must be False")
+    if execution_lock.get("future_approval_mechanism_available") is not False:
+        errors.append("execution_lock future_approval_mechanism_available must be False")
+    if execution_lock.get("explicit_future_approval_required") is not True:
+        errors.append("execution_lock explicit_future_approval_required must be True")
+    if report.get("review_json_preview") != json.dumps(packet, sort_keys=True, indent=2, ensure_ascii=False):
+        errors.append("review_json_preview must match deterministic packet encoding")
+    append_result("stage2g_f_f_user_install_review_report_shape_and_boundaries", errors)
+
+    # 2. stage2g_f_f_user_install_review_report_ready_packet
+    errors = []
+    ready_report = build_user_install_review_report(
+        user_install_execution_gate=execution_gate,
+        requested_mode="fresh_install_review",
+    )
+    if ready_report.get("requested_mode") != "fresh_install_review":
+        errors.append(f"requested_mode mismatch: {ready_report.get('requested_mode')}")
+    if ready_report.get("report_status") != "ready_for_human_review_execution_locked":
+        errors.append(f"report_status mismatch: {ready_report.get('report_status')}")
+    if ready_report.get("recommended_next_step_kind") != "human_review_execution_locked_packet":
+        errors.append("recommended_next_step_kind mismatch")
+    if ready_report.get("requires_manual_review") is not False:
+        errors.append("requires_manual_review must be False for ready packet")
+    append_result("stage2g_f_f_user_install_review_report_ready_packet", errors)
+
+    # 3. stage2g_f_f_user_install_review_report_json_preview_is_deterministic
+    errors = []
+    report_a = build_user_install_review_report(
+        user_install_execution_gate=execution_gate,
+        requested_mode="doctor_review",
+    )
+    report_b = build_user_install_review_report(
+        user_install_execution_gate=execution_gate,
+        requested_mode="doctor_review",
+    )
+    if report_a.get("review_json_preview") != report_b.get("review_json_preview"):
+        errors.append("review_json_preview must be deterministic")
+    append_result("stage2g_f_f_user_install_review_report_json_preview_is_deterministic", errors)
+
+    # 4. stage2g_f_f_user_install_review_report_blocks_missing_execution_gate
+    errors = []
+    blocked_report = build_user_install_review_report(
+        user_install_execution_gate=None,
+        requested_mode="doctor_review",
+    )
+    if blocked_report.get("report_status") != "blocked_missing_inputs":
+        errors.append(f"report_status mismatch: {blocked_report.get('report_status')}")
+    if blocked_report.get("recommended_next_step_kind") != "collect_missing_install_review_inputs":
+        errors.append("recommended_next_step_kind mismatch")
+    if "user_install_execution_gate is missing or invalid" not in blocked_report.get("blocked_reasons", []):
+        errors.append("blocked_reasons must mention invalid execution gate")
+    if blocked_report.get("reviewed_operation_count") != 0:
+        errors.append("reviewed_operation_count must be 0 for blocked report")
+    for field in auth_false:
+        if blocked_report.get(field) is not False:
+            errors.append(f"blocked report {field} must remain False")
+    append_result("stage2g_f_f_user_install_review_report_blocks_missing_execution_gate", errors)
+
+    # 5. stage2g_f_f_user_install_review_report_propagates_manual_review
+    errors = []
+    manual_gate = json.loads(json.dumps(execution_gate))
+    manual_gate["gate_status"] = "manual_review_required"
+    manual_gate["requires_manual_review"] = True
+    manual_report = build_user_install_review_report(
+        user_install_execution_gate=manual_gate,
+        requested_mode="doctor_review",
+    )
+    if manual_report.get("report_status") != "manual_review_required":
+        errors.append(f"report_status mismatch: {manual_report.get('report_status')}")
+    if manual_report.get("recommended_next_step_kind") != "manual_install_review_required":
+        errors.append("recommended_next_step_kind mismatch")
+    if manual_report.get("requires_manual_review") is not True:
+        errors.append("requires_manual_review must propagate")
+    append_result("stage2g_f_f_user_install_review_report_propagates_manual_review", errors)
+
+    # 6. stage2g_f_f_user_install_review_report_rejects_upstream_authorization
+    errors = []
+    authorized_gate = json.loads(json.dumps(execution_gate))
+    authorized_gate["execution_allowed"] = True
+    authorized_gate["gate_decision"]["authorization"]["write_authorized"] = True
+    authorized_gate["gate_decision"]["execution_gate"]["execution_authorized"] = True
+    rejected_report = build_user_install_review_report(
+        user_install_execution_gate=authorized_gate,
+        requested_mode="doctor_review",
+    )
+    if rejected_report.get("report_status") != "unsupported_manual_review":
+        errors.append(f"report_status mismatch: {rejected_report.get('report_status')}")
+    if not rejected_report.get("review_reasons"):
+        errors.append("review_reasons must explain rejected upstream authorization")
+    for field in auth_false:
+        if rejected_report.get(field) is not False:
+            errors.append(f"rejected report {field} must remain False")
+    append_result("stage2g_f_f_user_install_review_report_rejects_upstream_authorization", errors)
+
+    # 7. stage2g_f_f_user_install_review_report_format_is_non_executing
+    errors = []
+    formatted = format_user_install_review_report(report)
+    for marker in (
+        "User-space install review report",
+        "Report status:",
+        "Recommended next step:",
+        "Manifest path:",
+        "Transaction digest:",
+        "Approval envelope digest:",
+        "Execution allowed: false",
+        "Execution authorized: false",
+        "Approval granted: false",
+        "Approval validated: false",
+        "Reviewed operations:",
+        "Review JSON preview:",
+        "No approval was validated, and no user-space install, directory creation, manifest write, package operation, service mutation, storage move, command generation, or command execution was performed.",
+    ):
+        if marker not in formatted:
+            errors.append(f"formatted output missing marker: {marker}")
+    for forbidden in (
+        "sudo ",
+        "apt install",
+        "dnf install",
+        "pacman -S",
+        "systemctl",
+        "mkdir ",
+    ):
+        if forbidden in formatted:
+            errors.append(f"formatted output contains forbidden phrase: {forbidden}")
+    append_result("stage2g_f_f_user_install_review_report_format_is_non_executing", errors)
+
+    # 8. stage2g_f_f_user_install_review_report_probe_is_read_only
+    errors = []
+    try:
+        probe_result = run_named_probe("user_install_review_report")
+        if probe_result.ok is not True:
+            errors.append("user_install_review_report probe must return ok=True")
+        if probe_result.probe_name != "user_install_review_report":
+            errors.append(f"probe_name mismatch: {probe_result.probe_name}")
+        probe_data = probe_result.data if isinstance(probe_result.data, dict) else {}
+        if probe_data.get("kind") != "bond_user_space_install_review_report":
+            errors.append(f"probe data kind mismatch: {probe_data.get('kind')}")
+        for field in auth_false:
+            if probe_data.get(field) is not False:
+                errors.append(f"probe {field} must be False")
+    except Exception as exc:
+        errors.append(f"run_named_probe user_install_review_report raised unexpectedly: {exc}")
+    append_result("stage2g_f_f_user_install_review_report_probe_is_read_only", errors)
+
+    # 9. stage2g_f_f_user_install_review_report_docs_and_source_boundary
+    errors = []
+    docs_needles = {
+        "README.md": ["Stage 2G-F-F", "user-space install review/report"],
+        "ROADMAP.md": ["Stage 2G-F-F", "review/report"],
+        "docs/ARCHITECTURE.md": ["Stage 2G-F-F", "ai_user_install_review.py", "user_install_review_report"],
+        "docs/INSTALLATION.md": ["Stage 2G-F-F", "review packet"],
+        "docs/PROBES.md": ["user_install_review_report"],
+        "docs/STATE.md": ["Stage 2G-F-F", '{"ok": true, "passed": 360, "failed": 0, "total": 360}'],
+        "docs/TESTING.md": ["Stage 2G-F-F", '{"ok": true, "passed": 360, "failed": 0, "total": 360}'],
+    }
+    for relative_path, needles in docs_needles.items():
+        text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
+        for needle in needles:
+            if needle not in text:
+                errors.append(f"missing docs marker in {relative_path}: {needle}")
+    source_text = AI_USER_INSTALL_REVIEW.read_text(encoding="utf-8")
+    forbidden_tokens = [
+        "subprocess",
+        "os.system",
+        "Popen",
+        "check_call",
+        "check_output",
+        "Path.mkdir",
+        ".mkdir(",
+        ".write_text(",
+        ".write_bytes(",
+        "open(",
+        "shutil.",
+        "socket.",
+        "requests.",
+        "urllib.",
+        "sudo ",
+        "apt install",
+        "apt upgrade",
+        "dnf install",
+        "rpm-ostree install",
+        "pacman -S",
+        "zypper install",
+        "apk add",
+        "xbps-install",
+        "nix-env",
+        "systemctl",
+        "flatpak install",
+        "podman ",
+        "docker ",
+    ]
+    hits = [token for token in forbidden_tokens if token in source_text]
+    if hits:
+        errors.append("forbidden execution/write/system token(s) in ai_user_install_review.py: " + ", ".join(hits))
+    append_result("stage2g_f_f_user_install_review_report_docs_and_source_boundary", errors)
+
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -10535,6 +10873,7 @@ def main() -> None:
         AI_PROBE_CONTRACT,
         AI_PROBES,
         AI_INSTALL_MANIFEST,
+        AI_USER_INSTALL_REVIEW,
         AI_WRAPPER,
         AI_MEMORY,
         AI_MEMORY_QUERY,
@@ -11089,6 +11428,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2g_f_e_user_install_execution_gate_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2g_f_f_user_install_review_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")
