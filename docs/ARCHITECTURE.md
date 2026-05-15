@@ -532,6 +532,30 @@ Stage 2F-F-E adds metadata-only readiness fields inside the explicit maintenance
 - It does not generate commands.
 - It does not broaden normal assistant answers.
 
+### Final user-space install readiness aggregation (Stage 2G-F-J)
+
+- Module owner: `src/bond/ai_user_install_readiness.py`.
+- Probe owner: `user_install_readiness_report` in `src/bond/ai_probes.py`.
+- Purpose: compose disabled write-executor output into deterministic `readiness_packet` and `readiness_json_preview` outputs.
+- It is pure deterministic and non-executing.
+- It keeps all authorization fields explicitly False.
+- `performed_operations` is always empty.
+- `refused_operations` is summarized for final human review.
+- It closes the current non-executing detect-plan-show chain for human review.
+- It does not add CLI surface.
+- It does not add execution.
+- It does not collect approval.
+- It does not validate approval as true.
+- It does not authorize execution.
+- It does not authorize writes.
+- It does not create directories.
+- It does not write manifests.
+- It does not install packages.
+- It does not mutate services.
+- It does not move storage.
+- It does not generate commands.
+- It does not broaden normal assistant answers.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

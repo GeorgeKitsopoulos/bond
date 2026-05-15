@@ -54,6 +54,11 @@ from ai_user_install_write_executor import (
     build_user_install_write_executor,
     format_user_install_write_executor,
 )
+from ai_user_install_readiness import (
+    AUTHORIZATION_FIELDS as USER_INSTALL_READINESS_AUTHORIZATION_FIELDS,
+    build_user_install_readiness_report,
+    format_user_install_readiness_report,
+)
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
 from ai_maintenance_report import (
     build_maintenance_readiness_report,
@@ -175,6 +180,7 @@ from ai_probes import (
     probe_user_install_review_report,
     probe_user_install_write_preflight,
     probe_user_install_approval_validation,
+    probe_user_install_readiness_report,
     run_all_probes,
     run_named_probe,
 )
@@ -193,6 +199,7 @@ AI_USER_INSTALL_REVIEW = SRC_BOND / "ai_user_install_review.py"
 AI_USER_INSTALL_WRITE_PREFLIGHT = SRC_BOND / "ai_user_install_write_preflight.py"
 AI_USER_INSTALL_APPROVAL_VALIDATION = SRC_BOND / "ai_user_install_approval_validation.py"
 AI_USER_INSTALL_WRITE_EXECUTOR = SRC_BOND / "ai_user_install_write_executor.py"
+AI_USER_INSTALL_READINESS = SRC_BOND / "ai_user_install_readiness.py"
 AI_MEMORY = SRC_BOND / "ai_memory.py"
 AI_MEMORY_QUERY = SRC_BOND / "ai_memory_query.py"
 AI_MEMORY_REFLECT = SRC_BOND / "ai_memory_reflect.py"
@@ -6698,7 +6705,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 387, "failed": 0, "total": 387}'
+    current_summary = '{"ok": true, "passed": 396, "failed": 0, "total": 396}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -6920,7 +6927,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 387, "failed": 0, "total": 387}'
+    current_summary = '{"ok": true, "passed": 396, "failed": 0, "total": 396}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -10835,8 +10842,8 @@ def run_stage2g_f_f_user_install_review_tests() -> list[dict[str, Any]]:
         "docs/ARCHITECTURE.md": ["Stage 2G-F-F", "ai_user_install_review.py", "user_install_review_report"],
         "docs/INSTALLATION.md": ["Stage 2G-F-F", "review packet"],
         "docs/PROBES.md": ["user_install_review_report"],
-        "docs/STATE.md": ["Stage 2G-F-F", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
-        "docs/TESTING.md": ["Stage 2G-F-F", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
+        "docs/STATE.md": ["Stage 2G-F-F", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
+        "docs/TESTING.md": ["Stage 2G-F-F", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
     }
     for relative_path, needles in docs_needles.items():
         text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
@@ -11215,8 +11222,8 @@ def run_stage2g_f_g_user_install_write_preflight_tests() -> list[dict[str, Any]]
         "docs/ARCHITECTURE.md": ["Stage 2G-F-G", "ai_user_install_write_preflight.py", "user_install_write_preflight"],
         "docs/INSTALLATION.md": ["Stage 2G-F-G", "write-preflight"],
         "docs/PROBES.md": ["user_install_write_preflight"],
-        "docs/STATE.md": ["Stage 2G-F-G", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
-        "docs/TESTING.md": ["Stage 2G-F-G", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
+        "docs/STATE.md": ["Stage 2G-F-G", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
+        "docs/TESTING.md": ["Stage 2G-F-G", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
     }
     for relative_path, needles in docs_needles.items():
         text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
@@ -11562,13 +11569,13 @@ def run_stage2g_f_h_user_install_approval_validation_tests() -> list[dict[str, A
 
     errors = []
     docs_needles = {
-        "README.md": ["Stage 2G-F-H", "387", "user-space install approval-validation"],
+        "README.md": ["Stage 2G-F-H", "396", "user-space install approval-validation"],
         "ROADMAP.md": ["Stage 2G-F-H", "approval-validation"],
         "docs/ARCHITECTURE.md": ["Stage 2G-F-H", "ai_user_install_approval_validation.py", "user_install_approval_validation"],
         "docs/INSTALLATION.md": ["Stage 2G-F-H", "approval-validation"],
         "docs/PROBES.md": ["user_install_approval_validation"],
-        "docs/STATE.md": ["Stage 2G-F-H", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
-        "docs/TESTING.md": ["Stage 2G-F-H", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
+        "docs/STATE.md": ["Stage 2G-F-H", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
+        "docs/TESTING.md": ["Stage 2G-F-H", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
     }
     for relative_path, needles in docs_needles.items():
         text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
@@ -11912,13 +11919,13 @@ def run_stage2g_f_i_user_install_write_executor_tests() -> list[dict[str, Any]]:
 
     errors = []
     docs_needles = {
-        "README.md": ["Stage 2G-F-I", "387", "disabled/default-deny user-space install write-executor"],
+        "README.md": ["Stage 2G-F-I", "396", "disabled/default-deny user-space install write-executor"],
         "ROADMAP.md": ["Stage 2G-F-I", "disabled/default-deny write-executor"],
         "docs/ARCHITECTURE.md": ["Stage 2G-F-I", "ai_user_install_write_executor.py", "user_install_write_executor"],
         "docs/INSTALLATION.md": ["Stage 2G-F-I", "Disabled write-executor"],
         "docs/PROBES.md": ["user_install_write_executor"],
-        "docs/STATE.md": ["Stage 2G-F-I", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
-        "docs/TESTING.md": ["Stage 2G-F-I", '{"ok": true, "passed": 387, "failed": 0, "total": 387}'],
+        "docs/STATE.md": ["Stage 2G-F-I", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
+        "docs/TESTING.md": ["Stage 2G-F-I", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
     }
     for relative_path, needles in docs_needles.items():
         text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
@@ -11969,6 +11976,335 @@ def run_stage2g_f_i_user_install_write_executor_tests() -> list[dict[str, Any]]:
     return results
 
 
+def run_stage2g_f_j_user_install_readiness_report_tests() -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+
+    def append_result(name: str, errors: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": "",
+                "stderr": "",
+                "errors": errors,
+                "cmd": ["stage2g_f_j", name],
+            }
+        )
+
+    auth_false = {field: False for field in USER_INSTALL_READINESS_AUTHORIZATION_FIELDS}
+
+    def build_write_executor_payload(
+        *,
+        executor_status: str = "disabled_execution_locked",
+        executor_enabled: bool = False,
+        dry_run_only: bool = True,
+        would_write: bool = False,
+        performed_operations: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        performed = performed_operations if isinstance(performed_operations, list) else []
+        packet = {
+            "kind": "bond_user_space_install_write_executor_disabled_packet",
+            "schema_version": 1,
+            "requested_mode": "doctor_executor",
+            "executor_status": executor_status,
+            **auth_false,
+            "executor_enabled": False,
+            "dry_run_only": True,
+            "would_write": False,
+            "operation_summary": {
+                "approved_operation_count": 2,
+                "performed_operation_count": 0,
+                "refused_operation_count": 1,
+            },
+            "performed_operations": [],
+            "refused_operations": [
+                {
+                    "operation_kind": "manifest_or_install_write_candidate",
+                    "target": "/home/example/Bond/manifest.json",
+                    "refusal_reason": "executor is disabled and execution remains locked",
+                }
+            ],
+        }
+        return {
+            "kind": "bond_user_space_install_write_executor",
+            "schema_version": 1,
+            **auth_false,
+            "requested_mode": "doctor_executor",
+            "executor_status": executor_status,
+            "executor_enabled": executor_enabled,
+            "dry_run_only": dry_run_only,
+            "would_write": would_write,
+            "recommended_next_step_kind": "review_disabled_executor_packet",
+            "requires_manual_review": False,
+            "blocked_reasons": [],
+            "review_reasons": [],
+            "denial_reasons": [],
+            "manifest_path": "/home/example/Bond/manifest.json",
+            "transaction_digest": "a" * 64,
+            "approval_envelope_digest": "b" * 64,
+            "write_preflight_digest": "c" * 64,
+            "approval_validation_digest": "d" * 64,
+            "approved_operation_count": 2,
+            "performed_operations": performed,
+            "refused_operations": packet["refused_operations"],
+            "executor_disabled_packet": packet,
+            "executor_packet_digest": "e" * 64,
+            "executor_json_preview": json.dumps(packet, sort_keys=True, indent=2, ensure_ascii=False),
+            "input_summaries": {"source": "stage2g_f_j_selftest"},
+        }
+
+    errors: list[str] = []
+    report = build_user_install_readiness_report(
+        user_install_write_executor=build_write_executor_payload(),
+        requested_mode="doctor_readiness",
+    )
+    if report.get("kind") != "bond_user_space_install_readiness_report":
+        errors.append(f"readiness kind mismatch: {report.get('kind')}")
+    if report.get("schema_version") != 1:
+        errors.append(f"readiness schema_version mismatch: {report.get('schema_version')}")
+    packet = report.get("readiness_packet") if isinstance(report.get("readiness_packet"), dict) else {}
+    if packet.get("kind") != "bond_user_space_install_readiness_packet":
+        errors.append(f"readiness_packet kind mismatch: {packet.get('kind')}")
+    for field in auth_false:
+        if report.get(field) is not False:
+            errors.append(f"report {field} must be False")
+    if report.get("performed_operations") != []:
+        errors.append("performed_operations must be []")
+    if packet.get("performed_operations") != []:
+        errors.append("readiness_packet performed_operations must be []")
+    append_result("stage2g_f_j_user_install_readiness_report_shape_and_boundaries", errors)
+
+    errors = []
+    ready = build_user_install_readiness_report(
+        user_install_write_executor=build_write_executor_payload(executor_status="disabled_execution_locked"),
+        requested_mode="fresh_install_readiness",
+    )
+    if ready.get("requested_mode") != "fresh_install_readiness":
+        errors.append(f"requested_mode mismatch: {ready.get('requested_mode')}")
+    if ready.get("readiness_status") != "ready_for_final_human_review_execution_locked":
+        errors.append(f"readiness_status mismatch: {ready.get('readiness_status')}")
+    if ready.get("recommended_next_step_kind") != "review_final_user_install_readiness_report":
+        errors.append("recommended_next_step_kind mismatch")
+    append_result("stage2g_f_j_user_install_readiness_report_final_review_ready", errors)
+
+    errors = []
+    report_a = build_user_install_readiness_report(
+        user_install_write_executor=build_write_executor_payload(),
+        requested_mode="doctor_readiness",
+    )
+    report_b = build_user_install_readiness_report(
+        user_install_write_executor=build_write_executor_payload(),
+        requested_mode="doctor_readiness",
+    )
+    if report_a.get("readiness_packet_digest") != report_b.get("readiness_packet_digest"):
+        errors.append("readiness_packet_digest must be deterministic")
+    if report_a.get("readiness_json_preview") != report_b.get("readiness_json_preview"):
+        errors.append("readiness_json_preview must be deterministic")
+    append_result("stage2g_f_j_user_install_readiness_report_digest_deterministic", errors)
+
+    errors = []
+    blocked = build_user_install_readiness_report(
+        user_install_write_executor=None,
+        requested_mode="doctor_readiness",
+    )
+    if blocked.get("readiness_status") != "blocked_missing_inputs":
+        errors.append(f"readiness_status mismatch: {blocked.get('readiness_status')}")
+    if blocked.get("recommended_next_step_kind") != "collect_missing_readiness_inputs":
+        errors.append("recommended_next_step_kind mismatch")
+    if "user_install_write_executor is missing or invalid" not in blocked.get("blocked_reasons", []):
+        errors.append("blocked_reasons must include invalid write-executor marker")
+    for field in auth_false:
+        if blocked.get(field) is not False:
+            errors.append(f"blocked report {field} must remain False")
+    append_result("stage2g_f_j_user_install_readiness_report_blocks_missing_executor", errors)
+
+    errors = []
+    rejected = build_user_install_readiness_report(
+        user_install_write_executor=build_write_executor_payload(executor_enabled=True),
+        requested_mode="doctor_readiness",
+    )
+    if rejected.get("readiness_status") != "unsupported_manual_review":
+        errors.append(f"readiness_status mismatch: {rejected.get('readiness_status')}")
+    if (
+        "disabled executor invariant failed: executor_enabled must be false"
+        not in rejected.get("denial_reasons", [])
+    ):
+        errors.append("denial_reasons must include executor_enabled invariant marker")
+    for field in auth_false:
+        if rejected.get(field) is not False:
+            errors.append(f"rejected report {field} must remain False")
+    append_result("stage2g_f_j_user_install_readiness_report_rejects_executor_invariant_break", errors)
+
+    errors = []
+    closure = ready.get("chain_closure") if isinstance(ready.get("chain_closure"), dict) else {}
+    expected_closure = {
+        "closed_for_non_executing_human_review": True,
+        "write_capable_installer_available": False,
+        "approval_validation_available": False,
+        "cli_surface_available": False,
+        "real_execution_available": False,
+    }
+    for key, expected in expected_closure.items():
+        if closure.get(key) is not expected:
+            errors.append(f"chain_closure {key} mismatch: {closure.get(key)}")
+    if ready.get("performed_operations") != []:
+        errors.append("performed_operations must always be []")
+    append_result("stage2g_f_j_user_install_readiness_report_chain_closure_flags", errors)
+
+    errors = []
+    formatted = format_user_install_readiness_report(report)
+    for marker in (
+        "User-space install readiness report",
+        "Readiness status:",
+        "Readiness summary:",
+        "Recommended next step:",
+        "Manifest path:",
+        "Transaction digest:",
+        "Approval envelope digest:",
+        "Write preflight digest:",
+        "Approval validation digest:",
+        "Executor report digest:",
+        "Executor packet digest:",
+        "Readiness packet digest:",
+        "Execution allowed: false",
+        "Execution authorized: false",
+        "Write authorized: false",
+        "Write manifest authorized: false",
+        "Filesystem write authorized: false",
+        "Approval granted: false",
+        "Approval validated: false",
+        "Performed operations: 0",
+        "Refused operations:",
+        "Chain closed for non-executing human review: true",
+        "Write-capable installer available: false",
+        "CLI surface available: false",
+        "Real execution available: false",
+        "Readiness JSON preview:",
+        "No approval was validated, and no user-space install, directory creation, manifest write, package operation, service mutation, storage move, command generation, or command execution was performed.",
+    ):
+        if marker not in formatted:
+            errors.append(f"formatted output missing marker: {marker}")
+    append_result("stage2g_f_j_user_install_readiness_report_format_is_non_executing", errors)
+
+    errors = []
+    try:
+        probe_result = run_named_probe("user_install_readiness_report")
+        if probe_result.ok is not True:
+            errors.append("user_install_readiness_report probe must return ok=True")
+        if probe_result.probe_name != "user_install_readiness_report":
+            errors.append(f"probe_name mismatch: {probe_result.probe_name}")
+        probe_data = probe_result.data if isinstance(probe_result.data, dict) else {}
+        if probe_data.get("kind") != "bond_user_space_install_readiness_report":
+            errors.append(f"probe data kind mismatch: {probe_data.get('kind')}")
+        if probe_data.get("readiness_status") not in {
+            "ready_for_final_human_review_execution_locked",
+            "manual_review_required",
+            "blocked_missing_inputs",
+            "blocked_unsafe_write_targets",
+            "unsupported_manual_review",
+        }:
+            errors.append(f"unexpected probe readiness_status: {probe_data.get('readiness_status')}")
+        if probe_data.get("performed_operations") != []:
+            errors.append("probe performed_operations must be []")
+        probe_closure = probe_data.get("chain_closure") if isinstance(probe_data.get("chain_closure"), dict) else {}
+        if probe_closure.get("closed_for_non_executing_human_review") is not True:
+            errors.append("probe chain closure flag must be True")
+        if probe_closure.get("write_capable_installer_available") is not False:
+            errors.append("probe write_capable_installer_available must be False")
+        if probe_closure.get("cli_surface_available") is not False:
+            errors.append("probe cli_surface_available must be False")
+        if probe_closure.get("real_execution_available") is not False:
+            errors.append("probe real_execution_available must be False")
+        for field in auth_false:
+            if probe_data.get(field) is not False:
+                errors.append(f"probe {field} must be False")
+    except Exception as exc:
+        errors.append(f"run_named_probe user_install_readiness_report raised unexpectedly: {exc}")
+    append_result("stage2g_f_j_user_install_readiness_report_probe_is_read_only", errors)
+
+    errors = []
+    docs_needles = {
+        "README.md": ["Stage 2G-F-J", "396", "final non-executing user-space install readiness"],
+        "ROADMAP.md": ["Stage 2G-F-J", "final non-executing readiness"],
+        "docs/ARCHITECTURE.md": ["Stage 2G-F-J", "ai_user_install_readiness.py", "user_install_readiness_report"],
+        "docs/INSTALLATION.md": ["Stage 2G-F-J", "Final non-executing readiness report"],
+        "docs/PROBES.md": ["user_install_readiness_report"],
+        "docs/STATE.md": ["Stage 2G-F-J", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
+        "docs/TESTING.md": ["Stage 2G-F-J", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
+    }
+    for relative_path, needles in docs_needles.items():
+        text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
+        for needle in needles:
+            if needle not in text:
+                errors.append(f"missing docs marker in {relative_path}: {needle}")
+
+    source_text = AI_USER_INSTALL_READINESS.read_text(encoding="utf-8")
+    forbidden_tokens = [
+        "subprocess",
+        "import os",
+        "from os",
+        "pathlib",
+        "Path(",
+        "Popen",
+        "check_call",
+        "check_output",
+        "open(",
+        ".mkdir(",
+        ".write_text(",
+        ".write_bytes(",
+        "shutil.",
+        "socket.",
+        "requests.",
+        "urllib.",
+        "sudo ",
+        "apt install",
+        "apt upgrade",
+        "dnf install",
+        "rpm-ostree install",
+        "pacman -S",
+        "zypper install",
+        "apk add",
+        "xbps-install",
+        "nix-env",
+        "systemctl",
+        "flatpak install",
+        "podman ",
+        "docker ",
+    ]
+    hits = [token for token in forbidden_tokens if token in source_text]
+    if hits:
+        errors.append(
+            "forbidden execution/write/system token(s) in ai_user_install_readiness.py: " + ", ".join(hits)
+        )
+
+    stale_needles = [
+        '"docs/STATE.md": ["Stage 2G-F-F", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
+        '"docs/TESTING.md": ["Stage 2G-F-F", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
+        '"docs/STATE.md": ["Stage 2G-F-G", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
+        '"docs/TESTING.md": ["Stage 2G-F-G", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
+        '"docs/STATE.md": ["Stage 2G-F-H", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
+        '"docs/TESTING.md": ["Stage 2G-F-H", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
+        '"docs/STATE.md": ["Stage 2G-F-I", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
+        '"docs/TESTING.md": ["Stage 2G-F-I", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
+    ]
+    selftest_text = AI_RUN.with_name("ai_selftest.py").read_text(encoding="utf-8")
+    stale_hits = [needle for needle in stale_needles if needle in selftest_text]
+    if stale_hits:
+        errors.append("stale current-doc-baseline selftest literal(s): " + "; ".join(stale_hits))
+    required_needles = [
+        '"docs/STATE.md": ["Stage 2G-F-J", \'{"ok": true, "passed": 396, "failed": 0, "total": 396}\']',
+        '"docs/TESTING.md": ["Stage 2G-F-J", \'{"ok": true, "passed": 396, "failed": 0, "total": 396}\']',
+    ]
+    missing_needles = [needle for needle in required_needles if needle not in selftest_text]
+    if missing_needles:
+        errors.append("missing Stage 2G-F-J current-doc-baseline selftest literal(s): " + "; ".join(missing_needles))
+
+    append_result("stage2g_f_j_user_install_readiness_report_docs_and_source_boundary", errors)
+
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -11983,6 +12319,7 @@ def main() -> None:
         AI_USER_INSTALL_WRITE_PREFLIGHT,
         AI_USER_INSTALL_APPROVAL_VALIDATION,
         AI_USER_INSTALL_WRITE_EXECUTOR,
+        AI_USER_INSTALL_READINESS,
         AI_WRAPPER,
         AI_MEMORY,
         AI_MEMORY_QUERY,
@@ -12585,6 +12922,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2g_f_i_user_install_write_executor_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2g_f_j_user_install_readiness_report_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

@@ -132,6 +132,12 @@ Future write-capable user-space installer work must pass through this executor s
 
 This stage does not collect approval, does not validate approval, does not authorize writes, and does not perform writes.
 
+## Final non-executing readiness report prerequisite (Stage 2G-F-J)
+
+Future CLI or write-capable user-space installer work must start after this readiness seam, not by modifying lower planning layers.
+
+This stage does not collect approval, does not validate approval, does not authorize writes, does not perform writes, and does not add a CLI.
+
 Updates must be repository-driven.
 
 This section describes updating Bond itself. It is separate from future OS/package update advisory features.

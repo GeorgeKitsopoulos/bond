@@ -20,6 +20,17 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-F-J final user-space install readiness aggregator/report
+
+- Adds `ai_user_install_readiness.py`.
+- Adds `user_install_readiness_report` probe.
+- Defines a deterministic final non-executing user-space install readiness aggregator/report.
+- Composes the Stage 2G-F-I disabled write-executor output into `readiness_packet` and `readiness_json_preview` outputs.
+- Closes the current non-executing user-space install detect-plan-show chain for human review only.
+- Does not collect approval, validate approval as true, authorize execution, authorize writes, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
+- Adds 9 selftests.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 396, "failed": 0, "total": 396}.
+
 ### Stage 2G-F-I disabled user-space install write-executor skeleton
 
 - Adds `ai_user_install_write_executor.py`.

@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 387, "failed": 0, "total": 387}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 396, "failed": 0, "total": 396}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -186,6 +186,21 @@ Coverage now also includes Stage 2G-F-I user-space install write-executor checks
 - `stage2g_f_i_user_install_write_executor_format_is_non_executing` — formatted report includes explicit non-executing disabled-executor markers
 - `stage2g_f_i_user_install_write_executor_probe_is_read_only` — `run_named_probe("user_install_write_executor")` returns the expected read-only disabled/default-deny contract
 - `stage2g_f_i_user_install_write_executor_docs_and_source_boundary` — docs mention Stage 2G-F-I and `ai_user_install_write_executor.py` stays free of forbidden execution/write/system tokens
+
+Coverage now also includes Stage 2G-F-J final user-space install readiness report checks:
+
+- `stage2g_f_j_user_install_readiness_report_shape_and_boundaries` — readiness report/packet shape, deterministic boundaries, and all authorization fields fixed False
+- `stage2g_f_j_user_install_readiness_report_final_review_ready` — `disabled_execution_locked` maps to `ready_for_final_human_review_execution_locked` while execution remains locked
+- `stage2g_f_j_user_install_readiness_report_digest_deterministic` — repeated builds produce identical `readiness_packet_digest` and `readiness_json_preview`
+- `stage2g_f_j_user_install_readiness_report_blocks_missing_executor` — missing/invalid disabled write-executor input blocks safely with no authorization
+- `stage2g_f_j_user_install_readiness_report_rejects_executor_invariant_break` — invariant breaks (for example `executor_enabled=True`) force `unsupported_manual_review` while all authorization fields remain False
+- `stage2g_f_j_user_install_readiness_report_chain_closure_flags` — chain-closure fields stay `closed_for_non_executing_human_review=True` with all execution/CLI availability flags False
+- `stage2g_f_j_user_install_readiness_report_format_is_non_executing` — formatted output contains all required non-executing readiness markers
+- `stage2g_f_j_user_install_readiness_report_probe_is_read_only` — `run_named_probe("user_install_readiness_report")` returns the expected read-only final readiness contract
+- `stage2g_f_j_user_install_readiness_report_docs_and_source_boundary` — docs mention Stage 2G-F-J, `ai_user_install_readiness.py` stays free of forbidden execution/write/system tokens, and stale current-doc-baseline literals for 387 are guarded out of selftest docs-needle checks
+
+The Stage 2G-F-J suite also adds a stale-baseline prevention guard because Stage 2G-F-I required a follow-up baseline-literal fix.
+
 - `stage2g_f_c_user_install_transaction_format_is_non_executing`
 - `stage2g_f_c_user_install_transaction_probe_is_read_only`
 

@@ -256,6 +256,21 @@ Current implemented probe names:
 - It is not part of the maintenance report contract.
 - Maintenance report scope remains unchanged and does not include this probe.
 
+### Stage 2G-F-J final user-space install readiness aggregation/report
+
+- `user_install_readiness_report` composes existing `user_install_write_executor` output into a deterministic final non-executing readiness report.
+- Layer: 3.
+- Source: `SOURCE_RUNTIME_PROBE`.
+- Certainty: `CERTAINTY_DERIVED`.
+- Refresh: `REFRESH_MEDIUM_CHURN`.
+- It derives deterministic `readiness_packet` and `readiness_json_preview` outputs for final human readiness review.
+- It keeps all authorization fields false.
+- It keeps `performed_operations` empty and summarizes `refused_operations` only.
+- It closes the detect-plan-show user-space install chain for human review only.
+- It does not collect approval, validate approval, authorize execution, authorize writes, create directories, write manifests, run commands, mutate services, install packages, or move storage.
+- It is not part of the maintenance report contract.
+- Maintenance report scope remains unchanged and does not include this probe.
+
 ## Stage 2F-F-A read-only maintenance probe foundation
 
 - `package_update_status` inspects local apt upgradable-package cache only.

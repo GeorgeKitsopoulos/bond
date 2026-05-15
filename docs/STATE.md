@@ -16,11 +16,12 @@ This file exists to prevent drift between:
 
 ## Current Checkpoint
 
-Date: (Stage 2G-F-I current)
+Date: (Stage 2G-F-J current)
 
 Current baseline note:
 
-- Stage 2G-F-I disabled user-space install write-executor skeleton is the current repository checkpoint.
+- Stage 2G-F-J final user-space install readiness aggregator/report is the current repository checkpoint.
+- `src/bond/ai_user_install_readiness.py` and `user_install_readiness_report` probe are integrated as deterministic, non-executing final readiness planning/report surfaces.
 - `src/bond/ai_user_install_write_executor.py` and `user_install_write_executor` probe are integrated as deterministic, non-executing disabled/default-deny write-executor planning surfaces.
 - `src/bond/ai_user_install_approval_validation.py` and `user_install_approval_validation` probe are integrated as deterministic, non-executing approval-validation planning surfaces.
 - `src/bond/ai_user_install_write_preflight.py` and `user_install_write_preflight` probe are integrated as deterministic, non-executing write-preflight planning surfaces.
@@ -31,7 +32,8 @@ Current baseline note:
 - `src/bond/ai_user_install_manifest.py` and `user_install_manifest_plan` probe are integrated as deterministic, non-executing manifest payload planning surfaces.
 - `src/bond/ai_user_install_plan.py` and `user_install_plan` probe are integrated as deterministic, non-executing write-set planning surfaces.
 - `src/bond/ai_installer_plan.py` added as a pure deterministic, non-executing contract for installer/reconfigure planning.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 387, "failed": 0, "total": 387} (Stage 2G-F-I applied on top of Stage 2G-F-H).
+- Compile and integrated selftest baseline is {"ok": true, "passed": 396, "failed": 0, "total": 396} (Stage 2G-F-J applied on top of Stage 2G-F-I).
+- Stage 2G-F-J adds a deterministic final readiness aggregator/report (`readiness_packet` and `readiness_json_preview`) with all authorization fields fixed False, `performed_operations` fixed empty, and chain closure for non-executing human review only; it does not collect approval, validate approval as true, authorize execution, authorize writes, create directories, write manifests, install packages, mutate services, move storage, generate commands, execute commands, or add CLI/scripts.
 - Stage 2G-F-I adds a deterministic disabled/default-deny write-executor skeleton (`executor_disabled_packet` and `executor_json_preview`) with all authorization fields fixed False, `performed_operations` fixed empty, and `refused_operations` as a denied-operation summary only; it does not collect approval, validate approval, authorize execution, authorize writes, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
 - Stage 2G-F-H adds a deterministic approval-validation contract (`approval_challenge` and `approval_challenge_json_preview`) with all authorization fields fixed False, can compare a future approval-record shape, and does not collect approval, validate approval, authorize execution, authorize writes, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
 - Stage 2G-F-G adds a deterministic write-preflight contract (`write_preflight_packet` and `write_preflight_json_preview`) with all authorization fields fixed False, lexical path checks only, and does not validate approval, authorize execution, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
@@ -42,6 +44,7 @@ Current baseline note:
 - Stage 2G-F-B1 forward-fix preserves factual package-manager identity in manifest payload previews while keeping command generation and execution unauthorized.
 - Stage 2G-F-B adds a deterministic sanitized manifest payload planning contract (`manifest_candidate` and `manifest_json_preview`) and does not create directories, write manifests, install packages, mutate services, move storage, generate commands, or authorize execution.
 - Portable installer/updater/satellite item 6 remains only in planning/contract form and is not complete.
+- The current detect-plan-show user-space install chain is closed for human review only, with no execution surface and no CLI surface.
 - Stage 2G-E adds a read-only installer planning contract composing Stage 2G profile, drift, and dependency facts into a bounded plan without authorizing execution, installation, reconfiguration, service changes, manifest writes, or storage mutation.
 - Stage 2G-E does not authorize installation, reconfiguration, service changes, manifest writes, storage mutations, or execution of any kind.
 - Stage 2G-D deterministic dependency planning and package-manager classification contract remains integrated/current.
