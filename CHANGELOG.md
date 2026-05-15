@@ -20,6 +20,16 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-F-H user-space install approval-validation contract
+
+- Adds `ai_user_install_approval_validation.py`.
+- Adds `user_install_approval_validation` probe.
+- Defines a deterministic non-executing user-space install approval-validation contract and challenge.
+- Composes the Stage 2G-F-G write-preflight packet into `approval_challenge` and `approval_challenge_json_preview` outputs.
+- Does not collect approval, validate approval as true, authorize execution, authorize writes, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
+- Adds 9 selftests.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 378, "failed": 0, "total": 378}.
+
 ### Stage 2G-F-G user-space install write-preflight contract
 
 - Adds `ai_user_install_write_preflight.py`.

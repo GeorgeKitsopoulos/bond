@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 369, "failed": 0, "total": 369}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 378, "failed": 0, "total": 378}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -162,6 +162,18 @@ Coverage now also includes Stage 2G-F-G user-space install write-preflight check
 - `stage2g_f_g_user_install_write_preflight_format_is_non_executing` — formatted report includes explicit non-execution markers
 - `stage2g_f_g_user_install_write_preflight_probe_is_read_only` — `run_named_probe("user_install_write_preflight")` returns the expected read-only contract with all authorization fields False
 - `stage2g_f_g_user_install_write_preflight_docs_and_source_boundary` — docs mention Stage 2G-F-G and `ai_user_install_write_preflight.py` stays free of forbidden execution/write/system tokens
+
+Coverage now also includes Stage 2G-F-H user-space install approval-validation checks:
+
+- `stage2g_f_h_user_install_approval_validation_shape_and_boundaries` — approval-validation report/challenge shape, boundary markers, and all authorization fields fixed False
+- `stage2g_f_h_user_install_approval_validation_ready_execution_locked` — `write_preflight_ready_execution_locked` maps to `approval_validation_ready_execution_locked` while execution remains locked
+- `stage2g_f_h_user_install_approval_validation_challenge_digest_deterministic` — repeated builds produce identical `write_preflight_digest` and `approval_challenge_json_preview`
+- `stage2g_f_h_user_install_approval_validation_blocks_missing_write_preflight` — missing/invalid write-preflight input blocks safely with no approval validation or write authorization
+- `stage2g_f_h_user_install_approval_validation_rejects_authorizing_record` — injected approval records that attempt authorization are rejected while all output authorization fields remain False
+- `stage2g_f_h_user_install_approval_validation_matching_record_still_locked` — a shape-matching approval record still leaves approval validation unavailable and execution/write authorization locked
+- `stage2g_f_h_user_install_approval_validation_format_is_non_executing` — formatted report includes explicit non-executing approval-validation markers
+- `stage2g_f_h_user_install_approval_validation_probe_is_read_only` — `run_named_probe("user_install_approval_validation")` returns the expected read-only contract with all authorization fields False
+- `stage2g_f_h_user_install_approval_validation_docs_and_source_boundary` — docs mention Stage 2G-F-H and `ai_user_install_approval_validation.py` stays free of forbidden execution/write/system tokens
 - `stage2g_f_c_user_install_transaction_format_is_non_executing`
 - `stage2g_f_c_user_install_transaction_probe_is_read_only`
 
