@@ -32,6 +32,10 @@ from ai_user_install_approval import (
     build_user_install_approval_plan,
     format_user_install_approval_plan,
 )
+from ai_user_install_execution_gate import (
+    build_user_install_execution_gate,
+    format_user_install_execution_gate,
+)
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
 from ai_maintenance_report import (
     build_maintenance_readiness_report,
@@ -149,6 +153,7 @@ from ai_probes import (
     probe_user_install_manifest_plan,
     probe_user_install_transaction_plan,
     probe_user_install_approval_plan,
+    probe_user_install_execution_gate,
     run_all_probes,
     run_named_probe,
 )
@@ -6668,7 +6673,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 343, "failed": 0, "total": 343}'
+    current_summary = '{"ok": true, "passed": 351, "failed": 0, "total": 351}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -6890,7 +6895,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 343, "failed": 0, "total": 343}'
+    current_summary = '{"ok": true, "passed": 351, "failed": 0, "total": 351}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -10160,6 +10165,366 @@ def run_stage2g_f_d_user_install_approval_tests() -> list[dict[str, Any]]:
     return results
 
 
+def run_stage2g_f_e_user_install_execution_gate_tests() -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+
+    def append_result(name: str, errors: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": "",
+                "stderr": "",
+                "errors": errors,
+                "cmd": ["stage2g_f_e", name],
+            }
+        )
+
+    auth_false = {
+        "execution_authorized": False,
+        "execution_allowed": False,
+        "install_authorized": False,
+        "package_install_authorized": False,
+        "upgrade_authorized": False,
+        "reconfigure_authorized": False,
+        "service_authorized": False,
+        "storage_move_authorized": False,
+        "write_authorized": False,
+        "write_manifest_authorized": False,
+        "commands_generated": False,
+        "approval_granted": False,
+        "approval_validated": False,
+    }
+
+    manifest_path = "/home/tester/.config/bond/install-manifest.json"
+    transaction_digest = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+    approval_candidate = {
+        "kind": "bond_user_install_approval_candidate",
+        "schema_version": 1,
+        "authorization": dict(auth_false),
+        "manifest_path": manifest_path,
+        "transaction_digest": transaction_digest,
+        "approval_requirements": {
+            "explicit_future_approval_required": True,
+            "approval_granted": False,
+            "approval_must_match_transaction_digest": transaction_digest,
+            "approval_must_match_manifest_path": manifest_path,
+            "approval_must_match_operation_count": 3,
+            "approval_must_be_collected_after_review": True,
+            "approval_is_not_collected_in_this_stage": True,
+            "approval_does_not_authorize_execution_in_this_stage": True,
+        },
+        "reviewed_operations": [
+            {
+                "operation_id": "000_preflight_review",
+                "operation_kind": "preflight_review_candidate",
+                "role": "preflight",
+                "path": None,
+                "status": "planned_not_authorized",
+                "source": "transaction_preflight",
+                "requires_explicit_future_authorization": True,
+                "verify_after_operation": True,
+            },
+            {
+                "operation_id": "001_config_create_directory_candidate",
+                "operation_kind": "create_directory_candidate",
+                "role": "config",
+                "path": "/home/tester/.config/bond",
+                "status": "planned_not_authorized",
+                "source": "user_install_plan.write_set",
+                "requires_explicit_future_authorization": True,
+                "verify_after_operation": True,
+            },
+            {
+                "operation_id": "999_post_install_verification",
+                "operation_kind": "post_install_verification_candidate",
+                "role": "verification",
+                "path": None,
+                "status": "planned_not_authorized",
+                "source": "transaction_verification",
+                "requires_explicit_future_authorization": True,
+                "verify_after_operation": True,
+            },
+        ],
+    }
+    approval_json_preview = json.dumps(approval_candidate, sort_keys=True, indent=2, ensure_ascii=False)
+
+    approval_plan = {
+        "kind": "bond_user_install_approval_plan",
+        "schema_version": 1,
+        **auth_false,
+        "requested_mode": "doctor_review",
+        "plan_status": "ready_for_user_review",
+        "recommended_next_step_kind": "review_user_install_approval_envelope",
+        "requires_manual_review": False,
+        "blocked_reasons": [],
+        "review_reasons": [],
+        "manifest_path": manifest_path,
+        "transaction_digest": transaction_digest,
+        "approval_candidate": approval_candidate,
+        "approval_json_preview": approval_json_preview,
+    }
+
+    # 1. stage2g_f_e_user_install_execution_gate_shape_and_boundaries
+    errors: list[str] = []
+    gate = build_user_install_execution_gate(
+        user_install_approval_plan=approval_plan,
+        requested_mode="doctor_review",
+    )
+    if gate.get("kind") != "bond_user_install_execution_gate":
+        errors.append(f"gate kind mismatch: {gate.get('kind')}")
+    if gate.get("schema_version") != 1:
+        errors.append(f"gate schema_version mismatch: {gate.get('schema_version')}")
+
+    decision = gate.get("gate_decision")
+    if not isinstance(decision, dict):
+        errors.append("gate_decision must be a dict")
+        decision = {}
+    if decision.get("kind") != "bond_user_install_execution_gate":
+        errors.append(f"gate_decision kind mismatch: {decision.get('kind')}")
+    if decision.get("schema_version") != 1:
+        errors.append(f"gate_decision schema_version mismatch: {decision.get('schema_version')}")
+
+    for field in auth_false:
+        if gate.get(field) is not False:
+            errors.append(f"gate {field} must be False")
+        if decision.get("authorization", {}).get(field) is not False:
+            errors.append(f"gate_decision authorization {field} must be False")
+
+    if gate.get("execution_allowed") is not False:
+        errors.append("execution_allowed must be False")
+    if gate.get("approval_validated") is not False:
+        errors.append("approval_validated must be False")
+    if gate.get("future_approval_mechanism_available") is not False:
+        errors.append("future_approval_mechanism_available must be False")
+
+    reviewed_summary = decision.get("reviewed_operations_summary")
+    if not isinstance(reviewed_summary, list):
+        errors.append("reviewed_operations_summary must be a list")
+    else:
+        for item in reviewed_summary:
+            for forbidden_key in ("command", "execution_authorized", "write_authorized"):
+                if forbidden_key in item:
+                    errors.append(f"reviewed operation leaked forbidden key: {forbidden_key}")
+
+    append_result("stage2g_f_e_user_install_execution_gate_shape_and_boundaries", errors)
+
+    # 2. stage2g_f_e_user_install_execution_gate_digests_are_deterministic
+    errors = []
+    gate_a = build_user_install_execution_gate(
+        user_install_approval_plan=approval_plan,
+        requested_mode="doctor_review",
+    )
+    gate_b = build_user_install_execution_gate(
+        user_install_approval_plan=approval_plan,
+        requested_mode="doctor_review",
+    )
+    if gate_a.get("approval_envelope_digest") != gate_b.get("approval_envelope_digest"):
+        errors.append("approval_envelope_digest must be deterministic")
+    if gate_a.get("gate_json_preview") != gate_b.get("gate_json_preview"):
+        errors.append("gate_json_preview must be deterministic")
+    digest = gate_a.get("approval_envelope_digest")
+    if not isinstance(digest, str) or len(digest) != 64:
+        errors.append(f"approval_envelope_digest must be 64 hex chars, got {digest!r}")
+    if gate_a.get("gate_decision", {}).get("execution_gate", {}).get("approval_envelope_digest") != digest:
+        errors.append("execution_gate approval_envelope_digest mismatch")
+
+    changed_plan = json.loads(json.dumps(approval_plan))
+    changed_plan["approval_json_preview"] = changed_plan["approval_json_preview"] + "\n "
+    changed_gate = build_user_install_execution_gate(
+        user_install_approval_plan=changed_plan,
+        requested_mode="doctor_review",
+    )
+    if changed_gate.get("approval_envelope_digest") == digest:
+        errors.append("approval_envelope_digest must change when approval_json_preview changes")
+    append_result("stage2g_f_e_user_install_execution_gate_digests_are_deterministic", errors)
+
+    # 3. stage2g_f_e_user_install_execution_gate_always_denies_execution
+    errors = []
+    gate = build_user_install_execution_gate(
+        user_install_approval_plan=approval_plan,
+        requested_mode="doctor_review",
+    )
+    if gate.get("gate_status") != "execution_locked_pending_future_approval":
+        errors.append(f"gate_status mismatch: {gate.get('gate_status')}")
+    if gate.get("recommended_next_step_kind") != "review_execution_gate_denial":
+        errors.append("recommended_next_step_kind mismatch")
+    if gate.get("execution_allowed") is not False:
+        errors.append("execution_allowed must be False")
+    if gate.get("execution_authorized") is not False:
+        errors.append("execution_authorized must be False")
+    if gate.get("approval_validated") is not False:
+        errors.append("approval_validated must be False")
+    denial_reasons = gate.get("denial_reasons") if isinstance(gate.get("denial_reasons"), list) else []
+    for marker in (
+        "future approval validation mechanism is not implemented",
+        "execution is locked in Stage 2G-F-E",
+    ):
+        if marker not in denial_reasons:
+            errors.append(f"missing denial reason: {marker}")
+    append_result("stage2g_f_e_user_install_execution_gate_always_denies_execution", errors)
+
+    # 4. stage2g_f_e_user_install_execution_gate_blocks_missing_approval_plan
+    errors = []
+    blocked = build_user_install_execution_gate(
+        user_install_approval_plan=None,
+        requested_mode="doctor_review",
+    )
+    if blocked.get("gate_status") != "blocked_missing_inputs":
+        errors.append(f"gate_status mismatch: {blocked.get('gate_status')}")
+    if blocked.get("recommended_next_step_kind") != "collect_missing_execution_gate_inputs":
+        errors.append("recommended_next_step_kind mismatch")
+    if blocked.get("execution_allowed") is not False:
+        errors.append("execution_allowed must be False")
+    for field in auth_false:
+        if blocked.get(field) is not False:
+            errors.append(f"{field} must remain False")
+    append_result("stage2g_f_e_user_install_execution_gate_blocks_missing_approval_plan", errors)
+
+    # 5. stage2g_f_e_user_install_execution_gate_requires_digest_and_manifest_alignment
+    errors = []
+    mismatched_manifest = json.loads(json.dumps(approval_plan))
+    mismatched_manifest["manifest_path"] = "/home/tester/.config/bond/other.json"
+    manifest_gate = build_user_install_execution_gate(
+        user_install_approval_plan=mismatched_manifest,
+        requested_mode="doctor_review",
+    )
+    if manifest_gate.get("gate_status") != "unsupported_manual_review":
+        errors.append("manifest mismatch must cause unsupported_manual_review")
+    if not any("manifest path mismatch" in reason for reason in manifest_gate.get("review_reasons", [])):
+        errors.append("review_reasons must mention manifest path mismatch")
+
+    mismatched_digest = json.loads(json.dumps(approval_plan))
+    mismatched_digest["approval_candidate"]["approval_requirements"]["approval_must_match_transaction_digest"] = "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"
+    digest_gate = build_user_install_execution_gate(
+        user_install_approval_plan=mismatched_digest,
+        requested_mode="doctor_review",
+    )
+    if digest_gate.get("gate_status") != "unsupported_manual_review":
+        errors.append("transaction digest mismatch must cause unsupported_manual_review")
+    if not any("transaction digest mismatch" in reason for reason in digest_gate.get("review_reasons", [])):
+        errors.append("review_reasons must mention transaction digest mismatch")
+
+    for payload in (manifest_gate, digest_gate):
+        if payload.get("execution_allowed") is not False:
+            errors.append("execution_allowed must remain False")
+    append_result("stage2g_f_e_user_install_execution_gate_requires_digest_and_manifest_alignment", errors)
+
+    # 6. stage2g_f_e_user_install_execution_gate_rejects_upstream_authorization_or_commands
+    errors = []
+    top_authorized = json.loads(json.dumps(approval_plan))
+    top_authorized["execution_authorized"] = True
+    rejected_top = build_user_install_execution_gate(
+        user_install_approval_plan=top_authorized,
+        requested_mode="doctor_review",
+    )
+    if rejected_top.get("gate_status") != "unsupported_manual_review":
+        errors.append("top-level execution_authorized must cause unsupported_manual_review")
+
+    candidate_authorized = json.loads(json.dumps(approval_plan))
+    candidate_authorized["approval_candidate"]["authorization"]["write_authorized"] = True
+    rejected_candidate = build_user_install_execution_gate(
+        user_install_approval_plan=candidate_authorized,
+        requested_mode="doctor_review",
+    )
+    if rejected_candidate.get("gate_status") != "unsupported_manual_review":
+        errors.append("candidate authorization write_authorized must cause unsupported_manual_review")
+
+    granted_approval = json.loads(json.dumps(approval_plan))
+    granted_approval["approval_candidate"]["approval_requirements"]["approval_granted"] = True
+    rejected_approval = build_user_install_execution_gate(
+        user_install_approval_plan=granted_approval,
+        requested_mode="doctor_review",
+    )
+    if rejected_approval.get("gate_status") != "unsupported_manual_review":
+        errors.append("approval_granted must cause unsupported_manual_review")
+
+    command_plan = json.loads(json.dumps(approval_plan))
+    command_plan["approval_candidate"]["reviewed_operations"][1]["command"] = "mkdir /tmp/nope"
+    rejected_command = build_user_install_execution_gate(
+        user_install_approval_plan=command_plan,
+        requested_mode="doctor_review",
+    )
+    if rejected_command.get("gate_status") != "unsupported_manual_review":
+        errors.append("operation command must cause unsupported_manual_review")
+
+    for payload in (rejected_top, rejected_candidate, rejected_approval, rejected_command):
+        for field in auth_false:
+            if payload.get(field) is not False:
+                errors.append(f"{field} must remain False")
+        if payload.get("execution_allowed") is not False:
+            errors.append("execution_allowed must remain False")
+        if payload.get("approval_validated") is not False:
+            errors.append("approval_validated must remain False")
+    append_result("stage2g_f_e_user_install_execution_gate_rejects_upstream_authorization_or_commands", errors)
+
+    # 7. stage2g_f_e_user_install_execution_gate_format_is_non_executing
+    errors = []
+    formatted = format_user_install_execution_gate(gate)
+    for marker in (
+        "User-space install execution-gate report",
+        "Execution allowed: false",
+        "Execution authorized: false",
+        "Approval granted: false",
+        "Approval validated: false",
+        "Future approval mechanism available: false",
+        "Denial reasons:",
+        "Reviewed operations:",
+        "Gate JSON preview:",
+        "No approval was validated, and no user-space install, directory creation, manifest write, package operation, service mutation, storage move, or command execution was performed.",
+    ):
+        if marker not in formatted:
+            errors.append(f"formatted output missing marker: {marker}")
+    for forbidden in (
+        "sudo ",
+        "apt install",
+        "dnf install",
+        "pacman -S",
+        "rpm-ostree install",
+        "rpm-ostree override",
+        "rpm-ostree rebase",
+        "rpm-ostree upgrade",
+        "flatpak install",
+        "mkdir ",
+        "touch ",
+        "systemctl",
+    ):
+        if forbidden in formatted:
+            errors.append(f"formatted output contains forbidden command phrase: {forbidden}")
+    append_result("stage2g_f_e_user_install_execution_gate_format_is_non_executing", errors)
+
+    # 8. stage2g_f_e_user_install_execution_gate_probe_is_read_only
+    errors = []
+    try:
+        probe_result = probe_user_install_execution_gate()
+        if probe_result.probe_name != "user_install_execution_gate":
+            errors.append(f"probe_name mismatch: {probe_result.probe_name}")
+        probe_data = probe_result.data if isinstance(probe_result.data, dict) else {}
+        if probe_data.get("kind") != "bond_user_install_execution_gate":
+            errors.append(f"probe data kind mismatch: {probe_data.get('kind')}")
+        probe_decision = probe_data.get("gate_decision")
+        if not isinstance(probe_decision, dict) or probe_decision.get("kind") != "bond_user_install_execution_gate":
+            errors.append("gate_decision missing or wrong kind")
+        for field in auth_false:
+            if probe_data.get(field) is not False:
+                errors.append(f"probe {field} must be False")
+        if probe_data.get("execution_allowed") is not False:
+            errors.append("execution_allowed must be False")
+        if probe_data.get("approval_validated") is not False:
+            errors.append("approval_validated must be False")
+        if probe_data.get("future_approval_mechanism_available") is not False:
+            errors.append("future_approval_mechanism_available must be False")
+        if probe_result.probe_name == "maintenance_report":
+            errors.append("probe must not have probe_name 'maintenance_report'")
+    except Exception as exc:
+        errors.append(f"probe_user_install_execution_gate raised unexpectedly: {exc}")
+    append_result("stage2g_f_e_user_install_execution_gate_probe_is_read_only", errors)
+
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -10712,6 +11077,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2g_f_d_user_install_approval_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2g_f_e_user_install_execution_gate_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

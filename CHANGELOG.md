@@ -20,6 +20,22 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-F-E user-space install execution-gate/readiness decision
+
+- Adds `ai_user_install_execution_gate.py`.
+- Adds `user_install_execution_gate` probe.
+- Defines `gate_decision` and `gate_json_preview` for future user-space install execution readiness review.
+- Computes deterministic `approval_envelope_digest` from `approval_json_preview`.
+- Validates manifest path and transaction digest consistency from approval-envelope inputs.
+- `execution_allowed` remains False.
+- `approval_validated` remains False.
+- `future_approval_mechanism_available` remains False.
+- All authorization fields remain False.
+- No commands generated.
+- No approval validated, approval granted, directory creation, manifest write, package operation, service mutation, storage move, or command execution.
+- Adds 8 selftests.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 351, "failed": 0, "total": 351}.
+
 ### Stage 2G-F-D user-space install approval envelope contract
 
 - Adds `ai_user_install_approval.py`.

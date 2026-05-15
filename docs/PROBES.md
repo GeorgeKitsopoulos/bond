@@ -31,6 +31,7 @@ Current implemented probe names:
 - `user_install_manifest_plan`
 - `user_install_transaction_plan`
 - `user_install_approval_plan`
+- `user_install_execution_gate`
 
 ## Stage 2G-A host portability profile
 
@@ -149,6 +150,23 @@ Current implemented probe names:
 - It derives deterministic `approval_candidate` and `approval_json_preview` outputs for future user-space install transaction review.
 - It computes `transaction_digest` from `transaction_json_preview`.
 - It does not grant approval.
+- It does not create directories.
+- It does not write manifests.
+- It does not run commands.
+- It does not mutate services.
+- It does not install packages.
+- It does not move storage.
+- It is not part of the maintenance report contract.
+- Maintenance report scope remains unchanged and does not include this probe.
+
+### Stage 2G-F-E user-space install execution-gate planning
+
+- `user_install_execution_gate` composes existing `user_install_approval_plan` into a read-only execution-gate/readiness decision.
+- It derives deterministic `gate_decision` and `gate_json_preview` outputs for future user-space install execution readiness review.
+- It computes `approval_envelope_digest` from `approval_json_preview`.
+- It validates manifest path and transaction digest consistency from approval-envelope inputs.
+- It does not validate approval.
+- It does not authorize execution.
 - It does not create directories.
 - It does not write manifests.
 - It does not run commands.

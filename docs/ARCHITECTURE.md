@@ -433,6 +433,28 @@ Stage 2F-F-E adds metadata-only readiness fields inside the explicit maintenance
 - All authorization fields are explicitly False.
 - It does not broaden normal assistant answers.
 
+### User-space install execution-gate planning (Stage 2G-F-E)
+
+- Module owner: `src/bond/ai_user_install_execution_gate.py`.
+- Probe owner: `user_install_execution_gate` in `src/bond/ai_probes.py`.
+- Purpose: derive a deterministic `gate_decision` and `gate_json_preview` from an approval-envelope plan.
+- It computes `approval_envelope_digest` from `approval_json_preview`.
+- It validates manifest path and transaction digest consistency.
+- It explicitly keeps `execution_allowed` false because future approval validation is not implemented.
+- It is pure deterministic and non-executing.
+- It does not inspect live system state.
+- It does not create directories.
+- It does not write manifests.
+- It does not install packages.
+- It does not mutate services.
+- It does not move storage.
+- It does not generate executable commands.
+- It does not validate approval.
+- It does not grant approval.
+- It does not authorize execution.
+- All authorization fields are explicitly False.
+- It does not broaden normal assistant answers.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

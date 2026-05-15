@@ -16,17 +16,19 @@ This file exists to prevent drift between:
 
 ## Current Checkpoint
 
-Date: (Stage 2G-F-D current)
+Date: (Stage 2G-F-E current)
 
 Current baseline note:
 
-- Stage 2G-F-D user-space install approval-envelope contract is the current repository checkpoint.
+- Stage 2G-F-E user-space install execution-gate/readiness decision is the current repository checkpoint.
+- `src/bond/ai_user_install_execution_gate.py` and `user_install_execution_gate` probe are integrated as deterministic, non-executing execution-gate/readiness planning surfaces.
 - `src/bond/ai_user_install_approval.py` and `user_install_approval_plan` probe are integrated as deterministic, non-executing approval-envelope planning surfaces.
 - `src/bond/ai_user_install_transaction.py` and `user_install_transaction_plan` probe are integrated as deterministic, non-executing transaction/preflight planning surfaces.
 - `src/bond/ai_user_install_manifest.py` and `user_install_manifest_plan` probe are integrated as deterministic, non-executing manifest payload planning surfaces.
 - `src/bond/ai_user_install_plan.py` and `user_install_plan` probe are integrated as deterministic, non-executing write-set planning surfaces.
 - `src/bond/ai_installer_plan.py` added as a pure deterministic, non-executing contract for installer/reconfigure planning.
-- Compile and integrated selftest baseline is {"ok": true, "passed": 343, "failed": 0, "total": 343} (Stage 2G-F-D applied on top of Stage 2G-F-C).
+- Compile and integrated selftest baseline is {"ok": true, "passed": 351, "failed": 0, "total": 351} (Stage 2G-F-E applied on top of Stage 2G-F-D).
+- Stage 2G-F-E adds a deterministic execution-gate/readiness decision contract (`gate_decision` and `gate_json_preview`) with `execution_allowed` fixed False and does not validate approval, authorize execution, create directories, write manifests, install packages, mutate services, move storage, generate commands, or authorize execution.
 - Stage 2G-F-D adds a deterministic approval-envelope planning contract (`approval_candidate` and `approval_json_preview`) with `approval_granted` fixed False and does not grant approval, create directories, write manifests, install packages, mutate services, move storage, generate commands, or authorize execution.
 - Stage 2G-F-C adds an ordered deterministic transaction/preflight planning contract (`transaction_candidate` and `transaction_json_preview`) and does not create directories, write manifests, install packages, mutate services, move storage, generate commands, or authorize execution.
 - Stage 2G-F-B1 forward-fix preserves factual package-manager identity in manifest payload previews while keeping command generation and execution unauthorized.

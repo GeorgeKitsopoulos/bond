@@ -19,6 +19,7 @@ from ai_user_install_plan import build_user_space_install_plan
 from ai_user_install_manifest import build_user_install_manifest_payload_plan
 from ai_user_install_transaction import build_user_install_transaction_plan
 from ai_user_install_approval import build_user_install_approval_plan
+from ai_user_install_execution_gate import build_user_install_execution_gate
 from ai_core import BOND_ROOT, CONFIG_FILE, get_memory_root, get_router_config_path, get_state_root
 from ai_probe_contract import (
     CERTAINTY_AUTHORITATIVE,
@@ -55,6 +56,7 @@ AVAILABLE_PROBES = (
     "user_install_manifest_plan",
     "user_install_transaction_plan",
     "user_install_approval_plan",
+    "user_install_execution_gate",
 )
 
 
@@ -779,6 +781,7 @@ def run_named_probe(name: str) -> ProbeResult:
         "user_install_manifest_plan": probe_user_install_manifest_plan,
         "user_install_transaction_plan": probe_user_install_transaction_plan,
         "user_install_approval_plan": probe_user_install_approval_plan,
+        "user_install_execution_gate": probe_user_install_execution_gate,
     }
     func = dispatch.get(name)
     if func is None:
@@ -1021,6 +1024,48 @@ def probe_user_install_approval_plan() -> ProbeResult:
     except Exception as exc:
         return probe_error(
             probe_name="user_install_approval_plan",
+            layer=3,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_UNKNOWN,
+            refresh_class=REFRESH_MEDIUM_CHURN,
+            supports_live_truth=False,
+            data={},
+            error=standard_error("computation_failed", str(exc)[:400]),
+        )
+
+
+def probe_user_install_execution_gate() -> ProbeResult:
+    """Read-only user-space install execution-gate planning probe."""
+    try:
+        user_install_approval_result = probe_user_install_approval_plan()
+        user_install_approval_plan = (
+            user_install_approval_result.data
+            if user_install_approval_result.ok
+            else {}
+        )
+
+        gate = build_user_install_execution_gate(
+            user_install_approval_plan=user_install_approval_plan,
+            requested_mode="doctor_review",
+        )
+
+        return probe_ok(
+            probe_name="user_install_execution_gate",
+            layer=3,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_DERIVED,
+            refresh_class=REFRESH_MEDIUM_CHURN,
+            supports_live_truth=True,
+            data=gate,
+            notes=(
+                "Read-only user-space install execution-gate probe; it does not validate approval, "
+                "authorize execution, create directories, write manifests, run commands, mutate services, "
+                "install packages, or move storage."
+            ),
+        )
+    except Exception as exc:
+        return probe_error(
+            probe_name="user_install_execution_gate",
             layer=3,
             source_type=SOURCE_RUNTIME_PROBE,
             certainty_class=CERTAINTY_UNKNOWN,

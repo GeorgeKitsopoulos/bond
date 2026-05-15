@@ -332,6 +332,34 @@ Directory creation is not added in this stage.
 
 Approval execution is not added in this stage.
 
+## User-space execution-gate prerequisite (Stage 2G-F-E)
+
+Future user-space installer work must define an execution-gate/readiness decision before any write-capable operation exists.
+
+Stage 2G-F-E defines `gate_decision` and `gate_json_preview` only.
+
+It previews approval-envelope digest, transaction digest, manifest path, denial reasons, and reviewed operation summary.
+
+`execution_allowed` remains False.
+
+`approval_validated` remains False.
+
+`future_approval_mechanism_available` remains False.
+
+It still performs no write.
+
+It still follows:
+
+classify -> plan -> show -> explicitly authorize -> execute -> verify -> report
+
+Execution is not added in this stage.
+
+Manifest write is not added in this stage.
+
+Directory creation is not added in this stage.
+
+Approval validation is not added in this stage.
+
 ## Uninstall direction
 
 Uninstall must eventually become explicit.

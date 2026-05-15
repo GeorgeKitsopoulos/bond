@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 343, "failed": 0, "total": 343}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 351, "failed": 0, "total": 351}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -153,6 +153,19 @@ Coverage now also includes Stage 2G-F-D user-space install approval-envelope pla
 - `stage2g_f_d_user_install_approval_probe_is_read_only`
 
 These checks cover approval-envelope shape/boundaries, deterministic transaction-digest behavior, sensitive-field omission, missing-transaction-plan blocking, manifest-path alignment enforcement, rejection of upstream authorization/command leakage, non-executing formatting, and read-only probe shape.
+
+Coverage now also includes Stage 2G-F-E user-space install execution-gate/readiness decision checks:
+
+- `stage2g_f_e_user_install_execution_gate_shape_and_boundaries`
+- `stage2g_f_e_user_install_execution_gate_digests_are_deterministic`
+- `stage2g_f_e_user_install_execution_gate_always_denies_execution`
+- `stage2g_f_e_user_install_execution_gate_blocks_missing_approval_plan`
+- `stage2g_f_e_user_install_execution_gate_requires_digest_and_manifest_alignment`
+- `stage2g_f_e_user_install_execution_gate_rejects_upstream_authorization_or_commands`
+- `stage2g_f_e_user_install_execution_gate_format_is_non_executing`
+- `stage2g_f_e_user_install_execution_gate_probe_is_read_only`
+
+These checks cover shape/boundaries, deterministic approval-envelope digest behavior, always-deny execution behavior, missing approval-plan blocking, manifest/digest alignment, rejection of upstream authorization/command leakage, non-executing format output, and read-only probe shape.
 
 These checks cover transaction shape/boundaries, deterministic operation ordering, manifest path alignment, missing-upstream-plan blocking, upstream manual-review propagation, rejection of unsafe upstream authorization/commands, non-executing format output, and read-only probe shape.
 
