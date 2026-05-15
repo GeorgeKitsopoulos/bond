@@ -472,6 +472,24 @@ Stage 2F-F-E adds metadata-only readiness fields inside the explicit maintenance
 - It does not generate commands.
 - It does not broaden normal assistant answers.
 
+### User-space install write-preflight planning (Stage 2G-F-G)
+
+- Module owner: `src/bond/ai_user_install_write_preflight.py`.
+- Probe owner: `user_install_write_preflight` in `src/bond/ai_probes.py`.
+- Purpose: compose the review/report packet into a deterministic `write_preflight_packet` and `write_preflight_json_preview`.
+- It is pure deterministic and non-executing.
+- It keeps all authorization fields explicitly False.
+- Path checks are lexical only and do not inspect the real filesystem.
+- It does not validate approval.
+- It does not authorize execution.
+- It does not create directories.
+- It does not write manifests.
+- It does not install packages.
+- It does not mutate services.
+- It does not move storage.
+- It does not generate commands.
+- It does not broaden normal assistant answers.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

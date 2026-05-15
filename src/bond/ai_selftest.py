@@ -40,6 +40,10 @@ from ai_user_install_review import (
     build_user_install_review_report,
     format_user_install_review_report,
 )
+from ai_user_install_write_preflight import (
+    build_user_install_write_preflight,
+    format_user_install_write_preflight,
+)
 from ai_maintenance_plan import PLAN_KIND, build_maintenance_plan
 from ai_maintenance_report import (
     build_maintenance_readiness_report,
@@ -159,6 +163,7 @@ from ai_probes import (
     probe_user_install_approval_plan,
     probe_user_install_execution_gate,
     probe_user_install_review_report,
+    probe_user_install_write_preflight,
     run_all_probes,
     run_named_probe,
 )
@@ -174,6 +179,7 @@ AI_PROBE_CONTRACT = SRC_BOND / "ai_probe_contract.py"
 AI_PROBES = SRC_BOND / "ai_probes.py"
 AI_INSTALL_MANIFEST = SRC_BOND / "ai_install_manifest.py"
 AI_USER_INSTALL_REVIEW = SRC_BOND / "ai_user_install_review.py"
+AI_USER_INSTALL_WRITE_PREFLIGHT = SRC_BOND / "ai_user_install_write_preflight.py"
 AI_MEMORY = SRC_BOND / "ai_memory.py"
 AI_MEMORY_QUERY = SRC_BOND / "ai_memory_query.py"
 AI_MEMORY_REFLECT = SRC_BOND / "ai_memory_reflect.py"
@@ -6679,7 +6685,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 360, "failed": 0, "total": 360}'
+    current_summary = '{"ok": true, "passed": 369, "failed": 0, "total": 369}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -6901,7 +6907,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 360, "failed": 0, "total": 360}'
+    current_summary = '{"ok": true, "passed": 369, "failed": 0, "total": 369}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -10816,8 +10822,8 @@ def run_stage2g_f_f_user_install_review_tests() -> list[dict[str, Any]]:
         "docs/ARCHITECTURE.md": ["Stage 2G-F-F", "ai_user_install_review.py", "user_install_review_report"],
         "docs/INSTALLATION.md": ["Stage 2G-F-F", "review packet"],
         "docs/PROBES.md": ["user_install_review_report"],
-        "docs/STATE.md": ["Stage 2G-F-F", '{"ok": true, "passed": 360, "failed": 0, "total": 360}'],
-        "docs/TESTING.md": ["Stage 2G-F-F", '{"ok": true, "passed": 360, "failed": 0, "total": 360}'],
+        "docs/STATE.md": ["Stage 2G-F-F", '{"ok": true, "passed": 369, "failed": 0, "total": 369}'],
+        "docs/TESTING.md": ["Stage 2G-F-F", '{"ok": true, "passed": 369, "failed": 0, "total": 369}'],
     }
     for relative_path, needles in docs_needles.items():
         text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
@@ -10863,6 +10869,391 @@ def run_stage2g_f_f_user_install_review_tests() -> list[dict[str, Any]]:
     return results
 
 
+def run_stage2g_f_g_user_install_write_preflight_tests() -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+
+    def append_result(name: str, errors: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": "",
+                "stderr": "",
+                "errors": errors,
+                "cmd": ["stage2g_f_g", name],
+            }
+        )
+
+    auth_false = {
+        "execution_authorized": False,
+        "execution_allowed": False,
+        "install_authorized": False,
+        "package_install_authorized": False,
+        "upgrade_authorized": False,
+        "reconfigure_authorized": False,
+        "service_authorized": False,
+        "storage_move_authorized": False,
+        "write_authorized": False,
+        "write_manifest_authorized": False,
+        "filesystem_write_authorized": False,
+        "commands_generated": False,
+        "approval_granted": False,
+        "approval_validated": False,
+    }
+
+    def build_review_report_payload(
+        *,
+        report_status: str = "ready_for_human_review_execution_locked",
+        requires_manual_review: bool = False,
+        manifest_path: str = "/home/example/Bond/manifest.json",
+        reviewed_operations: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        operations = reviewed_operations
+        if operations is None:
+            operations = [
+                {
+                    "operation_id": "001_config_create_directory_candidate",
+                    "operation_kind": "create_directory_candidate",
+                    "role": "config",
+                    "path": "/home/example/.config/bond",
+                    "status": "planned_not_authorized",
+                }
+            ]
+        human_review_packet = {
+            "kind": "bond_user_space_install_human_review_packet",
+            "requested_mode": "doctor_review",
+            "report_status": report_status,
+            "review_subject": "user_space_install",
+            "identifiers": {
+                "manifest_path": manifest_path,
+                "transaction_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                "approval_envelope_digest": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+            },
+            "execution_lock": {
+                "execution_allowed": False,
+                "execution_authorized": False,
+                "approval_granted": False,
+                "approval_validated": False,
+            },
+            "operation_summary": {
+                "reviewed_operation_count": len(operations),
+                "reviewed_operations": operations,
+            },
+        }
+        return {
+            "kind": "bond_user_space_install_review_report",
+            "schema_version": 1,
+            **auth_false,
+            "requested_mode": "doctor_review",
+            "report_status": report_status,
+            "recommended_next_step_kind": "human_review_execution_locked_packet",
+            "requires_manual_review": requires_manual_review,
+            "blocked_reasons": [],
+            "review_reasons": [],
+            "denial_reasons": [],
+            "manifest_path": manifest_path,
+            "transaction_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "approval_envelope_digest": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+            "reviewed_operation_count": len(operations),
+            "human_review_packet": human_review_packet,
+            "review_json_preview": json.dumps(human_review_packet, sort_keys=True, indent=2, ensure_ascii=False),
+            "input_summaries": {"user_install_execution_gate": {"gate_status": "execution_locked_pending_future_approval"}},
+        }
+
+    # 1. stage2g_f_g_user_install_write_preflight_shape_and_boundaries
+    errors: list[str] = []
+    review_report = build_review_report_payload()
+    preflight = build_user_install_write_preflight(
+        user_install_review_report=review_report,
+        requested_mode="doctor_preflight",
+    )
+    if preflight.get("kind") != "bond_user_space_install_write_preflight":
+        errors.append(f"preflight kind mismatch: {preflight.get('kind')}")
+    if preflight.get("schema_version") != 1:
+        errors.append(f"preflight schema_version mismatch: {preflight.get('schema_version')}")
+    packet = preflight.get("write_preflight_packet")
+    if not isinstance(packet, dict):
+        errors.append("write_preflight_packet must be a dict")
+        packet = {}
+    if packet.get("kind") != "bond_user_space_install_write_preflight_packet":
+        errors.append(f"write_preflight_packet kind mismatch: {packet.get('kind')}")
+    for field in auth_false:
+        if preflight.get(field) is not False:
+            errors.append(f"preflight {field} must be False")
+    packet_lock = packet.get("execution_lock") if isinstance(packet.get("execution_lock"), dict) else {}
+    for field in (
+        "execution_allowed",
+        "execution_authorized",
+        "write_authorized",
+        "write_manifest_authorized",
+        "filesystem_write_authorized",
+        "approval_granted",
+        "approval_validated",
+    ):
+        if packet_lock.get(field) is not False:
+            errors.append(f"execution_lock {field} must be False")
+    if packet_lock.get("future_write_executor_available") is not False:
+        errors.append("future_write_executor_available must be False")
+    if packet_lock.get("explicit_future_approval_required") is not True:
+        errors.append("explicit_future_approval_required must be True")
+
+    preflight_a = build_user_install_write_preflight(
+        user_install_review_report=review_report,
+        requested_mode="doctor_preflight",
+    )
+    preflight_b = build_user_install_write_preflight(
+        user_install_review_report=review_report,
+        requested_mode="doctor_preflight",
+    )
+    if preflight_a.get("write_preflight_json_preview") != preflight_b.get("write_preflight_json_preview"):
+        errors.append("write_preflight_json_preview must be deterministic")
+    append_result("stage2g_f_g_user_install_write_preflight_shape_and_boundaries", errors)
+
+    # 2. stage2g_f_g_user_install_write_preflight_ready_execution_locked
+    errors = []
+    ready_report = build_review_report_payload(report_status="ready_for_human_review_execution_locked")
+    ready_preflight = build_user_install_write_preflight(
+        user_install_review_report=ready_report,
+        requested_mode="fresh_install_preflight",
+    )
+    if ready_preflight.get("requested_mode") != "fresh_install_preflight":
+        errors.append(f"requested_mode mismatch: {ready_preflight.get('requested_mode')}")
+    if ready_preflight.get("write_preflight_status") != "write_preflight_ready_execution_locked":
+        errors.append(f"write_preflight_status mismatch: {ready_preflight.get('write_preflight_status')}")
+    if ready_preflight.get("recommended_next_step_kind") != "review_write_preflight_packet_execution_locked":
+        errors.append("recommended_next_step_kind mismatch")
+    append_result("stage2g_f_g_user_install_write_preflight_ready_execution_locked", errors)
+
+    # 3. stage2g_f_g_user_install_write_preflight_path_safety_checks
+    errors = []
+    path_cases = [
+        {
+            "operation_id": "home",
+            "operation_kind": "create_directory_candidate",
+            "role": "config",
+            "path": "/home/example/Bond/manifest.json",
+            "status": "planned_not_authorized",
+        },
+        {
+            "operation_id": "run_media",
+            "operation_kind": "create_directory_candidate",
+            "role": "config",
+            "path": "/run/media/deck/DeckData/Bond/manifest.json",
+            "status": "planned_not_authorized",
+        },
+        {
+            "operation_id": "etc",
+            "operation_kind": "create_directory_candidate",
+            "role": "config",
+            "path": "/etc/bond/manifest.json",
+            "status": "planned_not_authorized",
+        },
+        {
+            "operation_id": "relative",
+            "operation_kind": "create_directory_candidate",
+            "role": "config",
+            "path": "relative/path",
+            "status": "planned_not_authorized",
+        },
+        {
+            "operation_id": "tmp",
+            "operation_kind": "create_directory_candidate",
+            "role": "config",
+            "path": "/tmp/bond/manifest.json",
+            "status": "planned_not_authorized",
+        },
+    ]
+    path_report = build_review_report_payload(
+        reviewed_operations=path_cases,
+        manifest_path="/home/example/Bond/manifest.json",
+    )
+    path_preflight = build_user_install_write_preflight(
+        user_install_review_report=path_report,
+        requested_mode="doctor_preflight",
+    )
+    checks = path_preflight.get("path_safety_checks") if isinstance(path_preflight.get("path_safety_checks"), list) else []
+
+    def status_for_path(target_path: str) -> str | None:
+        for item in checks:
+            if isinstance(item, dict) and item.get("path") == target_path:
+                return item.get("path_status")
+        return None
+
+    if status_for_path("/home/example/Bond/manifest.json") != "safe_candidate":
+        errors.append("/home/example/Bond/manifest.json must be safe_candidate")
+    if status_for_path("/run/media/deck/DeckData/Bond/manifest.json") != "manual_review_required":
+        errors.append("/run/media/deck/DeckData/Bond/manifest.json must be manual_review_required")
+    if status_for_path("/etc/bond/manifest.json") != "blocked":
+        errors.append("/etc/bond/manifest.json must be blocked")
+    if status_for_path("relative/path") != "blocked":
+        errors.append("relative/path must be blocked")
+    if status_for_path("/tmp/bond/manifest.json") != "blocked":
+        errors.append("/tmp/bond/manifest.json must be blocked")
+    if path_preflight.get("write_preflight_status") != "blocked_unsafe_write_targets":
+        errors.append("unsafe path set must produce blocked_unsafe_write_targets")
+    append_result("stage2g_f_g_user_install_write_preflight_path_safety_checks", errors)
+
+    # 4. stage2g_f_g_user_install_write_preflight_blocks_missing_review_report
+    errors = []
+    blocked = build_user_install_write_preflight(
+        user_install_review_report=None,
+        requested_mode="doctor_preflight",
+    )
+    if blocked.get("write_preflight_status") != "blocked_missing_inputs":
+        errors.append(f"write_preflight_status mismatch: {blocked.get('write_preflight_status')}")
+    if blocked.get("recommended_next_step_kind") != "collect_missing_write_preflight_inputs":
+        errors.append("recommended_next_step_kind mismatch")
+    if "user_install_review_report is missing or invalid" not in blocked.get("blocked_reasons", []):
+        errors.append("blocked_reasons must include invalid review report marker")
+    for field in auth_false:
+        if blocked.get(field) is not False:
+            errors.append(f"blocked preflight {field} must remain False")
+    append_result("stage2g_f_g_user_install_write_preflight_blocks_missing_review_report", errors)
+
+    # 5. stage2g_f_g_user_install_write_preflight_propagates_manual_review
+    errors = []
+    manual_report = build_review_report_payload(
+        report_status="manual_review_required",
+        requires_manual_review=True,
+    )
+    manual_preflight = build_user_install_write_preflight(
+        user_install_review_report=manual_report,
+        requested_mode="doctor_preflight",
+    )
+    if manual_preflight.get("write_preflight_status") != "manual_review_required":
+        errors.append(f"write_preflight_status mismatch: {manual_preflight.get('write_preflight_status')}")
+    if manual_preflight.get("recommended_next_step_kind") != "manual_write_preflight_review_required":
+        errors.append("recommended_next_step_kind mismatch")
+    if manual_preflight.get("requires_manual_review") is not True:
+        errors.append("requires_manual_review must propagate")
+    append_result("stage2g_f_g_user_install_write_preflight_propagates_manual_review", errors)
+
+    # 6. stage2g_f_g_user_install_write_preflight_rejects_upstream_authorization
+    errors = []
+    unauthorized_report = build_review_report_payload()
+    unauthorized_report["execution_authorized"] = True
+    unauthorized_report["human_review_packet"]["execution_lock"]["write_authorized"] = True
+    rejected = build_user_install_write_preflight(
+        user_install_review_report=unauthorized_report,
+        requested_mode="doctor_preflight",
+    )
+    if rejected.get("write_preflight_status") != "unsupported_manual_review":
+        errors.append(f"write_preflight_status mismatch: {rejected.get('write_preflight_status')}")
+    if (
+        "upstream review report attempted to authorize execution, approval, commands, or writes"
+        not in rejected.get("denial_reasons", [])
+    ):
+        errors.append("denial_reasons must include upstream authorization rejection marker")
+    for field in auth_false:
+        if rejected.get(field) is not False:
+            errors.append(f"rejected preflight {field} must remain False")
+    append_result("stage2g_f_g_user_install_write_preflight_rejects_upstream_authorization", errors)
+
+    # 7. stage2g_f_g_user_install_write_preflight_format_is_non_executing
+    errors = []
+    formatted = format_user_install_write_preflight(preflight)
+    for marker in (
+        "User-space install write preflight",
+        "Write preflight status:",
+        "Recommended next step:",
+        "Manifest path:",
+        "Transaction digest:",
+        "Approval envelope digest:",
+        "Execution allowed: false",
+        "Execution authorized: false",
+        "Write authorized: false",
+        "Write manifest authorized: false",
+        "Filesystem write authorized: false",
+        "Approval granted: false",
+        "Approval validated: false",
+        "Candidate write targets:",
+        "Path safety checks:",
+        "Write preflight JSON preview:",
+        "No approval was validated, and no user-space install, directory creation, manifest write, package operation, service mutation, storage move, command generation, or command execution was performed.",
+    ):
+        if marker not in formatted:
+            errors.append(f"formatted output missing marker: {marker}")
+    append_result("stage2g_f_g_user_install_write_preflight_format_is_non_executing", errors)
+
+    # 8. stage2g_f_g_user_install_write_preflight_probe_is_read_only
+    errors = []
+    try:
+        probe_result = run_named_probe("user_install_write_preflight")
+        if probe_result.ok is not True:
+            errors.append("user_install_write_preflight probe must return ok=True")
+        if probe_result.probe_name != "user_install_write_preflight":
+            errors.append(f"probe_name mismatch: {probe_result.probe_name}")
+        probe_data = probe_result.data if isinstance(probe_result.data, dict) else {}
+        if probe_data.get("kind") != "bond_user_space_install_write_preflight":
+            errors.append(f"probe data kind mismatch: {probe_data.get('kind')}")
+        for field in auth_false:
+            if probe_data.get(field) is not False:
+                errors.append(f"probe {field} must be False")
+    except Exception as exc:
+        errors.append(f"run_named_probe user_install_write_preflight raised unexpectedly: {exc}")
+    append_result("stage2g_f_g_user_install_write_preflight_probe_is_read_only", errors)
+
+    # 9. stage2g_f_g_user_install_write_preflight_docs_and_source_boundary
+    errors = []
+    docs_needles = {
+        "README.md": ["Stage 2G-F-G", "user-space install write-preflight"],
+        "ROADMAP.md": ["Stage 2G-F-G", "write-preflight"],
+        "docs/ARCHITECTURE.md": ["Stage 2G-F-G", "ai_user_install_write_preflight.py", "user_install_write_preflight"],
+        "docs/INSTALLATION.md": ["Stage 2G-F-G", "write-preflight"],
+        "docs/PROBES.md": ["user_install_write_preflight"],
+        "docs/STATE.md": ["Stage 2G-F-G", '{"ok": true, "passed": 369, "failed": 0, "total": 369}'],
+        "docs/TESTING.md": ["Stage 2G-F-G", '{"ok": true, "passed": 369, "failed": 0, "total": 369}'],
+    }
+    for relative_path, needles in docs_needles.items():
+        text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
+        for needle in needles:
+            if needle not in text:
+                errors.append(f"missing docs marker in {relative_path}: {needle}")
+
+    source_text = AI_USER_INSTALL_WRITE_PREFLIGHT.read_text(encoding="utf-8")
+    forbidden_tokens = [
+        "subprocess",
+        "import os",
+        "from os",
+        "pathlib",
+        "Path(",
+        "Popen",
+        "check_call",
+        "check_output",
+        "open(",
+        ".mkdir(",
+        ".write_text(",
+        ".write_bytes(",
+        "shutil.",
+        "socket.",
+        "requests.",
+        "urllib.",
+        "sudo ",
+        "apt install",
+        "apt upgrade",
+        "dnf install",
+        "rpm-ostree install",
+        "pacman -S",
+        "zypper install",
+        "apk add",
+        "xbps-install",
+        "nix-env",
+        "systemctl",
+        "flatpak install",
+        "podman ",
+        "docker ",
+    ]
+    hits = [token for token in forbidden_tokens if token in source_text]
+    if hits:
+        errors.append(
+            "forbidden execution/write/system token(s) in ai_user_install_write_preflight.py: " + ", ".join(hits)
+        )
+    append_result("stage2g_f_g_user_install_write_preflight_docs_and_source_boundary", errors)
+
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -10874,6 +11265,7 @@ def main() -> None:
         AI_PROBES,
         AI_INSTALL_MANIFEST,
         AI_USER_INSTALL_REVIEW,
+        AI_USER_INSTALL_WRITE_PREFLIGHT,
         AI_WRAPPER,
         AI_MEMORY,
         AI_MEMORY_QUERY,
@@ -11440,6 +11832,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2g_f_f_user_install_review_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2g_f_g_user_install_write_preflight_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

@@ -5,15 +5,17 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 ## Current status
 
 - Bond is under active development.
-- The current validated baseline is Stage 2G-F-F user-space install review/report contract.
+- The current validated baseline is Stage 2G-F-G user-space install write-preflight contract.
 - `src/bond/ai_user_install_approval.py` added: pure deterministic, non-executing user-space install approval-envelope planning contract that composes transaction/preflight planning inputs into deterministic `approval_candidate` and `approval_json_preview` outputs.
 - `src/bond/ai_user_install_execution_gate.py` added: pure deterministic, non-executing user-space install execution-gate/readiness decision contract that consumes approval-envelope inputs into deterministic `gate_decision` and `gate_json_preview` outputs.
 - `src/bond/ai_user_install_review.py` added: pure deterministic, non-executing user-space install review/report contract that composes execution-gate inputs into deterministic `human_review_packet` and `review_json_preview` outputs.
+- `src/bond/ai_user_install_write_preflight.py` added: pure deterministic, non-executing user-space install write-preflight contract that composes review/report inputs into deterministic `write_preflight_packet` and `write_preflight_json_preview` outputs.
 - `src/bond/ai_user_install_transaction.py` added: pure deterministic, non-executing user-space install transaction/preflight planning contract that composes upstream write-set and manifest payload plans into ordered `transaction_candidate` and `transaction_json_preview` outputs.
 - `src/bond/ai_user_install_manifest.py` added: pure deterministic, non-executing user-space install manifest payload planning contract that derives sanitized `manifest_candidate` and deterministic `manifest_json_preview` from explicit planning inputs.
 - `src/bond/ai_user_install_plan.py` remains integrated: pure deterministic, non-executing user-space install write-set planning contract composing explicit installer/storage/manifest path inputs.
 - `src/bond/ai_installer_plan.py` added: pure deterministic, non-executing installer/reconfigure planning contract composing Stage 2G read-only facts.
-- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 360, "failed": 0, "total": 360} (see docs/TESTING.md for exact summary).
+- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 369, "failed": 0, "total": 369} (see docs/TESTING.md for exact summary).
+- Stage 2G-F-G adds a deterministic non-executing user-space install write-preflight packet; it does not validate approval, authorize execution, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
 - Stage 2G-F-F adds a deterministic non-executing user-space install review/report packet; it does not validate approval, authorize execution, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
 - Stage 2G-F-E defines a deterministic user-space install execution-gate/readiness decision only (`gate_decision` and `gate_json_preview`); it does not validate approval, grant approval, create directories, write manifests, install packages, mutate services, move storage, generate commands, or authorize execution.
 - execution_allowed remains False in Stage 2G-F-E.

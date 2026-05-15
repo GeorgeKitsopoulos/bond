@@ -21,6 +21,7 @@ from ai_user_install_transaction import build_user_install_transaction_plan
 from ai_user_install_approval import build_user_install_approval_plan
 from ai_user_install_execution_gate import build_user_install_execution_gate
 from ai_user_install_review import build_user_install_review_report
+from ai_user_install_write_preflight import build_user_install_write_preflight
 from ai_core import BOND_ROOT, CONFIG_FILE, get_memory_root, get_router_config_path, get_state_root
 from ai_probe_contract import (
     CERTAINTY_AUTHORITATIVE,
@@ -59,6 +60,7 @@ AVAILABLE_PROBES = (
     "user_install_approval_plan",
     "user_install_execution_gate",
     "user_install_review_report",
+    "user_install_write_preflight",
 )
 
 
@@ -785,6 +787,7 @@ def run_named_probe(name: str) -> ProbeResult:
         "user_install_approval_plan": probe_user_install_approval_plan,
         "user_install_execution_gate": probe_user_install_execution_gate,
         "user_install_review_report": probe_user_install_review_report,
+        "user_install_write_preflight": probe_user_install_write_preflight,
     }
     func = dispatch.get(name)
     if func is None:
@@ -1111,6 +1114,48 @@ def probe_user_install_review_report() -> ProbeResult:
     except Exception as exc:
         return probe_error(
             probe_name="user_install_review_report",
+            layer=3,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_UNKNOWN,
+            refresh_class=REFRESH_MEDIUM_CHURN,
+            supports_live_truth=False,
+            data={},
+            error=standard_error("computation_failed", str(exc)[:400]),
+        )
+
+
+def probe_user_install_write_preflight() -> ProbeResult:
+    """Read-only user-space install write-preflight probe."""
+    try:
+        user_install_review_result = probe_user_install_review_report()
+        user_install_review_report = (
+            user_install_review_result.data
+            if user_install_review_result.ok
+            else {}
+        )
+
+        report = build_user_install_write_preflight(
+            user_install_review_report=user_install_review_report,
+            requested_mode="doctor_preflight",
+        )
+
+        return probe_ok(
+            probe_name="user_install_write_preflight",
+            layer=3,
+            source_type=SOURCE_RUNTIME_PROBE,
+            certainty_class=CERTAINTY_DERIVED,
+            refresh_class=REFRESH_MEDIUM_CHURN,
+            supports_live_truth=True,
+            data=report,
+            notes=(
+                "Read-only user-space install write-preflight probe; it does not validate approval, "
+                "authorize execution, create directories, write manifests, run commands, mutate services, "
+                "install packages, or move storage."
+            ),
+        )
+    except Exception as exc:
+        return probe_error(
+            probe_name="user_install_write_preflight",
             layer=3,
             source_type=SOURCE_RUNTIME_PROBE,
             certainty_class=CERTAINTY_UNKNOWN,

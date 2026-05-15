@@ -114,6 +114,12 @@ Future write-capable user-space installer work must have a human-facing review p
 
 This stage does not collect approval and does not authorize execution.
 
+## User-space install write-preflight prerequisite (Stage 2G-F-G)
+
+Future write-capable user-space installer work must pass a write-preflight packet before any approval mechanism or write-capable operation exists.
+
+This stage does not collect approval and does not authorize writes.
+
 Updates must be repository-driven.
 
 This section describes updating Bond itself. It is separate from future OS/package update advisory features.

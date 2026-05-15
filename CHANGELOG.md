@@ -20,6 +20,17 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-F-G user-space install write-preflight contract
+
+- Adds `ai_user_install_write_preflight.py`.
+- Adds `user_install_write_preflight` probe.
+- Defines a deterministic non-executing user-space install write-preflight packet.
+- Composes the Stage 2G-F-F review/report packet into `write_preflight_packet` and `write_preflight_json_preview` outputs.
+- Uses lexical path checks only and does not inspect the real filesystem.
+- Does not validate approval, authorize execution, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.
+- Adds 9 selftests.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 369, "failed": 0, "total": 369}.
+
 ### Stage 2G-F-F user-space install review/report contract
 
 - Adds `ai_user_install_review.py`.

@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 360, "failed": 0, "total": 360}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 369, "failed": 0, "total": 369}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -150,6 +150,18 @@ Coverage now also includes Stage 2G-F-F user-space install review/report checks:
 - `stage2g_f_f_user_install_review_report_format_is_non_executing` — formatted report includes explicit non-execution markers and no execution phrases
 - `stage2g_f_f_user_install_review_report_probe_is_read_only` — `run_named_probe("user_install_review_report")` returns the expected read-only contract with all authorization fields False
 - `stage2g_f_f_user_install_review_report_docs_and_source_boundary` — docs mention Stage 2G-F-F and `ai_user_install_review.py` stays free of forbidden execution/write/system tokens
+
+Coverage now also includes Stage 2G-F-G user-space install write-preflight checks:
+
+- `stage2g_f_g_user_install_write_preflight_shape_and_boundaries` — write-preflight report/packet shape, deterministic JSON preview, and all authorization fields fixed False
+- `stage2g_f_g_user_install_write_preflight_ready_execution_locked` — `ready_for_human_review_execution_locked` maps to `write_preflight_ready_execution_locked` while execution remains locked
+- `stage2g_f_g_user_install_write_preflight_path_safety_checks` — lexical path safety classification for safe, manual-review, and blocked path targets
+- `stage2g_f_g_user_install_write_preflight_blocks_missing_review_report` — missing/invalid review report input blocks safely with no write authorization
+- `stage2g_f_g_user_install_write_preflight_propagates_manual_review` — manual review requirements propagate from review-shaped input
+- `stage2g_f_g_user_install_write_preflight_rejects_upstream_authorization` — injected upstream authorization is downgraded/rejected while all authorization fields remain False
+- `stage2g_f_g_user_install_write_preflight_format_is_non_executing` — formatted report includes explicit non-execution markers
+- `stage2g_f_g_user_install_write_preflight_probe_is_read_only` — `run_named_probe("user_install_write_preflight")` returns the expected read-only contract with all authorization fields False
+- `stage2g_f_g_user_install_write_preflight_docs_and_source_boundary` — docs mention Stage 2G-F-G and `ai_user_install_write_preflight.py` stays free of forbidden execution/write/system tokens
 - `stage2g_f_c_user_install_transaction_format_is_non_executing`
 - `stage2g_f_c_user_install_transaction_probe_is_read_only`
 
