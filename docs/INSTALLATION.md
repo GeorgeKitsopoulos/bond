@@ -254,6 +254,22 @@ classify -> plan -> show -> explicitly authorize -> execute -> verify -> report
 
 Installation, reconfiguration, and storage execution are not added in this stage.
 
+## User-space write-set prerequisite (Stage 2G-F-A)
+
+Future user-space installer work must define an explicit write-set before any execution-capable installer exists.
+
+Stage 2G-F-A defines `target_layout` and `write_set` only.
+
+It can identify candidate user-space locations for config/data/cache/models/telemetry/logs/backups and a future install manifest path.
+
+It still performs no write.
+
+It still follows:
+
+classify -> plan -> show -> explicitly authorize -> execute -> verify -> report
+
+Execution is not added in this stage.
+
 ## Uninstall direction
 
 Uninstall must eventually become explicit.

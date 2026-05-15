@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 309, "failed": 0, "total": 309}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 317, "failed": 0, "total": 317}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -100,6 +100,19 @@ Coverage now also includes Stage 2G-E read-only installer planning contract chec
 - `stage2g_e_installer_plan_omits_identity_and_secret_fields` — plan output omits sensitive fields (hostname, username, email, token, password, secret, api_key, machine_id) from host, storage, and dependency inputs
 - `stage2g_e_installer_plan_format_is_non_executing` — format_installer_plan output includes disclaimer and does not include shell commands or package-manager invocations
 - `stage2g_e_installer_plan_probe_is_read_only` — installer_plan probe invocation returns correct kind with all authorizations false
+
+Coverage now also includes Stage 2G-F-A user-space install write-set contract checks:
+
+- `stage2g_f_a_user_install_plan_shape_and_boundaries`
+- `stage2g_f_a_user_install_plan_resolves_role_paths`
+- `stage2g_f_a_user_install_plan_env_paths_override_role_bases`
+- `stage2g_f_a_user_install_plan_blocks_missing_installer_plan`
+- `stage2g_f_a_user_install_plan_propagates_upstream_manual_review`
+- `stage2g_f_a_user_install_plan_rejects_non_user_space_targets`
+- `stage2g_f_a_user_install_plan_format_is_non_executing`
+- `stage2g_f_a_user_install_plan_probe_is_read_only`
+
+These tests cover shape and boundaries, role path resolution, env override behavior, missing upstream installer plan blocking, upstream manual review propagation, non-user-space rejection, non-executing formatting, and read-only probe shape.
 
 Stage 2F-F-D tests also guard against accidental inclusion of host/session/tool/model context probes inside `ai_maintenance_report.py`; the maintenance report contract must stay limited to the three maintenance probes plus the non-executing plan output.
 Stage 2F-F-D docs hygiene coverage also guards against duplicate maintenance-planning and coverage checkpoint notes in ROADMAP.md and docs/TESTING.md, plus stale current baseline drift across README.md, ROADMAP.md, docs/STATE.md, and docs/TESTING.md.

@@ -268,7 +268,7 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest latest run summary is {"ok": true, "passed": 309, "failed": 0, "total": 309}.
+- integrated selftest latest run summary is {"ok": true, "passed": 317, "failed": 0, "total": 317}.
 - coverage includes routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, telemetry-derived guardrail regressions, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, and the C5 follow-up strict-timeout cleanup checks.
 - coverage also includes Stage 2F-D probe foundation/cleanup checks, Stage 2F-D-B bounded model-truth checks, Stage 2F-D-C model-truth fallback checks, Stage 2F-D-D bounded context-capability answer checks, Stage 2F-E-A classifier-boundary checks, events bucket, and core memory flows.
 - coverage now also includes Stage 2F-E-E selftest accounting integrity checks.
@@ -281,6 +281,7 @@ Current checkpoint note:
 - coverage now also includes Stage 2G-D package-manager strategy classification and dependency planning contract checks, Stage 2G-D forward-fix regression checks for host_profile distro_like resolution, rpm-ostree non-host-package claims, and manual-review next-step aggregation, and Stage 2G-D second forward-fix checks for manual-review item status alignment and top-level aggregation consistency.
 - coverage now also includes Stage 2G-D package-manager strategy classification and dependency planning checks.
 - coverage now also includes Stage 2G-E read-only installer planning contract checks, missing-inputs blocking, dependency and drift manual-review propagation, sensitive field exclusion, non-executing format output, and read-only probe shape checks.
+- coverage now also includes Stage 2G-F-A user-space install write-set contract checks for shape/boundaries, role-path resolution, env-path override precedence, upstream blocking/manual-review propagation, non-user-space rejection, non-executing formatting, and read-only probe shape.
 - integrated selftest baseline now includes confirmation-token flow coverage (token creation, invalid/expired/consumed handling, confirmed dry-run, and non-reuse)
 - Stage 2E improves parser honesty and preflight failure behavior; Stage 2F-A/2F-B/2F-C add static registry truth, read-only capability answers, and telemetry-driven deterministic guardrail hardening, but do not expand executor authorization
 - this does not imply full behavioral coverage or assistant maturity
@@ -305,6 +306,8 @@ Current sequence implementation boundary:
 - Stage 2G-C implements only item 3.
 - Stage 2G-D implements only item 4.
 - Stage 2G-E implements only item 5.
+- Stage 2G-F-A begins item 6 by adding a non-executing user-space install write-set contract.
+- Stage 2G-F-A does not complete the user-space installer and does not create/write anything.
 
 ### M7 - Service layer
 

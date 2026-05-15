@@ -133,6 +133,7 @@ from ai_probes import (
     probe_session_baseline,
     probe_storage_hygiene,
     probe_tool_inventory,
+    probe_user_install_plan,
     run_all_probes,
     run_named_probe,
 )
@@ -6652,7 +6653,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 309, "failed": 0, "total": 309}'
+    current_summary = '{"ok": true, "passed": 317, "failed": 0, "total": 317}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -6874,7 +6875,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 309, "failed": 0, "total": 309}'
+    current_summary = '{"ok": true, "passed": 317, "failed": 0, "total": 317}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -8527,6 +8528,287 @@ def run_stage2g_e_installer_plan_tests() -> list[dict[str, Any]]:
     return results
 
 
+def run_stage2g_f_a_user_install_plan_tests() -> list[dict[str, Any]]:
+    import ai_user_install_plan
+
+    results: list[dict[str, Any]] = []
+
+    def _append(name: str, errors: list[str]) -> None:
+        results.append(
+            {
+                "name": name,
+                "ok": not errors,
+                "returncode": 0,
+                "stdout": "",
+                "stderr": "",
+                "errors": errors,
+            }
+        )
+
+    installer_plan = {
+        "kind": "bond_installer_plan",
+        "plan_status": "ready_for_human_review",
+        "recommended_next_step_kind": "review_installer_plan",
+        "requires_manual_review": False,
+        "execution_authorized": False,
+        "install_authorized": False,
+        "upgrade_authorized": False,
+        "reconfigure_authorized": False,
+        "service_authorized": False,
+        "write_plan_authorized": False,
+        "write_manifest_authorized": False,
+        "commands_generated": False,
+    }
+
+    storage_profile = {
+        "profile_kind": "storage_portability_profile",
+        "recommendations": {
+            "strategy": "external_large_data_preferred",
+            "requires_manual_review": False,
+            "reason": "external_large_data_preferred",
+            "role_recommendations": [
+                {"role": "config", "preferred_base": "/home/tester"},
+                {"role": "data", "preferred_base": "/run/media/tester/DeckData"},
+                {"role": "cache", "preferred_base": "/run/media/tester/DeckData"},
+                {"role": "models", "preferred_base": "/run/media/tester/DeckData"},
+                {"role": "telemetry", "preferred_base": "/run/media/tester/DeckData"},
+                {"role": "logs", "preferred_base": "/run/media/tester/DeckData"},
+                {"role": "backups", "preferred_base": "/run/media/tester/DeckData"},
+            ],
+        },
+    }
+
+    # 1. stage2g_f_a_user_install_plan_shape_and_boundaries
+    errors: list[str] = []
+    plan = ai_user_install_plan.build_user_space_install_plan(
+        installer_plan=installer_plan,
+        storage_profile=storage_profile,
+        requested_mode="doctor_review",
+    )
+    if plan.get("kind") != ai_user_install_plan.USER_INSTALL_PLAN_KIND:
+        errors.append(f"kind mismatch: {plan.get('kind')}")
+    if plan.get("schema_version") != ai_user_install_plan.USER_INSTALL_PLAN_SCHEMA_VERSION:
+        errors.append(f"schema_version mismatch: {plan.get('schema_version')}")
+    for field in (
+        "execution_authorized",
+        "install_authorized",
+        "package_install_authorized",
+        "upgrade_authorized",
+        "reconfigure_authorized",
+        "service_authorized",
+        "storage_move_authorized",
+        "write_authorized",
+        "write_manifest_authorized",
+    ):
+        if plan.get(field) is not False:
+            errors.append(f"{field} must be False, got {plan.get(field)}")
+    if plan.get("commands_generated") is not False:
+        errors.append("commands_generated must be False")
+    write_set = plan.get("write_set")
+    if not isinstance(write_set, list) or not write_set:
+        errors.append("write_set must exist")
+    else:
+        for item in write_set:
+            if not isinstance(item, dict):
+                errors.append("write_set item must be dict")
+                continue
+            if item.get("execution_authorized") is not False:
+                errors.append("write_set item execution_authorized must be False")
+            if item.get("write_authorized") is not False:
+                errors.append("write_set item write_authorized must be False")
+            if item.get("command") is not None:
+                errors.append("write_set item command must be None")
+    _append("stage2g_f_a_user_install_plan_shape_and_boundaries", errors)
+
+    # 2. stage2g_f_a_user_install_plan_resolves_role_paths
+    errors = []
+    plan = ai_user_install_plan.build_user_space_install_plan(
+        installer_plan=installer_plan,
+        storage_profile=storage_profile,
+        requested_mode="doctor_review",
+    )
+    layout = plan.get("target_layout", {})
+    if layout.get("config") != "/home/tester/bond/config":
+        errors.append(f"config path mismatch: {layout.get('config')}")
+    if layout.get("data") != "/run/media/tester/DeckData/bond/data":
+        errors.append(f"data path mismatch: {layout.get('data')}")
+    if layout.get("models") != "/run/media/tester/DeckData/bond/models":
+        errors.append(f"models path mismatch: {layout.get('models')}")
+    if layout.get("manifest_path") != "/home/tester/bond/config/install-manifest.json":
+        errors.append(f"manifest_path mismatch: {layout.get('manifest_path')}")
+    if plan.get("plan_status") != "ready_for_user_review":
+        errors.append(f"plan_status mismatch: {plan.get('plan_status')}")
+    _append("stage2g_f_a_user_install_plan_resolves_role_paths", errors)
+
+    # 3. stage2g_f_a_user_install_plan_env_paths_override_role_bases
+    errors = []
+    env_override = {
+        "BOND_CONFIG_DIR": "/home/tester/.config/bond",
+        "BOND_DATA_DIR": "/run/media/tester/DeckData/Bond/data",
+        "BOND_CACHE_DIR": "/run/media/tester/DeckData/Bond/cache",
+        "BOND_MODEL_DIR": "/run/media/tester/DeckData/Bond/models",
+        "BOND_TELEMETRY_DIR": "/run/media/tester/DeckData/Bond/telemetry",
+        "BOND_LOG_DIR": "/run/media/tester/DeckData/Bond/logs",
+        "BOND_BACKUP_DIR": "/run/media/tester/DeckData/Bond/backups",
+    }
+    plan = ai_user_install_plan.build_user_space_install_plan(
+        installer_plan=installer_plan,
+        storage_profile=storage_profile,
+        env_paths=env_override,
+        requested_mode="doctor_review",
+    )
+    layout = plan.get("target_layout", {})
+    expected_pairs = {
+        "config": "/home/tester/.config/bond",
+        "data": "/run/media/tester/DeckData/Bond/data",
+        "cache": "/run/media/tester/DeckData/Bond/cache",
+        "models": "/run/media/tester/DeckData/Bond/models",
+        "telemetry": "/run/media/tester/DeckData/Bond/telemetry",
+        "logs": "/run/media/tester/DeckData/Bond/logs",
+        "backups": "/run/media/tester/DeckData/Bond/backups",
+    }
+    for role, expected in expected_pairs.items():
+        actual = layout.get(role)
+        if actual != expected:
+            errors.append(f"{role} path mismatch: expected {expected}, got {actual}")
+    _append("stage2g_f_a_user_install_plan_env_paths_override_role_bases", errors)
+
+    # 4. stage2g_f_a_user_install_plan_blocks_missing_installer_plan
+    errors = []
+    plan = ai_user_install_plan.build_user_space_install_plan(
+        installer_plan=None,
+        storage_profile=storage_profile,
+        requested_mode="doctor_review",
+    )
+    if plan.get("plan_status") != "blocked_missing_inputs":
+        errors.append(f"plan_status mismatch: {plan.get('plan_status')}")
+    if plan.get("recommended_next_step_kind") != "collect_missing_user_install_inputs":
+        errors.append(
+            f"recommended_next_step_kind mismatch: {plan.get('recommended_next_step_kind')}"
+        )
+    if plan.get("execution_authorized") is not False:
+        errors.append("execution_authorized must be False")
+    if plan.get("write_authorized") is not False:
+        errors.append("write_authorized must be False")
+    _append("stage2g_f_a_user_install_plan_blocks_missing_installer_plan", errors)
+
+    # 5. stage2g_f_a_user_install_plan_propagates_upstream_manual_review
+    errors = []
+    manual_installer = dict(installer_plan)
+    manual_installer["plan_status"] = "manual_review_required"
+    manual_installer["requires_manual_review"] = True
+    plan = ai_user_install_plan.build_user_space_install_plan(
+        installer_plan=manual_installer,
+        storage_profile=storage_profile,
+        requested_mode="doctor_review",
+    )
+    if plan.get("plan_status") != "manual_review_required":
+        errors.append(f"plan_status mismatch: {plan.get('plan_status')}")
+    if plan.get("recommended_next_step_kind") != "manual_user_install_review":
+        errors.append(
+            f"recommended_next_step_kind mismatch: {plan.get('recommended_next_step_kind')}"
+        )
+    review_reasons = plan.get("review_reasons", [])
+    if not any("installer" in str(reason).lower() for reason in review_reasons):
+        errors.append("review_reasons must mention installer")
+    _append("stage2g_f_a_user_install_plan_propagates_upstream_manual_review", errors)
+
+    # 6. stage2g_f_a_user_install_plan_rejects_non_user_space_targets
+    errors = []
+    bad_storage = {
+        "profile_kind": "storage_portability_profile",
+        "recommendations": {
+            "strategy": "external_large_data_preferred",
+            "requires_manual_review": False,
+            "reason": "external_large_data_preferred",
+            "role_recommendations": [
+                {"role": "config", "preferred_base": "/usr/local"},
+                {"role": "data", "preferred_base": "/run/media/tester/DeckData"},
+                {"role": "cache", "preferred_base": "/run/media/tester/DeckData"},
+                {"role": "models", "preferred_base": "/run/media/tester/DeckData"},
+                {"role": "telemetry", "preferred_base": "/run/media/tester/DeckData"},
+                {"role": "logs", "preferred_base": "/run/media/tester/DeckData"},
+                {"role": "backups", "preferred_base": "/run/media/tester/DeckData"},
+            ],
+        },
+    }
+    plan = ai_user_install_plan.build_user_space_install_plan(
+        installer_plan=installer_plan,
+        storage_profile=bad_storage,
+        requested_mode="doctor_review",
+    )
+    if plan.get("plan_status") != "unsupported_manual_review":
+        errors.append(f"plan_status mismatch: {plan.get('plan_status')}")
+    if plan.get("recommended_next_step_kind") != "manual_platform_review":
+        errors.append(
+            f"recommended_next_step_kind mismatch: {plan.get('recommended_next_step_kind')}"
+        )
+    if plan.get("write_authorized") is not False:
+        errors.append("write_authorized must be False")
+    _append("stage2g_f_a_user_install_plan_rejects_non_user_space_targets", errors)
+
+    # 7. stage2g_f_a_user_install_plan_format_is_non_executing
+    errors = []
+    plan = ai_user_install_plan.build_user_space_install_plan(
+        installer_plan=installer_plan,
+        storage_profile=storage_profile,
+        requested_mode="doctor_review",
+    )
+    formatted = ai_user_install_plan.format_user_space_install_plan(plan)
+    if "User-space install write-set report" not in formatted:
+        errors.append("formatted output missing title")
+    if "Execution authorized: false" not in formatted:
+        errors.append("formatted output missing execution boundary")
+    if "Write authorized: false" not in formatted:
+        errors.append("formatted output missing write boundary")
+    if "No user-space install, directory creation, manifest write, package operation, service mutation, storage move, or command execution was performed." not in formatted:
+        errors.append("formatted output missing final disclaimer")
+    for forbidden in (
+        "sudo ",
+        "apt install",
+        "dnf install",
+        "pacman -S",
+        "rpm-ostree",
+        "flatpak install",
+        "mkdir ",
+        "touch ",
+        "systemctl",
+    ):
+        if forbidden in formatted:
+            errors.append(f"formatted output contains forbidden string: {forbidden}")
+    _append("stage2g_f_a_user_install_plan_format_is_non_executing", errors)
+
+    # 8. stage2g_f_a_user_install_plan_probe_is_read_only
+    errors = []
+    try:
+        probe_result = probe_user_install_plan()
+        if probe_result.probe_name != "user_install_plan":
+            errors.append(f"probe_name mismatch: {probe_result.probe_name}")
+        probe_data = probe_result.data if isinstance(probe_result.data, dict) else {}
+        if probe_data.get("kind") != "bond_user_space_install_write_set_plan":
+            errors.append(f"probe data kind mismatch: {probe_data.get('kind')}")
+        for field in (
+            "execution_authorized",
+            "install_authorized",
+            "package_install_authorized",
+            "upgrade_authorized",
+            "reconfigure_authorized",
+            "service_authorized",
+            "storage_move_authorized",
+            "write_authorized",
+            "write_manifest_authorized",
+        ):
+            if probe_data.get(field) is not False:
+                errors.append(f"probe {field} must be False, got {probe_data.get(field)}")
+        if probe_result.probe_name == "maintenance_report":
+            errors.append("probe must not have probe_name 'maintenance_report'")
+    except Exception as exc:
+        errors.append(f"probe_user_install_plan raised unexpectedly: {exc}")
+    _append("stage2g_f_a_user_install_plan_probe_is_read_only", errors)
+
+    return results
+
+
 def main() -> None:
     required = [
         AI_RUN,
@@ -9019,6 +9301,18 @@ def main() -> None:
             print_block("stderr", result["stderr"])
 
     for result in run_stage2g_e_installer_plan_tests():
+        if result["ok"]:
+            passed += 1
+            print(f"[PASS] {result['name']}")
+        else:
+            failed += 1
+            print(f"[FAIL] {result['name']}")
+            for err in result["errors"]:
+                print(f"  - {err}")
+            print_block("stdout", result["stdout"])
+            print_block("stderr", result["stderr"])
+
+    for result in run_stage2g_f_a_user_install_plan_tests():
         if result["ok"]:
             passed += 1
             print(f"[PASS] {result['name']}")

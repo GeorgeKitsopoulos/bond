@@ -364,6 +364,22 @@ Stage 2F-F-E adds metadata-only readiness fields inside the explicit maintenance
 - All authorization fields are explicitly False.
 - It does not broaden normal assistant answers.
 
+### User-space install write-set planning (Stage 2G-F-A)
+
+- Module owner: `src/bond/ai_user_install_plan.py`.
+- Probe owner: `user_install_plan` in `src/bond/ai_probes.py`.
+- Purpose: derive deterministic user-space `target_layout` and `write_set` facts from existing installer/storage facts.
+- The module is pure deterministic and non-executing.
+- It does not inspect live system state.
+- It does not create directories.
+- It does not write manifests.
+- It does not install packages.
+- It does not mutate services.
+- It does not move storage.
+- It does not generate executable commands.
+- All authorization fields are explicitly False.
+- It does not broaden normal assistant answers.
+
 ### Rootless-first capability ordering
 
 Capabilities must be exposed in this order of preference:

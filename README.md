@@ -5,9 +5,11 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 ## Current status
 
 - Bond is under active development.
-- The current validated baseline is Stage 2G-E read-only installer planning contract.
+- The current validated baseline is Stage 2G-F-A user-space install write-set contract.
+- `src/bond/ai_user_install_plan.py` added: pure deterministic, non-executing user-space install write-set planning contract composing explicit installer/storage/manifest path inputs.
 - `src/bond/ai_installer_plan.py` added: pure deterministic, non-executing installer/reconfigure planning contract composing Stage 2G read-only facts.
-- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 309, "failed": 0, "total": 309} (see docs/TESTING.md for exact summary).
+- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 317, "failed": 0, "total": 317} (see docs/TESTING.md for exact summary).
+- Stage 2G-F-A defines a non-executing user-space write-set only; it does not create directories, write manifests, install packages, mutate services, move storage, or authorize execution.
 - Stage 2G-E adds a read-only installer planning layer without authorizing installation, reconfiguration, service changes, manifest writes, or storage mutation.
 - Stage 2G-D adds a read-only package-manager classification and dependency planning layer without authorizing installation, execution, or host mutation.
 - Stage 2G-C adds a read-only install manifest and drift detection layer on top of the existing portability profiles.

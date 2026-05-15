@@ -20,6 +20,17 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-F-A user-space install write-set contract
+
+- Adds `ai_user_install_plan.py` as a pure deterministic, non-executing user-space install write-set planning contract.
+- Adds `user_install_plan` as a read-only probe that composes installer/storage facts into a bounded user-space write-set review plan.
+- Defines deterministic `target_layout` and `write_set` structures for future user-space installer review.
+- All authorization fields remain explicitly False.
+- No commands are generated.
+- No directory creation, manifest write, package operation, service mutation, storage move, or command execution is performed.
+- Adds 8 selftests for Stage 2G-F-A contract coverage.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 317, "failed": 0, "total": 317}.
+
 ### Stage 2G-E read-only installer planning contract
 
 - Adds a read-only installer planning contract composing Stage 2G profile, drift, and dependency facts into a bounded installer plan.
