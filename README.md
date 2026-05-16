@@ -7,6 +7,7 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 - Bond is under active development.
 - The current validated baseline is Stage 2G-F-J final user-space install readiness aggregator/report.
 - `src/bond/ai_user_install_write_executor.py` added: pure deterministic, non-executing disabled/default-deny user-space install write-executor skeleton that composes approval-validation inputs into deterministic `executor_disabled_packet` and `executor_json_preview` outputs.
+- Stage 2G-F-J-A hardens the final readiness report while preserving non-execution/default-deny behavior.
 - `src/bond/ai_user_install_approval_validation.py` added: pure deterministic, non-executing user-space install approval-validation contract that composes write-preflight inputs into deterministic `approval_challenge` and `approval_challenge_json_preview` outputs.
 - `src/bond/ai_user_install_approval.py` added: pure deterministic, non-executing user-space install approval-envelope planning contract that composes transaction/preflight planning inputs into deterministic `approval_candidate` and `approval_json_preview` outputs.
 - `src/bond/ai_user_install_execution_gate.py` added: pure deterministic, non-executing user-space install execution-gate/readiness decision contract that consumes approval-envelope inputs into deterministic `gate_decision` and `gate_json_preview` outputs.
@@ -16,7 +17,7 @@ Bond is a local-first assistant project for Linux systems. It is currently focus
 - `src/bond/ai_user_install_manifest.py` added: pure deterministic, non-executing user-space install manifest payload planning contract that derives sanitized `manifest_candidate` and deterministic `manifest_json_preview` from explicit planning inputs.
 - `src/bond/ai_user_install_plan.py` remains integrated: pure deterministic, non-executing user-space install write-set planning contract composing explicit installer/storage/manifest path inputs.
 - `src/bond/ai_installer_plan.py` added: pure deterministic, non-executing installer/reconfigure planning contract composing Stage 2G read-only facts.
-- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 396, "failed": 0, "total": 396} (see docs/TESTING.md for exact summary).
+- Current documented validation baseline: compile passes and integrated selftest currently reports {"ok": true, "passed": 400, "failed": 0, "total": 400} (see docs/TESTING.md for exact summary).
 - Stage 2G-F-J adds a deterministic final non-executing user-space install readiness report.
 - Stage 2G-F-J closes the current detect-plan-show user-space install chain for human review, but still does not collect approval, validate approval as true, authorize execution, authorize writes, create directories, write manifests, install packages, mutate services, move storage, generate commands, execute commands, or add CLI/scripts.
 - Stage 2G-F-I adds a deterministic disabled/default-deny user-space install write-executor skeleton; it does not collect approval, validate approval as true, authorize execution, authorize writes, create directories, write manifests, install packages, mutate services, move storage, generate commands, or execute commands.

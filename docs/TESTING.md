@@ -33,7 +33,7 @@ So current passing tests are necessary but not sufficient.
 
 ## Current selftest baseline
 
-Current integrated selftest summary from latest run is {"ok": true, "passed": 396, "failed": 0, "total": 396}. Coverage includes Stage 2E parser-contract/action-preflight checks,
+Current integrated selftest summary from latest run is {"ok": true, "passed": 400, "failed": 0, "total": 400}. Coverage includes Stage 2E parser-contract/action-preflight checks,
 Stage 2D confirmation-token flow coverage, Stage 2F-A capability-registry
 honesty checks, Stage 2F-B capability-answer checks, Stage 2F-C telemetry-
 derived guardrail regression checks, Stage 2F-C2 regression-cleanup checks,
@@ -197,7 +197,11 @@ Coverage now also includes Stage 2G-F-J final user-space install readiness repor
 - `stage2g_f_j_user_install_readiness_report_chain_closure_flags` — chain-closure fields stay `closed_for_non_executing_human_review=True` with all execution/CLI availability flags False
 - `stage2g_f_j_user_install_readiness_report_format_is_non_executing` — formatted output contains all required non-executing readiness markers
 - `stage2g_f_j_user_install_readiness_report_probe_is_read_only` — `run_named_probe("user_install_readiness_report")` returns the expected read-only final readiness contract
-- `stage2g_f_j_user_install_readiness_report_docs_and_source_boundary` — docs mention Stage 2G-F-J, `ai_user_install_readiness.py` stays free of forbidden execution/write/system tokens, and stale current-doc-baseline literals for 387 are guarded out of selftest docs-needle checks
+- `stage2g_f_j_user_install_readiness_report_docs_and_source_boundary` — docs mention Stage 2G-F-J, `ai_user_install_readiness.py` stays free of forbidden execution/write/system tokens, and stale current-doc-baseline literals for 396 are guarded out of selftest docs-needle checks
+- `stage2g_f_j_a_readiness_rejects_upstream_performed_operations` — non-empty upstream performed_operations forces unsupported_manual_review, preserves `performed_operations: []`, and adds the performed-operations denial reason
+- `stage2g_f_j_a_readiness_rejects_nested_authorization` — recursive detection catches nested authorization attempts such as `executor_disabled_packet.executor_lock.write_authorized = True` and keeps all output authorization fields False
+- `stage2g_f_j_a_readiness_sanitizes_refused_operations` — refused_operations are boundary-sanitized, redact unsafe targets, drop raw refusal text, and never echo command-like material into packet/preview/format output
+- `stage2g_f_j_a_readiness_docs_and_baseline_guard` — docs now reflect Stage 2G-F-J-A with the 400 baseline and selftest guards reject stale 396 current-baseline literals
 
 The Stage 2G-F-J suite also adds a stale-baseline prevention guard because Stage 2G-F-I required a follow-up baseline-literal fix.
 

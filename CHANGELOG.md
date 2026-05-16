@@ -20,6 +20,14 @@ Until formal release tagging is established, this changelog should follow these 
 
 ## Unreleased
 
+### Stage 2G-F-J-A readiness hardening forward-fix
+
+- Hardens the final user-space install readiness report after audit findings.
+- Adds recursive authorization detection, performed_operations invariant enforcement, and refused_operations sanitization in the final readiness boundary.
+- Adds 4 selftests.
+- Final integrated selftest JSON summary: {"ok": true, "passed": 400, "failed": 0, "total": 400}.
+- Remains non-executing and does not add CLI surface, scripts, filesystem writes, approval validation as true, execution, or installer execution.
+
 ### Stage 2G-F-J final user-space install readiness aggregator/report
 
 - Adds `ai_user_install_readiness.py`.

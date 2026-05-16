@@ -6705,7 +6705,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
 
     # H: stage2f_f_d_current_docs_baseline_and_no_duplicate_coverage_notes
     errors = []
-    current_summary = '{"ok": true, "passed": 396, "failed": 0, "total": 396}'
+    current_summary = '{"ok": true, "passed": 400, "failed": 0, "total": 400}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -6927,7 +6927,7 @@ def run_stage2f_f_d_maintenance_report_contract_tests() -> list[dict]:
         BOND_ROOT / "docs" / "PROBES.md",
         BOND_ROOT / "docs" / "TESTING.md",
     ]
-    current_summary = '{"ok": true, "passed": 396, "failed": 0, "total": 396}'
+    current_summary = '{"ok": true, "passed": 400, "failed": 0, "total": 400}'
     stale_summaries = [
         '{"ok": true, "passed": 302, "failed": 0, "total": 302}',
         '{"ok": true, "passed": 300, "failed": 0, "total": 300}',
@@ -10842,8 +10842,8 @@ def run_stage2g_f_f_user_install_review_tests() -> list[dict[str, Any]]:
         "docs/ARCHITECTURE.md": ["Stage 2G-F-F", "ai_user_install_review.py", "user_install_review_report"],
         "docs/INSTALLATION.md": ["Stage 2G-F-F", "review packet"],
         "docs/PROBES.md": ["user_install_review_report"],
-        "docs/STATE.md": ["Stage 2G-F-F", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
-        "docs/TESTING.md": ["Stage 2G-F-F", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
+        "docs/STATE.md": ["Stage 2G-F-F", '{"ok": true, "passed": 400, "failed": 0, "total": 400}'],
+        "docs/TESTING.md": ["Stage 2G-F-F", '{"ok": true, "passed": 400, "failed": 0, "total": 400}'],
     }
     for relative_path, needles in docs_needles.items():
         text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
@@ -11222,8 +11222,8 @@ def run_stage2g_f_g_user_install_write_preflight_tests() -> list[dict[str, Any]]
         "docs/ARCHITECTURE.md": ["Stage 2G-F-G", "ai_user_install_write_preflight.py", "user_install_write_preflight"],
         "docs/INSTALLATION.md": ["Stage 2G-F-G", "write-preflight"],
         "docs/PROBES.md": ["user_install_write_preflight"],
-        "docs/STATE.md": ["Stage 2G-F-G", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
-        "docs/TESTING.md": ["Stage 2G-F-G", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
+        "docs/STATE.md": ["Stage 2G-F-G", '{"ok": true, "passed": 400, "failed": 0, "total": 400}'],
+        "docs/TESTING.md": ["Stage 2G-F-G", '{"ok": true, "passed": 400, "failed": 0, "total": 400}'],
     }
     for relative_path, needles in docs_needles.items():
         text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
@@ -11569,13 +11569,13 @@ def run_stage2g_f_h_user_install_approval_validation_tests() -> list[dict[str, A
 
     errors = []
     docs_needles = {
-        "README.md": ["Stage 2G-F-H", "396", "user-space install approval-validation"],
+        "README.md": ["Stage 2G-F-H", "400", "user-space install approval-validation"],
         "ROADMAP.md": ["Stage 2G-F-H", "approval-validation"],
         "docs/ARCHITECTURE.md": ["Stage 2G-F-H", "ai_user_install_approval_validation.py", "user_install_approval_validation"],
         "docs/INSTALLATION.md": ["Stage 2G-F-H", "approval-validation"],
         "docs/PROBES.md": ["user_install_approval_validation"],
-        "docs/STATE.md": ["Stage 2G-F-H", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
-        "docs/TESTING.md": ["Stage 2G-F-H", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
+        "docs/STATE.md": ["Stage 2G-F-H", '{"ok": true, "passed": 400, "failed": 0, "total": 400}'],
+        "docs/TESTING.md": ["Stage 2G-F-H", '{"ok": true, "passed": 400, "failed": 0, "total": 400}'],
     }
     for relative_path, needles in docs_needles.items():
         text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
@@ -11919,13 +11919,13 @@ def run_stage2g_f_i_user_install_write_executor_tests() -> list[dict[str, Any]]:
 
     errors = []
     docs_needles = {
-        "README.md": ["Stage 2G-F-I", "396", "disabled/default-deny user-space install write-executor"],
+        "README.md": ["Stage 2G-F-I", "400", "disabled/default-deny user-space install write-executor"],
         "ROADMAP.md": ["Stage 2G-F-I", "disabled/default-deny write-executor"],
         "docs/ARCHITECTURE.md": ["Stage 2G-F-I", "ai_user_install_write_executor.py", "user_install_write_executor"],
         "docs/INSTALLATION.md": ["Stage 2G-F-I", "Disabled write-executor"],
         "docs/PROBES.md": ["user_install_write_executor"],
-        "docs/STATE.md": ["Stage 2G-F-I", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
-        "docs/TESTING.md": ["Stage 2G-F-I", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
+        "docs/STATE.md": ["Stage 2G-F-I", '{"ok": true, "passed": 400, "failed": 0, "total": 400}'],
+        "docs/TESTING.md": ["Stage 2G-F-I", '{"ok": true, "passed": 400, "failed": 0, "total": 400}'],
     }
     for relative_path, needles in docs_needles.items():
         text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
@@ -12225,13 +12225,13 @@ def run_stage2g_f_j_user_install_readiness_report_tests() -> list[dict[str, Any]
 
     errors = []
     docs_needles = {
-        "README.md": ["Stage 2G-F-J", "396", "final non-executing user-space install readiness"],
-        "ROADMAP.md": ["Stage 2G-F-J", "final non-executing readiness"],
+        "README.md": ["Stage 2G-F-J-A", "400", "hardens the final readiness report"],
+        "ROADMAP.md": ["Stage 2G-F-J-A", "400", "forward-fix hardening"],
         "docs/ARCHITECTURE.md": ["Stage 2G-F-J", "ai_user_install_readiness.py", "user_install_readiness_report"],
         "docs/INSTALLATION.md": ["Stage 2G-F-J", "Final non-executing readiness report"],
         "docs/PROBES.md": ["user_install_readiness_report"],
-        "docs/STATE.md": ["Stage 2G-F-J", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
-        "docs/TESTING.md": ["Stage 2G-F-J", '{"ok": true, "passed": 396, "failed": 0, "total": 396}'],
+        "docs/STATE.md": ["Stage 2G-F-J-A", '{"ok": true, "passed": 400, "failed": 0, "total": 400}'],
+        "docs/TESTING.md": ["Stage 2G-F-J-A", '{"ok": true, "passed": 400, "failed": 0, "total": 400}'],
     }
     for relative_path, needles in docs_needles.items():
         text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
@@ -12279,28 +12279,149 @@ def run_stage2g_f_j_user_install_readiness_report_tests() -> list[dict[str, Any]
         )
 
     stale_needles = [
-        '"docs/STATE.md": ["Stage 2G-F-F", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
-        '"docs/TESTING.md": ["Stage 2G-F-F", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
-        '"docs/STATE.md": ["Stage 2G-F-G", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
-        '"docs/TESTING.md": ["Stage 2G-F-G", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
-        '"docs/STATE.md": ["Stage 2G-F-H", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
-        '"docs/TESTING.md": ["Stage 2G-F-H", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
-        '"docs/STATE.md": ["Stage 2G-F-I", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
-        '"docs/TESTING.md": ["Stage 2G-F-I", \'{"ok": true, "passed": 387, "failed": 0, "total": 387}\']',
+        '"docs/STATE.md": ["Stage 2G-F-F", \'{"ok": true, "passed": 396, "failed": 0, "total": 396}\']',
+        '"docs/TESTING.md": ["Stage 2G-F-F", \'{"ok": true, "passed": 396, "failed": 0, "total": 396}\']',
+        '"docs/STATE.md": ["Stage 2G-F-G", \'{"ok": true, "passed": 396, "failed": 0, "total": 396}\']',
+        '"docs/TESTING.md": ["Stage 2G-F-G", \'{"ok": true, "passed": 396, "failed": 0, "total": 396}\']',
+        '"docs/STATE.md": ["Stage 2G-F-H", \'{"ok": true, "passed": 396, "failed": 0, "total": 396}\']',
+        '"docs/TESTING.md": ["Stage 2G-F-H", \'{"ok": true, "passed": 396, "failed": 0, "total": 396}\']',
+        '"docs/STATE.md": ["Stage 2G-F-I", \'{"ok": true, "passed": 396, "failed": 0, "total": 396}\']',
+        '"docs/TESTING.md": ["Stage 2G-F-I", \'{"ok": true, "passed": 396, "failed": 0, "total": 396}\']',
     ]
     selftest_text = AI_RUN.with_name("ai_selftest.py").read_text(encoding="utf-8")
     stale_hits = [needle for needle in stale_needles if needle in selftest_text]
     if stale_hits:
         errors.append("stale current-doc-baseline selftest literal(s): " + "; ".join(stale_hits))
     required_needles = [
-        '"docs/STATE.md": ["Stage 2G-F-J", \'{"ok": true, "passed": 396, "failed": 0, "total": 396}\']',
-        '"docs/TESTING.md": ["Stage 2G-F-J", \'{"ok": true, "passed": 396, "failed": 0, "total": 396}\']',
+        '"docs/STATE.md": ["Stage 2G-F-J-A", \'{"ok": true, "passed": 400, "failed": 0, "total": 400}\']',
+        '"docs/TESTING.md": ["Stage 2G-F-J-A", \'{"ok": true, "passed": 400, "failed": 0, "total": 400}\']',
     ]
     missing_needles = [needle for needle in required_needles if needle not in selftest_text]
     if missing_needles:
         errors.append("missing Stage 2G-F-J current-doc-baseline selftest literal(s): " + "; ".join(missing_needles))
 
-    append_result("stage2g_f_j_user_install_readiness_report_docs_and_source_boundary", errors)
+    docs_boundary_errors = errors
+
+    # A: stage2g_f_j_a_readiness_rejects_upstream_performed_operations
+    errors = []
+    bad_performed = build_write_executor_payload()
+    bad_performed["performed_operations"] = [
+        {"operation_kind": "write", "target": "/home/example/Bond/manifest.json"}
+    ]
+    rejected_performed = build_user_install_readiness_report(user_install_write_executor=bad_performed)
+    if rejected_performed.get("readiness_status") != "unsupported_manual_review":
+        errors.append(f"readiness_status mismatch: {rejected_performed.get('readiness_status')}")
+    if rejected_performed.get("performed_operations") != []:
+        errors.append("performed_operations must remain []")
+    if (
+        "disabled executor invariant failed: upstream performed_operations must be empty"
+        not in rejected_performed.get("denial_reasons", [])
+    ):
+        errors.append("denial_reasons must include performed-operations invariant marker")
+    for field in auth_false:
+        if rejected_performed.get(field) is not False:
+            errors.append(f"rejected report {field} must remain False")
+    append_result("stage2g_f_j_a_readiness_rejects_upstream_performed_operations", errors)
+
+    # B: stage2g_f_j_a_readiness_rejects_nested_authorization
+    errors = []
+    bad_nested = build_write_executor_payload()
+    bad_nested["executor_disabled_packet"]["executor_lock"] = {
+        "write_authorized": True,
+        "approval_validated": True,
+    }
+    rejected_nested = build_user_install_readiness_report(user_install_write_executor=bad_nested)
+    if rejected_nested.get("readiness_status") != "unsupported_manual_review":
+        errors.append(f"readiness_status mismatch: {rejected_nested.get('readiness_status')}")
+    if (
+        "upstream write executor attempted to authorize execution, approval, commands, or writes"
+        not in rejected_nested.get("denial_reasons", [])
+    ):
+        errors.append("denial_reasons must include recursive authorization marker")
+    for field in auth_false:
+        if rejected_nested.get(field) is not False:
+            errors.append(f"nested rejected report {field} must remain False")
+    packet_lock = (
+        rejected_nested.get("readiness_packet", {}).get("executor_lock", {})
+        if isinstance(rejected_nested.get("readiness_packet"), dict)
+        else {}
+    )
+    if packet_lock.get("write_authorized") is not False or packet_lock.get("approval_validated") is not False:
+        errors.append("readiness_packet executor_lock must remain False for authorization fields")
+    append_result("stage2g_f_j_a_readiness_rejects_nested_authorization", errors)
+
+    # C: stage2g_f_j_a_readiness_sanitizes_refused_operations
+    errors = []
+    bad_string = "su" + "do " + "ap" + "t install evil"
+    bad_refused = build_write_executor_payload()
+    bad_refused["refused_operations"] = [
+        {
+            "operation_kind": "bad;kind",
+            "target": "/home/example/Bond/manifest.json; " + bad_string,
+            "refusal_reason": bad_string,
+        }
+    ]
+    sanitized = build_user_install_readiness_report(user_install_write_executor=bad_refused)
+    formatted = format_user_install_readiness_report(sanitized)
+    flattened = json.dumps(sanitized, sort_keys=True, ensure_ascii=False) + "\n" + formatted
+    for forbidden in [bad_string, "raw upstream reason must not survive"]:
+        if forbidden in flattened:
+            errors.append(f"forbidden string leaked into readiness output: {forbidden}")
+    refused_operations = sanitized.get("refused_operations") if isinstance(sanitized.get("refused_operations"), list) else []
+    if len(refused_operations) != 1:
+        errors.append(f"expected exactly 1 sanitized refused operation, got {len(refused_operations)}")
+    else:
+        refused_operation = refused_operations[0]
+        if set(refused_operation) != {"operation_kind", "target", "refusal_reason"}:
+            errors.append(f"sanitized refused operation keys mismatch: {sorted(refused_operation)}")
+        if refused_operation.get("target") != "<redacted_non_path_target>":
+            errors.append(f"sanitized target mismatch: {refused_operation.get('target')}")
+        if refused_operation.get("refusal_reason") != "operation remains refused by the disabled readiness boundary":
+            errors.append("sanitized refusal_reason mismatch")
+        if refused_operation.get("operation_kind") != "refused_operation_candidate":
+            errors.append(f"sanitized operation_kind mismatch: {refused_operation.get('operation_kind')}")
+    packet_refused = (
+        sanitized.get("readiness_packet", {}).get("refused_operations", [])
+        if isinstance(sanitized.get("readiness_packet"), dict)
+        else []
+    )
+    if packet_refused != refused_operations:
+        errors.append("readiness_packet refused_operations must match top-level sanitized output")
+    if bad_string in sanitized.get("readiness_json_preview", ""):
+        errors.append("readiness_json_preview must not echo raw refused-operation material")
+    append_result("stage2g_f_j_a_readiness_sanitizes_refused_operations", errors)
+
+    # D: stage2g_f_j_a_readiness_docs_and_baseline_guard
+    errors = []
+    docs_needles = {
+        "README.md": ["Stage 2G-F-J-A", "400", "hardens the final readiness report"],
+        "ROADMAP.md": ["Stage 2G-F-J-A", "400", "forward-fix hardening"],
+        "docs/STATE.md": ["Stage 2G-F-J-A", '{"ok": true, "passed": 400, "failed": 0, "total": 400}'],
+        "docs/TESTING.md": ["Stage 2G-F-J-A", '{"ok": true, "passed": 400, "failed": 0, "total": 400}'],
+    }
+    for relative_path, needles in docs_needles.items():
+        text = (BOND_ROOT / relative_path).read_text(encoding="utf-8")
+        for needle in needles:
+            if needle not in text:
+                errors.append(f"missing docs marker in {relative_path}: {needle}")
+    selftest_text = AI_RUN.with_name("ai_selftest.py").read_text(encoding="utf-8")
+    stale_current_baseline_needles = [
+        '"docs/STATE.md": ["Stage 2G-F-J", \'{"ok": true, "passed": 396, "failed": 0, "total": 396}\']',
+        '"docs/TESTING.md": ["Stage 2G-F-J", \'{"ok": true, "passed": 396, "failed": 0, "total": 396}\']',
+    ]
+    for needle in stale_current_baseline_needles:
+        if needle in selftest_text:
+            errors.append(f"stale current-baseline literal present: {needle}")
+    required_current_baseline_needles = [
+        '"docs/STATE.md": ["Stage 2G-F-J-A", \'{"ok": true, "passed": 400, "failed": 0, "total": 400}\']',
+        '"docs/TESTING.md": ["Stage 2G-F-J-A", \'{"ok": true, "passed": 400, "failed": 0, "total": 400}\']',
+    ]
+    for needle in required_current_baseline_needles:
+        if needle not in selftest_text:
+            errors.append(f"missing current-baseline literal: {needle}")
+    append_result("stage2g_f_j_a_readiness_docs_and_baseline_guard", errors)
+
+    append_result("stage2g_f_j_user_install_readiness_report_docs_and_source_boundary", docs_boundary_errors)
 
     return results
 

@@ -268,7 +268,7 @@ Exit criteria:
 
 Current checkpoint note:
 
-- integrated selftest latest run summary is {"ok": true, "passed": 396, "failed": 0, "total": 396}.
+- integrated selftest latest run summary is {"ok": true, "passed": 400, "failed": 0, "total": 400}.
 - coverage includes routing, policy, action-contract/dry-run, mixed-intent rejection, high-risk confirmation-required, parser-contract preflight behavior, capability-registry honesty behavior, capability-answer behavior, telemetry-derived guardrail regressions, Stage 2F-C5 strict timeout/diagnostic-expectation cleanup checks, and the C5 follow-up strict-timeout cleanup checks.
 - coverage also includes Stage 2F-D probe foundation/cleanup checks, Stage 2F-D-B bounded model-truth checks, Stage 2F-D-C model-truth fallback checks, Stage 2F-D-D bounded context-capability answer checks, Stage 2F-E-A classifier-boundary checks, events bucket, and core memory flows.
 - coverage now also includes Stage 2F-E-E selftest accounting integrity checks.
@@ -326,6 +326,7 @@ Current sequence implementation boundary:
 - Stage 2G-F-H continues item 6 by adding a non-executing user-space install approval-validation contract after the write-preflight packet.
 - Stage 2G-F-I continues item 6 by adding a disabled/default-deny write-executor skeleton after the approval-validation contract.
 - Stage 2G-F-J continues item 6 by adding a final non-executing readiness aggregator/report after the disabled/default-deny write-executor skeleton.
+- Stage 2G-F-J-A is a forward-fix hardening pass on the final readiness report, not a new capability stage.
 - Stage 2G-F-J closes the current detect-plan-show chain for human review only.
 - Stage 2G-F-C does not complete the user-space installer and does not create/write anything.
 - Stage 2G-F-D does not complete the user-space installer, does not grant approval, and does not create/write anything.

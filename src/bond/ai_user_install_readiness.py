@@ -87,12 +87,87 @@ def _as_list_of_dicts(value: Any) -> list[dict[str, Any]]:
 
 
 def _truthy_authorization_present(value: Any) -> bool:
-    if not isinstance(value, dict):
+    if isinstance(value, dict):
+        for key, nested_value in value.items():
+            if key in AUTHORIZATION_FIELDS and nested_value:
+                return True
+            if _truthy_authorization_present(nested_value):
+                return True
         return False
-    for field in AUTHORIZATION_FIELDS:
-        if value.get(field):
-            return True
+    if isinstance(value, (list, tuple)):
+        for item in value:
+            if _truthy_authorization_present(item):
+                return True
     return False
+
+
+def _sanitize_refused_operations(value: Any, review_reasons: list[str]) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        _append_unique(review_reasons, "refused_operations was not a list and was ignored")
+        return []
+
+    sanitized_operations: list[dict[str, Any]] = []
+    was_sanitized = False
+    fixed_refusal_reason = "operation remains refused by the disabled readiness boundary"
+    allowed_operation_kind_characters = set("-_./: ")
+    forbidden_target_characters = "\n\r;&|`$><"
+
+    for item in value[:50]:
+        if not isinstance(item, dict):
+            sanitized_operations.append(
+                {
+                    "operation_kind": "refused_operation_candidate",
+                    "target": "<redacted_non_path_target>",
+                    "refusal_reason": fixed_refusal_reason,
+                }
+            )
+            was_sanitized = True
+            continue
+
+        operation_kind = item.get("operation_kind")
+        if (
+            isinstance(operation_kind, str)
+            and 1 <= len(operation_kind) <= 80
+            and all(character.isalnum() or character in allowed_operation_kind_characters for character in operation_kind)
+        ):
+            sanitized_operation_kind = operation_kind
+        else:
+            sanitized_operation_kind = "refused_operation_candidate"
+            was_sanitized = True
+
+        target = item.get("target")
+        if (
+            isinstance(target, str)
+            and 1 <= len(target) <= 240
+            and target.startswith("/")
+            and not any(character in target for character in forbidden_target_characters)
+        ):
+            sanitized_target = target
+        else:
+            sanitized_target = "<redacted_non_path_target>"
+            was_sanitized = True
+
+        if item.get("refusal_reason") != fixed_refusal_reason:
+            was_sanitized = True
+
+        if set(item) != {"operation_kind", "target", "refusal_reason"}:
+            was_sanitized = True
+
+        sanitized_operations.append(
+            {
+                "operation_kind": sanitized_operation_kind,
+                "target": sanitized_target,
+                "refusal_reason": fixed_refusal_reason,
+            }
+        )
+
+    if len(value) > 50:
+        was_sanitized = True
+
+    if was_sanitized:
+        _append_unique(review_reasons, "refused_operations were sanitized by the readiness report boundary")
+
+    return sanitized_operations
 
 
 def _base_status_from_executor(executor_status: Any) -> str:
@@ -356,16 +431,11 @@ def build_user_install_readiness_report(
     ):
         _append_unique(review_reasons, "approved_operation_count is missing or invalid")
 
-    refused_operations = _as_list_of_dicts(user_install_write_executor.get("refused_operations"))
-    if user_install_write_executor.get("refused_operations") is not None and not isinstance(
-        user_install_write_executor.get("refused_operations"), list
-    ):
-        _append_unique(review_reasons, "refused_operations are missing or invalid")
+    refused_operations = _sanitize_refused_operations(user_install_write_executor.get("refused_operations"), review_reasons)
 
-    performed_operations = user_install_write_executor.get("performed_operations")
-    if not isinstance(performed_operations, list):
+    raw_performed_operations = user_install_write_executor.get("performed_operations")
+    if not isinstance(raw_performed_operations, list):
         _append_unique(review_reasons, "performed_operations are missing or invalid")
-        performed_operations = []
 
     executor_disabled_packet = user_install_write_executor.get("executor_disabled_packet")
     if executor_disabled_packet is not None and not isinstance(executor_disabled_packet, dict):
@@ -422,11 +492,17 @@ def build_user_install_readiness_report(
             "disabled executor invariant failed: would_write must be false",
         )
 
-    if performed_operations != []:
+    if not isinstance(raw_performed_operations, list):
         readiness_status = "unsupported_manual_review"
         _append_unique(
             denial_reasons,
-            "disabled executor invariant failed: performed_operations must be empty",
+            "disabled executor invariant failed: performed_operations must be a list",
+        )
+    elif raw_performed_operations != []:
+        readiness_status = "unsupported_manual_review"
+        _append_unique(
+            denial_reasons,
+            "disabled executor invariant failed: upstream performed_operations must be empty",
         )
 
     if blocked_reasons and readiness_status == "ready_for_final_human_review_execution_locked":
